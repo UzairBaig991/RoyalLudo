@@ -7,7 +7,96 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js">
+    // Complete authoritative game initializer
+    function initGame(options = {}) {
+      const count = options.playerCount || gameState.activePlayerCount || 4;
+      gameState.activePlayerCount = count;
+
+      if (options.isPassAndPlay) {
+        for (let i = 0; i < 4; i++) {
+          if (i < count && pnpSeats[i]) {
+            gameState.players[i].name = pnpSeats[i].name;
+            gameState.players[i].isBot = pnpSeats[i].type === 'Bot';
+          } else {
+            gameState.players[i].isBot = true;
+          }
+          gameState.players[i].hasKilledOpponent = false;
+        }
+      } else if (gameState.isTeamMode) {
+        gameState.players[0].name = 'Govind (You)';
+        gameState.players[0].isBot = false;
+        gameState.players[1].name = 'Shivali (Opponent)';
+        gameState.players[1].isBot = true;
+        gameState.players[2].name = 'Sachin K. (Teammate)';
+        gameState.players[2].isBot = false;
+        gameState.players[3].name = 'Thiago (Opponent)';
+        gameState.players[3].isBot = true;
+        for (let i = 0; i < 4; i++) gameState.players[i].hasKilledOpponent = false;
+      } else {
+        gameState.players[0].name = 'Govind (You)';
+        gameState.players[0].isBot = false;
+        gameState.players[0].hasKilledOpponent = false;
+        for (let i = 1; i < 4; i++) {
+          gameState.players[i].isBot = true;
+          gameState.players[i].hasKilledOpponent = false;
+        }
+      }
+
+      gameState.tokens.forEach(t => t.step = -1);
+      gameState.currentTurnSeat = 0;
+      gameState.phase = 'ROLL_DICE';
+      gameState.currentRoll = null;
+      gameState.consecutiveSixes = 0;
+
+      const mode = (gameState.selectedVariation || 'classic').toUpperCase();
+      const bet = gameState.selectedBet || 500;
+      const titleElem = document.getElementById('tableTitleDisplay');
+      if (titleElem) titleElem.textContent = `${mode} (${bet.toLocaleString()} 🪙)`;
+
+      const hud1 = document.getElementById('hud-slot-1');
+      if (hud1) hud1.style.display = count === 2 ? 'none' : 'flex';
+      const hud3 = document.getElementById('hud-slot-3');
+      if (hud3) hud3.style.display = count === 2 ? 'none' : 'flex';
+
+      renderBoard();
+      renderDicePips(6);
+      updateTurnHUD();
+    }
+
+    // Pass 'n Play starter
+    function startPassAndPlayMatch() {
+      closeModals();
+      gameState.activePlayerCount = pnpPlayerCount;
+      gameState.isTeamMode = false;
+      gameState.selectedVariation = 'classic';
+      initGame({ playerCount: pnpPlayerCount, isPassAndPlay: true });
+      showScreen('view-game');
+      showNotificationToast('📱 Pass \'n Play match started (' + pnpPlayerCount + ' Players)!');
+    }
+
+    // Info Modal
+    function openGameInfoModal() {
+      const mode = (gameState.selectedVariation || 'classic').toUpperCase();
+      const bet = gameState.selectedBet || 500;
+      const pot = Math.floor(bet * (gameState.activePlayerCount || 2) * 0.9);
+      const killStatus = gameState.players[0].hasKilledOpponent ? 'UNLOCKED 🔓' : 'LOCKED 🔒 (Kill Required)';
+      alert(`👑 LUDO STAR MATCH INFO\n\n• Mode: ${mode}\n• Stake Bet: 🪙 ${bet.toLocaleString()}\n• Prize Pool: 🪙 ${pot.toLocaleString()}\n• Home Corridor: ${killStatus}\n• Rules: 8 Safe Stars, 3-Sixes Turn Pass, Exact Home Finish.`);
+    }
+
+    // Turn countdown timer tick sound
+    const originalUpdateTurnTimerDisplay = updateTurnTimerDisplay;
+
+    // Initial DOM Ready Bootstrapper
+    window.addEventListener('DOMContentLoaded', () => {
+      updateCurrencyDisplay();
+      renderBoard();
+      renderDicePips(6);
+      renderDiceCollections();
+      renderFriendsList();
+      renderLeagueGroup();
+    });
+  </script>
   <style>
     :root {
       --ls-bg-top: #420A3F;
@@ -1575,6 +1664,62 @@
       margin-top: 1px;
     }
 
+
+    /* BOARD SHAKE ON CAPTURE */
+    @keyframes boardShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-5px, 4px) rotate(-0.5deg); }
+      40% { transform: translate(5px, -4px) rotate(0.5deg); }
+      60% { transform: translate(-3px, -3px) rotate(-0.3deg); }
+      80% { transform: translate(3px, 3px) rotate(0.3deg); }
+    }
+    .shake-board {
+      animation: boardShake 0.4s ease-in-out !important;
+    }
+
+    /* CONFETTI PARTICLES */
+    .confetti-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 99999;
+      animation: confettiFall 2.8s ease-in forwards;
+      border-radius: 2px;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* FORTUNE WHEEL STYLES */
+    .wheel-container {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin: 10px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .wheel-disc-svg {
+      width: 270px;
+      height: 270px;
+      transition: transform 4.5s cubic-bezier(0.15, 0.9, 0.25, 1);
+      filter: drop-shadow(0 6px 16px rgba(0,0,0,0.6));
+    }
+    .wheel-pointer-pin {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 24px solid #FFDF00;
+      filter: drop-shadow(0 3px 5px rgba(0,0,0,0.7));
+      z-index: 20;
+    }
+
 </style>
 </head>
 <body>
@@ -2280,17 +2425,72 @@
     </div>
   </div>
 
-  <!-- MODAL: LUCKY DICE MINIGAME -->
+    <!-- MODAL: FORTUNE WHEEL & LUCKY DICE MINIGAME -->
   <div class="modal-overlay" id="luckyDiceModal" onclick="if(event.target===this)closeModals()">
-    <div class="league-modal-box" style="padding: 20px; text-align: center;">
-      <div style="font-size: 38px;">🎲</div>
-      <div style="font-family: 'Fredoka', cursive; font-size: 22px; font-weight: 800; color: #FFDF00;">LUCKY DICE WHEEL</div>
-      <div style="font-size: 12px; color: #D9A0D7; margin: 6px 0 16px 0;">Roll the lucky dice to win up to 100,000 Coins!</div>
-      
-      <div style="font-family: 'Fredoka', cursive; font-size: 38px; color: #FFF; margin-bottom: 16px;" id="luckyRollDisplay">❓</div>
-      
-      <button class="ls-btn-gold" style="width: 100%;" onclick="rollLuckyDice()">ROLL FOR FREE</button>
-      <button class="side-control-btn" style="width: 100%; margin-top: 8px; justify-content: center;" onclick="closeModals()">CLOSE</button>
+    <div class="league-modal-box" style="padding: 18px; text-align: center; max-width: 360px;">
+      <div style="font-family: 'Fredoka', cursive; font-size: 22px; font-weight: 800; color: #FFDF00; letter-spacing: 1px;">
+        🎡 FORTUNE WHEEL
+      </div>
+      <div style="font-size: 11px; color: #D9A0D7; margin: 4px 0 10px 0;">
+        Spin the royal wheel to win Coins, Gems, and the 100K Jackpot!
+      </div>
+
+      <!-- THE INTERACTIVE 8-SECTOR SVG WHEEL -->
+      <div class="wheel-container">
+        <div class="wheel-pointer-pin"></div>
+        <svg class="wheel-disc-svg" id="wheelDiscSvg" viewBox="0 0 300 300">
+          <circle cx="150" cy="150" r="146" fill="#FFDF00" stroke="#FFF" stroke-width="4"/>
+          <!-- 8 Slices -->
+          <g transform="translate(150, 150)">
+            <!-- Slice 0 (0-45 deg): 5,000 Coins -->
+            <path d="M0,0 L140,0 A140,140 0 0,1 98.99,98.99 Z" fill="#E74C3C" stroke="#FFF" stroke-width="1.5"/>
+            <text x="75" y="40" fill="#FFF" font-family="'Fredoka', cursive" font-size="13" font-weight="900" transform="rotate(22.5)" text-anchor="middle">5K 🪙</text>
+
+            <!-- Slice 1 (45-90 deg): 10,000 Coins -->
+            <path d="M0,0 L98.99,98.99 A140,140 0 0,1 0,140 Z" fill="#2ECC71" stroke="#FFF" stroke-width="1.5"/>
+            <text x="75" y="40" fill="#FFF" font-family="'Fredoka', cursive" font-size="13" font-weight="900" transform="rotate(67.5)" text-anchor="middle">10K 🪙</text>
+
+            <!-- Slice 2 (90-135 deg): 5 Gems -->
+            <path d="M0,0 L0,140 A140,140 0 0,1 -98.99,98.99 Z" fill="#3498DB" stroke="#FFF" stroke-width="1.5"/>
+            <text x="75" y="40" fill="#FFF" font-family="'Fredoka', cursive" font-size="13" font-weight="900" transform="rotate(112.5)" text-anchor="middle">5 💎</text>
+
+            <!-- Slice 3 (135-180 deg): 25,000 Coins -->
+            <path d="M0,0 L-98.99,98.99 A140,140 0 0,1 -140,0 Z" fill="#9B59B6" stroke="#FFF" stroke-width="1.5"/>
+            <text x="75" y="40" fill="#FFF" font-family="'Fredoka', cursive" font-size="13" font-weight="900" transform="rotate(157.5)" text-anchor="middle">25K 🪙</text>
+
+            <!-- Slice 4 (180-225 deg): 15 Gems -->
+            <path d="M0,0 L-140,0 A140,140 0 0,1 -98.99,-98.99 Z" fill="#E67E22" stroke="#FFF" stroke-width="1.5"/>
+            <text x="75" y="40" fill="#FFF" font-family="'Fredoka', cursive" font-size="13" font-weight="900" transform="rotate(202.5)" text-anchor="middle">15 💎</text>
+
+            <!-- Slice 5 (225-270 deg): 50,000 Coins -->
+            <path d="M0,0 L-98.99,-98.99 A140,140 0 0,1 0,-140 Z" fill="#1ABC9C" stroke="#FFF" stroke-width="1.5"/>
+            <text x="75" y="40" fill="#FFF" font-family="'Fredoka', cursive" font-size="13" font-weight="900" transform="rotate(247.5)" text-anchor="middle">50K 🪙</text>
+
+            <!-- Slice 6 (270-315 deg): 100K JACKPOT -->
+            <path d="M0,0 L0,-140 A140,140 0 0,1 98.99,-98.99 Z" fill="#F1C40F" stroke="#FFF" stroke-width="1.5"/>
+            <text x="75" y="40" fill="#B7950B" font-family="'Fredoka', cursive" font-size="14" font-weight="900" transform="rotate(292.5)" text-anchor="middle">100K 👑</text>
+
+            <!-- Slice 7 (315-360 deg): 2,500 Coins -->
+            <path d="M0,0 L98.99,-98.99 A140,140 0 0,1 140,0 Z" fill="#E84393" stroke="#FFF" stroke-width="1.5"/>
+            <text x="75" y="40" fill="#FFF" font-family="'Fredoka', cursive" font-size="13" font-weight="900" transform="rotate(337.5)" text-anchor="middle">2.5K 🪙</text>
+
+            <!-- Center Hub -->
+            <circle cx="0" cy="0" r="26" fill="#FFDF00" stroke="#FFF" stroke-width="3"/>
+            <text x="0" y="7" font-size="18" text-anchor="middle">⭐</text>
+          </g>
+        </svg>
+      </div>
+
+      <div style="font-family: 'Fredoka', cursive; font-size: 16px; font-weight: 800; color: #FFF; margin: 4px 0 10px 0; min-height: 24px;" id="wheelResultText">
+        Press SPIN to roll!
+      </div>
+
+      <button class="ls-btn-gold" style="width: 100%; padding: 12px 0; font-size: 15px;" id="spinWheelBtn" onclick="spinFortuneWheel()">
+        🎡 SPIN FOR FREE
+      </button>
+      <button class="side-control-btn" style="width: 100%; margin-top: 8px; justify-content: center;" onclick="closeModals()">
+        CLOSE
+      </button>
     </div>
   </div>
 
@@ -2555,12 +2755,74 @@
       setTimeout(() => playTone(1318.51, 'sine', 0.15, 0.25), 60);
     }
 
+    function playStarSound() {
+      if (!soundEnabled) return;
+      playTone(523.25, 'triangle', 0.1, 0.2);
+      setTimeout(() => playTone(659.25, 'triangle', 0.1, 0.2), 70);
+      setTimeout(() => playTone(783.99, 'triangle', 0.25, 0.25), 150);
+    }
+
+    function playTickingSound() {
+      if (!soundEnabled) return;
+      playTone(880, 'sine', 0.03, 0.12);
+    }
+
+    function playSpinTick() {
+      if (!soundEnabled) return;
+      playTone(700, 'square', 0.02, 0.08);
+    }
+
+    function playCheerSound() {
+      if (!soundEnabled) return;
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, i) => {
+        setTimeout(() => playTone(freq, 'triangle', 0.2, 0.25), i * 90);
+      });
+    }
+
+    function playArrowSound() {
+      if (!soundEnabled) return;
+      playTone(440, 'sawtooth', 0.15, 0.2);
+      setTimeout(() => playTone(880, 'sine', 0.2, 0.25), 100);
+    }
+
     function toggleAudio() {
       soundEnabled = !soundEnabled;
       document.getElementById('soundIconBtn').textContent = soundEnabled ? '🔊' : '🔇';
     }
 
     // ==========================================================
+    
+    // Screen Shake & Confetti FX
+    function triggerVictoryConfetti() {
+      playCheerSound();
+      const colors = ['#FFDF00', '#FF4136', '#2ECC71', '#0074D9', '#B10DC9', '#FF851B', '#FFF'];
+      for (let i = 0; i < 45; i++) {
+        setTimeout(() => {
+          const p = document.createElement('div');
+          p.className = 'confetti-particle';
+          p.style.left = Math.random() * 100 + 'vw';
+          p.style.top = '-20px';
+          p.style.background = colors[Math.floor(Math.random() * colors.length)];
+          p.style.width = (8 + Math.random() * 8) + 'px';
+          p.style.height = (6 + Math.random() * 8) + 'px';
+          p.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+          document.body.appendChild(p);
+          setTimeout(() => p.remove(), 3500);
+        }, i * 35);
+      }
+    }
+
+    function triggerBoardShake() {
+      const board = document.getElementById('boardWrapper');
+      if (board) {
+        board.classList.remove('shake-board');
+        void board.offsetWidth;
+        board.classList.add('shake-board');
+        setTimeout(() => board.classList.remove('shake-board'), 450);
+      }
+    }
+
     // 2. COORDINATES & LUDO STAR BOARD (15x15 SVG)
     // ==========================================================
     const PERIMETER_COORDS = [
@@ -2729,6 +2991,17 @@
           star.setAttribute('fill', idx === 0 || idx === 13 || idx === 26 || idx === 39 ? '#FFF' : '#7F8C8D');
           star.textContent = '★';
           svg.appendChild(star);
+        } else if ([4, 17, 30, 43].includes(idx)) {
+          // Arrow Shortcut Tiles
+          const arrow = document.createElementNS(SVG_NS, 'text');
+          arrow.setAttribute('x', x + CELL_SIZE / 2);
+          arrow.setAttribute('y', y + CELL_SIZE / 2 + 5);
+          arrow.setAttribute('text-anchor', 'middle');
+          arrow.setAttribute('font-size', '14');
+          arrow.setAttribute('font-weight', '900');
+          arrow.setAttribute('fill', '#E67E22');
+          arrow.textContent = '➔';
+          svg.appendChild(arrow);
         }
       });
 
@@ -3040,8 +3313,27 @@
       if (nextStep > 56) return;
 
       gameState.phase = 'ANIMATING';
+
+      // Arrow mode +7 boost if landing on arrow tile
+      if (gameState.selectedVariation === 'arrow' && nextStep >= 0 && nextStep <= 50) {
+        const abs = (COLOR_START_INDEX[color] + nextStep) % 52;
+        if ([4, 17, 30, 43].includes(abs) && nextStep + 7 <= 56) {
+          nextStep += 7;
+          playArrowSound();
+          showNotificationToast('🏹 ARROW BOOST! Catapulted +7 steps!');
+        }
+      }
+
       token.step = nextStep;
       playMoveSound();
+
+      // Safe star chime
+      if (nextStep >= 0 && nextStep <= 50) {
+        const abs = (COLOR_START_INDEX[color] + nextStep) % 52;
+        if (SAFE_INDICES.includes(abs)) {
+          playStarSound();
+        }
+      }
 
       let earnedExtra = roll === 6;
       if (nextStep >= 0 && nextStep <= 50) {
@@ -3056,6 +3348,7 @@
               o.step = -1;
               activePlayer.hasKilledOpponent = true;
               playCaptureSound();
+              triggerBoardShake();
               earnedExtra = true;
               showSpeechBubble(gameState.currentTurnSeat, 'Capture! ⚔️');
               updateHomeLockIndicators();
@@ -3171,6 +3464,7 @@
     }
 
     function handleMatchVictory(winnerColor) {
+      triggerVictoryConfetti();
       playTone(523.25, 'triangle', 0.2, 0.2);
       setTimeout(() => playTone(659.25, 'triangle', 0.2, 0.2), 100);
       setTimeout(() => playTone(783.99, 'triangle', 0.4, 0.25), 200);
@@ -3364,6 +3658,59 @@
 
     function closeModals() {
       document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+    }
+
+    
+    // ========================================================
+    // FORTUNE WHEEL SPIN LOGIC
+    // ========================================================
+    let isSpinningWheel = false;
+    let wheelCurrentRotation = 0;
+    const WHEEL_SECTORS = [
+      { label: '5,000 Coins 🪙', reward: { gold: 5000, gems: 0 } },
+      { label: '10,000 Coins 🪙', reward: { gold: 10000, gems: 0 } },
+      { label: '5 Gems 💎', reward: { gold: 0, gems: 5 } },
+      { label: '25,000 Coins 🪙', reward: { gold: 25000, gems: 0 } },
+      { label: '15 Gems 💎', reward: { gold: 0, gems: 15 } },
+      { label: '50,000 Coins 🪙', reward: { gold: 50000, gems: 0 } },
+      { label: '100,000 Coins 👑 (JACKPOT!)', reward: { gold: 100000, gems: 10 } },
+      { label: '2,500 Coins 🪙', reward: { gold: 2500, gems: 0 } }
+    ];
+
+    function spinFortuneWheel() {
+      if (isSpinningWheel) return;
+      isSpinningWheel = true;
+      playDiceSound();
+
+      const wheelDisc = document.getElementById('wheelDiscSvg');
+      const winningIndex = Math.floor(Math.random() * WHEEL_SECTORS.length);
+      const sectorDegrees = 360 / WHEEL_SECTORS.length;
+      const extraRotations = 5 * 360;
+      const targetDeg = extraRotations + (WHEEL_SECTORS.length - winningIndex) * sectorDegrees - sectorDegrees / 2;
+      wheelCurrentRotation += targetDeg;
+
+      if (wheelDisc) {
+        wheelDisc.style.transform = `rotate(${wheelCurrentRotation}deg)`;
+      }
+
+      let tickCount = 0;
+      const tickInterval = setInterval(() => {
+        playSpinTick();
+        tickCount++;
+        if (tickCount > 18) clearInterval(tickInterval);
+      }, 230);
+
+      setTimeout(() => {
+        clearInterval(tickInterval);
+        isSpinningWheel = false;
+        const winner = WHEEL_SECTORS[winningIndex];
+        if (winner.reward.gold > 0) gameState.gold += winner.reward.gold;
+        if (winner.reward.gems > 0) gameState.gems += winner.reward.gems;
+        updateCurrencyDisplay();
+        triggerVictoryConfetti();
+        document.getElementById('wheelResultText').textContent = `🎉 YOU WON: ${winner.label}!`;
+        showNotificationToast(`🎁 +${winner.label} added to your account!`);
+      }, 4600);
     }
 
     function openLuckyDiceModal() {
@@ -3867,6 +4214,9 @@
       turnTimerInterval = setInterval(() => {
         turnTimeLeft -= 1;
         updateTurnTimerDisplay();
+        if (turnTimeLeft <= 5 && turnTimeLeft > 0) {
+          playTickingSound();
+        }
 
         if (turnTimeLeft <= 0) {
           stopTurnTimer();
@@ -3912,7 +4262,8 @@
     }
 
     // Interactive Game Info Modal
-    function openGameInfoModal() {
+    // old openGameInfoModal was here
+    function _unusedGameInfo() {
       alert(`👑 ROYAL ARENA MATCH INFO\n\n• Mode: ${gameState.gameMode.toUpperCase()}\n• Prize Pool: 🪙 ${(gameState.betAmount * gameState.activePlayerCount * 0.9).toLocaleString()}\n• Rules: Safe Star Cells, Consecutive 6s Bonus, Exact Finish.`);
     }
 
@@ -4013,7 +4364,8 @@
       renderPnpSeats();
     }
 
-    function startPassAndPlayMatch() {
+    // old startPassAndPlayMatch was here
+    function _unusedStartPnp() {
       closeModals();
       gameState.activePlayerCount = pnpPlayerCount;
       gameState.isTeamMode = false;
