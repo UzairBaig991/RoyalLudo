@@ -44,6 +44,13 @@ export default function LudoStarGamePlayScreen() {
   const [bounceAnim] = useState(new Animated.Value(0));
   const [turnSecondsLeft, setTurnSecondsLeft] = useState<number>(15);
   const [isAutoPlay, setIsAutoPlay] = useState<boolean>(false);
+  const [giftTarget, setGiftTarget] = useState<string | null>(null);
+  const [comboBanner, setComboBanner] = useState<string | null>(null);
+
+  const showCombo = (text: string) => {
+    setComboBanner(text);
+    setTimeout(() => setComboBanner(null), 1800);
+  };
 
   // Bouncing arrow animation for active turn
   useEffect(() => {
@@ -111,7 +118,8 @@ export default function LudoStarGamePlayScreen() {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <Text style={styles.loadingTitle}>Connecting to Arena...</Text>
-      </SafeAreaView>
+
+    </SafeAreaView>
     );
   }
 
@@ -177,11 +185,78 @@ export default function LudoStarGamePlayScreen() {
     ]);
   };
 
-  // Helper for Dice pips display
-  const renderDiceFace = () => {
-    if (isRolling) return '🎲';
-    if (lastDiceRoll === null) return '👑';
-    return `${lastDiceRoll}`;
+  // Helper for 3D Beveled Dice Pips Display
+  const renderDicePipsView = () => {
+    if (isRolling) {
+      return <Text style={{ fontSize: 26, transform: [{ rotate: '15deg' }] }}>🎲</Text>;
+    }
+    if (lastDiceRoll === null) {
+      return <Text style={{ fontSize: 24 }}>👑</Text>;
+    }
+
+    const pip = (isRuby = false) => (
+      <View
+        style={{
+          width: 8.5,
+          height: 8.5,
+          borderRadius: 4.5,
+          backgroundColor: isRuby ? '#E74C3C' : '#1A202C',
+          shadowColor: isRuby ? '#FF4136' : '#000',
+          shadowOpacity: 0.6,
+          shadowRadius: 2,
+          elevation: 2,
+        }}
+      />
+    );
+
+    switch (lastDiceRoll) {
+      case 1:
+        return (
+          <View style={{ alignItems: 'center', justifyContent: 'center', width: 36, height: 36 }}>
+            {pip(true)}
+          </View>
+        );
+      case 2:
+        return (
+          <View style={{ width: 36, height: 36, justifyContent: 'space-between', padding: 2 }}>
+            <View style={{ alignItems: 'flex-start' }}>{pip()}</View>
+            <View style={{ alignItems: 'flex-end' }}>{pip()}</View>
+          </View>
+        );
+      case 3:
+        return (
+          <View style={{ width: 36, height: 36, justifyContent: 'space-between', padding: 2 }}>
+            <View style={{ alignItems: 'flex-start' }}>{pip()}</View>
+            <View style={{ alignItems: 'center' }}>{pip()}</View>
+            <View style={{ alignItems: 'flex-end' }}>{pip()}</View>
+          </View>
+        );
+      case 4:
+        return (
+          <View style={{ width: 36, height: 36, justifyContent: 'space-between', padding: 2 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>{pip()}{pip()}</View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>{pip()}{pip()}</View>
+          </View>
+        );
+      case 5:
+        return (
+          <View style={{ width: 36, height: 36, justifyContent: 'space-between', padding: 2 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>{pip()}{pip()}</View>
+            <View style={{ alignItems: 'center' }}>{pip()}</View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>{pip()}{pip()}</View>
+          </View>
+        );
+      case 6:
+        return (
+          <View style={{ width: 36, height: 36, justifyContent: 'space-between', padding: 2 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>{pip()}{pip()}</View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>{pip()}{pip()}</View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>{pip()}{pip()}</View>
+          </View>
+        );
+      default:
+        return <Text style={{ fontSize: 24 }}>👑</Text>;
+    }
   };
 
   const timerColor = turnSecondsLeft > 7 ? '#27AE70' : turnSecondsLeft > 3 ? '#F5A623' : '#E74C4C';
@@ -227,7 +302,10 @@ export default function LudoStarGamePlayScreen() {
       {/* 2. TOP OPPONENTS HUD ROW */}
       <View style={styles.topOpponentsRow}>
         {/* Player 2 (Green / Top-Left): Shivali Mahajan */}
-        <View style={[styles.playerPod, currentTurnSeat === 1 && styles.playerPodActive]}>
+        <TouchableOpacity
+          style={[styles.playerPod, currentTurnSeat === 1 && styles.playerPodActive]}
+          onPress={() => setGiftTarget('Shivali Mahajan')}
+        >
           <View style={styles.avatarBorderGreen}>
             <Text style={{ fontSize: 20 }}>👩</Text>
           </View>
@@ -239,17 +317,14 @@ export default function LudoStarGamePlayScreen() {
               {gameState.players[1]?.tokensHome || 0}/4 🏁
             </Text>
           </View>
-          <TouchableOpacity
-            style={styles.giftMiniBtn}
-            onPress={() => Alert.alert('Send Gift 🎁', 'Sent 100 bonus coins to Shivali Mahajan!')}
-          >
+          <View style={styles.giftMiniBtn}>
             <Text style={{ fontSize: 13 }}>🎁</Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+        </TouchableOpacity>
 
         {/* Player 3 (Yellow / Top-Right): Sachin Kumar Sh */}
         {gameState.playerCount === 4 && (
-          <View style={[styles.playerPod, currentTurnSeat === 2 && styles.playerPodActive]}>
+          <TouchableOpacity style={[styles.playerPod, currentTurnSeat === 2 && styles.playerPodActive]} onPress={() => setGiftTarget('Sachin Kumar Sh')}>
             <View style={styles.avatarBorderYellow}>
               <Text style={{ fontSize: 20 }}>🧔</Text>
             </View>
@@ -261,7 +336,7 @@ export default function LudoStarGamePlayScreen() {
                 {gameState.players[2]?.tokensHome || 0}/4 🏁
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       </View>
 
@@ -288,7 +363,7 @@ export default function LudoStarGamePlayScreen() {
         {gameState.playerCount === 4 && (
           <View style={styles.bottomOpponentRow}>
             <View />
-            <View style={[styles.playerPod, currentTurnSeat === 3 && styles.playerPodActive]}>
+            <TouchableOpacity style={[styles.playerPod, currentTurnSeat === 3 && styles.playerPodActive]} onPress={() => setGiftTarget('Thiago Rodrigues')}>
               <View style={styles.avatarBorderBlue}>
                 <Text style={{ fontSize: 20 }}>👱‍♂️</Text>
               </View>
@@ -300,7 +375,7 @@ export default function LudoStarGamePlayScreen() {
                   {gameState.players[3]?.tokensHome || 0}/4 🏁
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -324,7 +399,7 @@ export default function LudoStarGamePlayScreen() {
               </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Text style={styles.govindName}>Govind (You)</Text>
+              <Text style={styles.govindName}>{profile?.username || 'Uzair (You)'}</Text>
               <View style={[styles.killPill, myPlayer?.hasKilledOpponent ? styles.killPillOpen : styles.killPillLocked]}>
                 <Text style={styles.killPillText}>
                   {myPlayer?.hasKilledOpponent ? '🔓 HOME OPEN' : '🔒 KILL NEEDED'}
@@ -375,7 +450,7 @@ export default function LudoStarGamePlayScreen() {
               activeOpacity={0.8}
             >
               <View style={styles.diceFaceInside}>
-                <Text style={styles.diceFaceValue}>{renderDiceFace()}</Text>
+                {renderDicePipsView()}
               </View>
             </TouchableOpacity>
 
@@ -452,6 +527,49 @@ export default function LudoStarGamePlayScreen() {
                 <Text style={styles.chatPhraseText}>{msg}</Text>
               </TouchableOpacity>
             ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+        {/* COMBO ANNOUNCER BANNER */}
+      {comboBanner && (
+        <View style={styles.comboBannerOverlay}>
+          <Text style={styles.comboBannerText}>{comboBanner}</Text>
+        </View>
+      )}
+
+      {/* INTERACTIVE OPPONENT GIFT MODAL */}
+      <Modal visible={!!giftTarget} transparent animationType="fade" onRequestClose={() => setGiftTarget(null)}>
+        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setGiftTarget(null)}>
+          <View style={styles.giftModalBox}>
+            <Text style={styles.giftModalTitle}>🎯 THROW GIFT TO {giftTarget?.toUpperCase()}</Text>
+            <View style={styles.giftGrid}>
+              {[
+                { emoji: '🍅', name: 'TOMATO' },
+                { emoji: '🥊', name: 'PUNCH' },
+                { emoji: '💣', name: 'BOMB' },
+                { emoji: '☕', name: 'COFFEE' },
+                { emoji: '🌹', name: 'ROSE' },
+                { emoji: '👑', name: 'CROWN' },
+              ].map((g) => (
+                <TouchableOpacity
+                  key={g.name}
+                  style={styles.giftBtn}
+                  onPress={() => {
+                    const t = giftTarget;
+                    setGiftTarget(null);
+                    sendEmoji(g.emoji);
+                    showCombo(`${g.emoji} Threw ${g.name} at ${t}!`);
+                  }}
+                >
+                  <Text style={{ fontSize: 28 }}>{g.emoji}</Text>
+                  <Text style={styles.giftBtnText}>{g.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.giftCloseBtn} onPress={() => setGiftTarget(null)}>
+              <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 12 }}>CANCEL</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -873,5 +991,88 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 11,
     fontWeight: '700',
+  },
+
+  comboBannerOverlay: {
+    position: 'absolute',
+    top: '46%',
+    left: '10%',
+    right: '10%',
+    backgroundColor: '#FFDF00',
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    elevation: 20,
+    zIndex: 9999,
+  },
+  comboBannerText: {
+    color: '#1A021A',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  giftModalBox: {
+    backgroundColor: '#521350',
+    borderRadius: 20,
+    padding: 16,
+    width: '85%',
+    maxWidth: 340,
+    borderWidth: 2,
+    borderColor: '#FFDF00',
+    alignItems: 'center',
+  },
+  giftModalTitle: {
+    color: '#FFDF00',
+    fontSize: 14,
+    fontWeight: '900',
+    marginBottom: 12,
+  },
+  giftGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  giftBtn: {
+    width: '30%',
+    backgroundColor: '#3B093A',
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#752273',
+  },
+  giftBtnText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  giftCloseBtn: {
+    backgroundColor: '#370A36',
+    borderRadius: 10,
+    paddingVertical: 8,
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#752273',
+    marginTop: 4,
+  },
+
+
+
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
   },
 });

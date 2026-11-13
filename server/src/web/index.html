@@ -89,6 +89,8 @@
 
     // Initial DOM Ready Bootstrapper
     window.addEventListener('DOMContentLoaded', () => {
+      loadUserProfileFromStorage();
+      updateEquippedDiceSkinOn3dCube();
       updateCurrencyDisplay();
       renderBoard();
       renderDicePips(6);
@@ -1720,6 +1722,231 @@
       z-index: 20;
     }
 
+
+    /* ========================================================
+       ULTRA-ADVANCED 3D CUBE DICE STYLES
+       ======================================================== */
+    .dice-3d-arena {
+      width: 72px;
+      height: 72px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 500px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .dice-3d-shadow {
+      position: absolute;
+      bottom: -6px;
+      width: 54px;
+      height: 14px;
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 70%);
+      border-radius: 50%;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    .dice-3d-cube {
+      width: 58px;
+      height: 58px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.2, 0.85, 0.35, 1.2);
+    }
+
+    .dice-face {
+      position: absolute;
+      width: 58px;
+      height: 58px;
+      background: linear-gradient(145deg, #FFFFFF 0%, #EDF2F7 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.95);
+      border-radius: 14px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.12), inset 2px 2px 3px rgba(255,255,255,0.9), inset -2px -2px 3px rgba(0,0,0,0.25), 0 4px 8px rgba(0,0,0,0.4);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 6px;
+      box-sizing: border-box;
+      backface-visibility: hidden;
+    }
+
+    /* Face Orientations (Standard Opposite Face Rule: 1-6, 2-5, 3-4) */
+    .face-1 { transform: rotateY(0deg) translateZ(29px); }
+    .face-6 { transform: rotateY(180deg) translateZ(29px); }
+    .face-2 { transform: rotateX(90deg) translateZ(29px); }
+    .face-5 { transform: rotateX(-90deg) translateZ(29px); }
+    .face-3 { transform: rotateY(90deg) translateZ(29px); }
+    .face-4 { transform: rotateY(-90deg) translateZ(29px); }
+
+    /* Indented 3D Pips */
+    .pip-slot {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .p-tl  { grid-row: 1; grid-column: 1; }
+    .p-tr  { grid-row: 1; grid-column: 3; }
+    .p-ml  { grid-row: 2; grid-column: 1; }
+    .p-mid { grid-row: 2; grid-column: 2; }
+    .p-mr  { grid-row: 2; grid-column: 3; }
+    .p-bl  { grid-row: 3; grid-column: 1; }
+    .p-br  { grid-row: 3; grid-column: 3; }
+
+    .dice-pip {
+      width: 10.5px;
+      height: 10.5px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #4A5568 0%, #1A202C 100%);
+      box-shadow: inset 0 1.5px 2px rgba(0,0,0,0.8), 0 1px 1px rgba(255,255,255,0.7);
+    }
+
+    .ruby-pip {
+      width: 15px;
+      height: 15px;
+      background: radial-gradient(circle at 35% 35%, #FF4136 0%, #900C3F 100%) !important;
+      box-shadow: inset 0 2px 3px rgba(0,0,0,0.6), 0 0 8px rgba(255, 65, 54, 0.8) !important;
+    }
+
+    /* THEMED EQUIPPED SKINS */
+    /* 1. Royal Gold Skin */
+    .skin-gold .dice-face {
+      background: linear-gradient(145deg, #FFF3A8 0%, #F5A623 50%, #C67800 100%) !important;
+      border-color: #FFFDE6 !important;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.3), inset 2px 2px 4px #FFF, 0 4px 12px rgba(245, 166, 35, 0.6) !important;
+    }
+    .skin-gold .dice-pip {
+      background: radial-gradient(circle at 35% 35%, #FFFFFF 0%, #A66606 100%) !important;
+      box-shadow: inset 0 1.5px 2px #000, 0 0 6px #FFDF00 !important;
+    }
+    .skin-gold .ruby-pip {
+      background: radial-gradient(circle at 35% 35%, #FFDF00 0%, #9E5306 100%) !important;
+      box-shadow: 0 0 10px #FFDF00 !important;
+    }
+
+    /* 2. Fire Dragon Skin */
+    .skin-dragon .dice-face {
+      background: linear-gradient(145deg, #2D140D 0%, #170A06 100%) !important;
+      border-color: #FF5722 !important;
+      box-shadow: inset 0 0 10px #FF5722, 0 0 14px rgba(255, 87, 34, 0.6) !important;
+    }
+    .skin-dragon .dice-pip {
+      background: radial-gradient(circle at 35% 35%, #FF7043 0%, #D84315 100%) !important;
+      box-shadow: 0 0 8px #FF5722 !important;
+    }
+
+    /* 3. Cyber Neon Skin */
+    .skin-cyber .dice-face {
+      background: linear-gradient(145deg, #0A192F 0%, #020C1B 100%) !important;
+      border-color: #00F5D4 !important;
+      box-shadow: inset 0 0 10px #00F5D4, 0 0 14px rgba(0, 245, 212, 0.5) !important;
+    }
+    .skin-cyber .dice-pip {
+      background: radial-gradient(circle at 35% 35%, #00F5D4 0%, #00BBF9 100%) !important;
+      box-shadow: 0 0 8px #00F5D4 !important;
+    }
+
+    /* 4. Glacial Ice Skin */
+    .skin-ice .dice-face {
+      background: linear-gradient(145deg, #E0F7FA 0%, #80DEEA 100%) !important;
+      border-color: #FFF !important;
+      box-shadow: inset 0 0 12px rgba(255,255,255,0.8), 0 0 14px rgba(128, 222, 234, 0.6) !important;
+    }
+    .skin-ice .dice-pip {
+      background: radial-gradient(circle at 35% 35%, #FFFFFF 0%, #00ACC1 100%) !important;
+      box-shadow: 0 0 6px #E0F7FA !important;
+    }
+
+    /* Turn Pulsing on 3D Dice */
+    .dice-3d-arena.turn-ready .dice-3d-cube {
+      animation: dice3dGlowPulse 1.1s infinite alternate ease-in-out;
+    }
+    @keyframes dice3dGlowPulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(46, 204, 113, 0.5)); }
+      100% { transform: scale(1.08); filter: drop-shadow(0 0 18px rgba(46, 204, 113, 0.95)); }
+    }
+
+    /* ARCADE COMBO ANNOUNCER BANNER */
+    .arcade-announcer-banner {
+      position: fixed;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      background: linear-gradient(135deg, #FFDF00 0%, #F39C12 100%);
+      border: 3.5px solid #FFF;
+      border-radius: 24px;
+      padding: 10px 26px;
+      font-family: 'Fredoka', cursive;
+      font-size: 22px;
+      font-weight: 900;
+      color: #1A021A;
+      text-shadow: 0 1px 2px rgba(255,255,255,0.6);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.7), 0 0 30px rgba(255, 223, 0, 0.85);
+      pointer-events: none;
+      z-index: 10000;
+      transition: transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.28s;
+      opacity: 0;
+      white-space: nowrap;
+    }
+    .arcade-announcer-banner.show {
+      transform: translate(-50%, -50%) scale(1.12);
+      opacity: 1;
+    }
+
+    /* INTERACTIVE OPPONENT GIFT PROJECTILE */
+    .gift-projectile {
+      position: fixed;
+      font-size: 34px;
+      pointer-events: none;
+      z-index: 9999;
+      transition: all 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    }
+    .avatar-recoil {
+      animation: avatarRecoilShake 0.4s ease-in-out !important;
+    }
+    @keyframes avatarRecoilShake {
+      0%, 100% { transform: scale(1); }
+      20% { transform: scale(0.85) rotate(-10deg); }
+      40% { transform: scale(1.15) rotate(10deg); }
+      60% { transform: scale(0.9) rotate(-5deg); }
+      80% { transform: scale(1.05) rotate(5deg); }
+    }
+
+    /* SIMULATED VOICE MIC WAVES */
+    .voice-mic-pill {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: rgba(39, 174, 96, 0.25);
+      border: 1px solid #27AE60;
+      border-radius: 12px;
+      padding: 1px 6px;
+      cursor: pointer;
+    }
+    .voice-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 10px;
+    }
+    .vbar {
+      width: 2px;
+      background: #2ECC71;
+      border-radius: 1px;
+      animation: soundWave 0.6s infinite ease-in-out alternate;
+    }
+    .vbar:nth-child(1) { height: 4px; animation-delay: 0.1s; }
+    .vbar:nth-child(2) { height: 9px; animation-delay: 0.25s; }
+    .vbar:nth-child(3) { height: 6px; animation-delay: 0.4s; }
+
+    @keyframes soundWave {
+      0% { height: 3px; }
+      100% { height: 10px; }
+    }
+
 </style>
 </head>
 <body>
@@ -1979,7 +2206,7 @@
       <!-- 2. TOP OPPONENTS HUD ROW -->
       <div class="ls-opponents-hud-row">
         <!-- Player 2 (Green / Top-Left): Shivali Mahajan -->
-        <div class="ls-player-pod" id="hud-slot-1">
+        <div class="ls-player-pod" id="hud-slot-1" onclick="openOpponentGiftLauncher(1)" style="cursor: pointer;" title="Tap to throw gifts!">
           <div class="ls-avatar-ring green">👩</div>
           <div class="ls-player-pod-meta">
             <div class="ls-player-pod-name" id="name-slot-1">Shivali Mahajan</div>
@@ -1990,7 +2217,7 @@
         </div>
 
         <!-- Player 3 (Yellow / Top-Right): Sachin Kumar Sh -->
-        <div class="ls-player-pod" id="hud-slot-2">
+        <div class="ls-player-pod" id="hud-slot-2" onclick="openOpponentGiftLauncher(2)" style="cursor: pointer;" title="Tap to throw gifts!">
           <div class="ls-avatar-ring yellow">🧔</div>
           <div class="ls-player-pod-meta">
             <div class="ls-player-pod-name" id="name-slot-2">Sachin Kumar Sh</div>
@@ -2009,7 +2236,7 @@
       <div class="ls-in-game-bottom-area">
         <!-- Bottom-Right Opponent (Blue / Thiago Rodrigues) -->
         <div class="ls-bottom-opp-row">
-          <div class="ls-player-pod" id="hud-slot-3">
+          <div class="ls-player-pod" id="hud-slot-3" onclick="openOpponentGiftLauncher(3)" style="cursor: pointer;" title="Tap to throw gifts!">
             <div class="ls-avatar-ring blue">👱‍♂️</div>
             <div class="ls-player-pod-meta">
               <div class="ls-player-pod-name" id="name-slot-3">Thiago Rodrigues</div>
@@ -2035,8 +2262,12 @@
               <div class="ls-govind-avatar-circle">😎</div>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 4px;">
-              <div class="ls-govind-name-text" id="hudPlayerName">Govind (You)</div>
+            <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+              <div class="ls-govind-name-text" id="hudPlayerName">Uzair (You)</div>
+              <div class="voice-mic-pill" onclick="toggleVoiceMic()" title="Voice Chat Status">
+                <span style="font-size: 10px;">🎙️</span>
+                <div class="voice-bars"><span class="vbar"></span><span class="vbar"></span><span class="vbar"></span></div>
+              </div>
               <div id="homeKillStatusPill" style="font-size: 8px; font-weight: 900; background: #C0392B; color: #FFF; padding: 1px 5px; border-radius: 6px;">🔒 KILL NEEDED</div>
             </div>
 
@@ -2045,6 +2276,7 @@
               <button class="ls-mini-action-pill" onclick="toggleEmojiTray()">EMOJI</button>
               <button class="ls-mini-action-pill" onclick="toggleChatTray()">CHAT</button>
               <button class="ls-mini-action-pill" id="autoPlayBtn" onclick="toggleAutoPlay()" style="background: #370A36; border-color: #A66606;">🤖 AUTO</button>
+              <button class="ls-mini-action-pill" onclick="doubleMatchBet()" style="background: #7D4E00; border-color: #FFDF00; color: #FFDF00;">💰 2X BET</button>
             </div>
           </div>
 
@@ -2053,10 +2285,49 @@
 
           <!-- THE LUDO STAR DICE STATION -->
           <div class="ls-dice-station-box">
-            <!-- Square 3D Dice Button -->
-            <div class="ls-dice-square-btn" id="diceBtn" onclick="onDiceClick()">
-              <div class="ls-dice-white-face">
-                <div class="ls-dice-pips-inner" id="dicePipsGrid">👑</div>
+            <!-- Ultra-Advanced 3D Cube Dice -->
+            <div class="dice-3d-arena" id="diceBtn" onclick="onDiceClick()" title="Tap to Roll 3D Dice!">
+              <div class="dice-3d-shadow" id="diceShadow"></div>
+              <div class="dice-3d-cube skin-classic" id="diceCube">
+                <!-- Face 1 (Front) -->
+                <div class="dice-face face-1">
+                  <div class="pip-slot p-mid"><span class="dice-pip ruby-pip"></span></div>
+                </div>
+                <!-- Face 2 (Top) -->
+                <div class="dice-face face-2">
+                  <div class="pip-slot p-tl"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-br"><span class="dice-pip"></span></div>
+                </div>
+                <!-- Face 3 (Right) -->
+                <div class="dice-face face-3">
+                  <div class="pip-slot p-tl"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-mid"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-br"><span class="dice-pip"></span></div>
+                </div>
+                <!-- Face 4 (Left) -->
+                <div class="dice-face face-4">
+                  <div class="pip-slot p-tl"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-tr"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-bl"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-br"><span class="dice-pip"></span></div>
+                </div>
+                <!-- Face 5 (Bottom) -->
+                <div class="dice-face face-5">
+                  <div class="pip-slot p-tl"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-tr"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-mid"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-bl"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-br"><span class="dice-pip"></span></div>
+                </div>
+                <!-- Face 6 (Back) -->
+                <div class="dice-face face-6">
+                  <div class="pip-slot p-tl"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-ml"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-bl"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-tr"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-mr"><span class="dice-pip"></span></div>
+                  <div class="pip-slot p-br"><span class="dice-pip"></span></div>
+                </div>
               </div>
             </div>
 
@@ -2421,7 +2692,10 @@
         <button class="ls-btn-gold" style="width: 100%; margin-top: 10px;" onclick="startConfiguredPrivateGame()">START MATCH</button>
       </div>
 
-      <button class="side-control-btn" style="width: 100%; justify-content: center;" onclick="closeModals()">CLOSE</button>
+      <div style="display: flex; gap: 8px; width: 100%;">
+        <button class="ls-btn-gold" style="flex: 1; padding: 10px 0; font-size: 13px;" onclick="openEditProfileModal()">✏️ EDIT PROFILE</button>
+        <button class="side-control-btn" style="flex: 1; justify-content: center;" onclick="closeModals()">CLOSE</button>
+      </div>
     </div>
   </div>
 
@@ -2697,6 +2971,85 @@
     </div>
   </div>
 
+    <!-- MODAL: INTERACTIVE OPPONENT GIFT LAUNCHER -->
+  <div class="modal-overlay" id="opponentGiftModal" onclick="if(event.target===this)closeModals()">
+    <div class="league-modal-box" style="padding: 18px; max-width: 360px; text-align: center;">
+      <div style="font-family: 'Fredoka', cursive; font-size: 20px; font-weight: 800; color: #FFDF00; margin-bottom: 2px;">
+        🎯 THROW INTERACTIVE GIFT
+      </div>
+      <div style="font-size: 11px; color: #D9A0D7; margin-bottom: 14px;" id="giftTargetNameText">
+        Target: Shivali Mahajan
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px;">
+        <button class="small-mode-card" style="padding: 10px 4px; border: 1.5px solid #E74C3C;" onclick="launchOpponentGift('🍅', 'squish')">
+          <div style="font-size: 30px;">🍅</div>
+          <div style="font-size: 10px; font-weight: 900; color: #FFF; margin-top: 4px;">TOMATO</div>
+        </button>
+        <button class="small-mode-card" style="padding: 10px 4px; border: 1.5px solid #F39C12;" onclick="launchOpponentGift('🥊', 'punch')">
+          <div style="font-size: 30px;">🥊</div>
+          <div style="font-size: 10px; font-weight: 900; color: #FFF; margin-top: 4px;">PUNCH</div>
+        </button>
+        <button class="small-mode-card" style="padding: 10px 4px; border: 1.5px solid #C0392B;" onclick="launchOpponentGift('💣', 'bomb')">
+          <div style="font-size: 30px;">💣</div>
+          <div style="font-size: 10px; font-weight: 900; color: #FFF; margin-top: 4px;">BOMB</div>
+        </button>
+        <button class="small-mode-card" style="padding: 10px 4px; border: 1.5px solid #8E44AD;" onclick="launchOpponentGift('☕', 'splash')">
+          <div style="font-size: 30px;">☕</div>
+          <div style="font-size: 10px; font-weight: 900; color: #FFF; margin-top: 4px;">COFFEE</div>
+        </button>
+        <button class="small-mode-card" style="padding: 10px 4px; border: 1.5px solid #E91E63;" onclick="launchOpponentGift('🌹', 'rose')">
+          <div style="font-size: 30px;">🌹</div>
+          <div style="font-size: 10px; font-weight: 900; color: #FFF; margin-top: 4px;">ROSE</div>
+        </button>
+        <button class="small-mode-card" style="padding: 10px 4px; border: 1.5px solid #FFDF00;" onclick="launchOpponentGift('👑', 'crown')">
+          <div style="font-size: 30px;">👑</div>
+          <div style="font-size: 10px; font-weight: 900; color: #FFDF00; margin-top: 4px;">CROWN</div>
+        </button>
+      </div>
+
+      <button class="side-control-btn" style="width: 100%; justify-content: center;" onclick="closeModals()">CANCEL</button>
+    </div>
+  </div>
+
+  <!-- MODAL: REAL PROFILE CUSTOMIZATION SUITE (NO FAKE ID) -->
+  <div class="modal-overlay" id="editProfileModal" onclick="if(event.target===this)closeModals()">
+    <div class="league-modal-box" style="padding: 20px; max-width: 400px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="font-family: 'Fredoka', cursive; font-size: 20px; font-weight: 800; color: #FFDF00;">
+          👑 EDIT ROYAL PROFILE
+        </div>
+        <button style="background: #E74C3C; border: none; color: #FFF; width: 26px; height: 26px; border-radius: 13px; font-weight: 900; cursor: pointer;" onclick="closeModals()">✕</button>
+      </div>
+
+      <!-- Real Name Input -->
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 11px; font-weight: 800; color: #D9A0D7; display: block; margin-bottom: 4px;">YOUR REAL DISPLAY NAME</label>
+        <input type="text" id="realProfileNameInput" placeholder="Enter your name" maxlength="16"
+          style="width: 100%; padding: 10px 14px; border-radius: 12px; background: #2A0429; border: 2px solid #752273; color: #FFF; font-size: 15px; font-weight: 800; outline: none;">
+      </div>
+
+      <!-- Avatar Picker -->
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 11px; font-weight: 800; color: #D9A0D7; display: block; margin-bottom: 4px;">CHOOSE ROYAL AVATAR</label>
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;" id="avatarGridSelector">
+          <!-- Rendered in JS -->
+        </div>
+      </div>
+
+      <!-- Country Flag Picker -->
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 11px; font-weight: 800; color: #D9A0D7; display: block; margin-bottom: 4px;">CHOOSE COUNTRY FLAG</label>
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;" id="flagGridSelector">
+          <!-- Rendered in JS -->
+        </div>
+      </div>
+
+      <button class="ls-btn-gold" style="width: 100%; padding: 12px 0; font-size: 14px;" onclick="saveCustomUserProfile()">
+        ✓ SAVE PROFILE
+      </button>
+    </div>
+  </div>
   <!-- SCRIPT & FULL GAME ENGINE -->
   <script>
     // ==========================================================
@@ -3177,6 +3530,56 @@
     }
 
     // ==========================================================
+    
+    // 3D DICE EXACT FACE ORIENTATIONS
+    const DICE_3D_TARGETS = {
+      1: { x: 0, y: 0 },
+      2: { x: -90, y: 0 },
+      3: { x: 0, y: -90 },
+      4: { x: 0, y: 90 },
+      5: { x: 90, y: 0 },
+      6: { x: 0, y: 180 }
+    };
+
+    let diceTotalRotX = 0;
+    let diceTotalRotY = 0;
+
+    function render3dDiceRoll(val, isAnimated = true) {
+      const cube = document.getElementById('diceCube');
+      const shadow = document.getElementById('diceShadow');
+      if (!cube) return;
+
+      const target = DICE_3D_TARGETS[val] || DICE_3D_TARGETS[1];
+
+      if (isAnimated) {
+        diceTotalRotX += 720;
+        diceTotalRotY += 1080;
+
+        if (shadow) {
+          shadow.style.transform = 'scale(0.5)';
+          shadow.style.opacity = '0.3';
+        }
+
+        cube.style.transform = `rotateX(${diceTotalRotX + target.x}deg) rotateY(${diceTotalRotY + target.y}deg) rotateZ(0deg)`;
+
+        setTimeout(() => {
+          if (shadow) {
+            shadow.style.transform = 'scale(1.15)';
+            shadow.style.opacity = '0.85';
+            setTimeout(() => { shadow.style.transform = 'scale(1)'; }, 140);
+          }
+        }, 620);
+      } else {
+        cube.style.transform = `rotateX(${target.x}deg) rotateY(${target.y}deg) rotateZ(0deg)`;
+      }
+    }
+
+    function updateEquippedDiceSkinOn3dCube() {
+      const cube = document.getElementById('diceCube');
+      if (!cube) return;
+      cube.className = 'dice-3d-cube skin-' + (gameState.equippedDice || 'classic');
+    }
+
     // 5. DICE ROLLING & TURN MECHANICS
     // ==========================================================
     const PIP_LAYOUTS = {
@@ -3189,6 +3592,8 @@
     };
 
     function renderDicePips(val) {
+      render3dDiceRoll(val, false);
+      return;
       const grid = document.getElementById('dicePipsGrid');
       grid.innerHTML = '';
       if (!val) val = 6;
@@ -3224,17 +3629,23 @@
         diceBox.classList.remove('rolling');
         const roll = Math.floor(Math.random() * 6) + 1;
         gameState.currentRoll = roll;
-        renderDicePips(roll);
+        render3dDiceRoll(roll, true);
 
         if (roll === 6) {
           playSixSound();
           gameState.consecutiveSixes++;
+          if (gameState.consecutiveSixes === 1) {
+            showComboAnnouncer('🎲 LUCKY SIX! ROLL AGAIN!');
+          } else if (gameState.consecutiveSixes === 2) {
+            showComboAnnouncer('🔥 DOUBLE SIX! ON FIRE!');
+          }
         } else {
           gameState.consecutiveSixes = 0;
         }
 
         if (gameState.consecutiveSixes === 3) {
           gameState.consecutiveSixes = 0;
+          showComboAnnouncer('⚠️ 3 CONSECUTIVE 6s! TURN LOST!');
           setTimeout(passTurn, 800);
           return;
         }
@@ -3320,10 +3731,11 @@
         if ([4, 17, 30, 43].includes(abs) && nextStep + 7 <= 56) {
           nextStep += 7;
           playArrowSound();
-          showNotificationToast('🏹 ARROW BOOST! Catapulted +7 steps!');
+          showComboAnnouncer('🏹 ARROW CATAPULT! +7 STEPS!');
         }
       }
 
+      const prevStep = token.step;
       token.step = nextStep;
       playMoveSound();
 
@@ -3765,6 +4177,140 @@
       closeModals();
     }
 
+    
+    // REAL PERSISTENT USER PROFILE (NO FAKE ID)
+    let userProfile = {
+      name: 'Uzair',
+      avatar: '👑',
+      flag: '🇵🇰',
+      title: 'GRAND MASTER',
+      frame: 'gold',
+      level: 12,
+      wins: 158,
+      winRate: '72%',
+      totalMatches: 219,
+      trophies: 2480,
+      bestRoll: 'Triple 6s'
+    };
+
+    const AVATAR_OPTIONS = ['👑', '👸', '🦁', '🐯', '🥷', '🧙‍♂️', '🏴‍☠️', '🚀', '💎', '🐉', '⚔️', '🦅'];
+    const FLAG_OPTIONS = ['🇵🇰', '🇸🇦', '🇦🇪', '🇹🇷', '🇺🇸', '🇬🇧', '🇨🇦', '🇦🇺', '🇩🇪', '🇫🇷', '🇮🇳', '🇧🇷'];
+
+    let tempSelectedAvatar = userProfile.avatar;
+    let tempSelectedFlag = userProfile.flag;
+
+    function loadUserProfileFromStorage() {
+      try {
+        const saved = localStorage.getItem('royalLudo_user_profile');
+        if (saved) {
+          userProfile = { ...userProfile, ...JSON.parse(saved) };
+        }
+      } catch (e) {}
+      applyUserProfileToDom();
+    }
+
+    function applyUserProfileToDom() {
+      // Lobby Header
+      const nameElem = document.getElementById('userName');
+      if (nameElem) nameElem.textContent = userProfile.name;
+
+      const flagElem = document.getElementById('userFlag');
+      if (flagElem) flagElem.textContent = userProfile.flag;
+
+      const avatarBox = document.querySelector('.profile-avatar');
+      if (avatarBox) avatarBox.textContent = userProfile.avatar;
+
+      // In-game HUD (Govind -> Real Name)
+      const hudName = document.getElementById('hudPlayerName');
+      if (hudName) hudName.textContent = userProfile.name + ' (You)';
+
+      const hudAvatar = document.querySelector('.ls-govind-avatar-circle');
+      if (hudAvatar) hudAvatar.textContent = userProfile.avatar;
+
+      // Profile Modal
+      const modalName = document.getElementById('profileModalName');
+      if (modalName) modalName.textContent = userProfile.name;
+
+      const modalWins = document.getElementById('statWins');
+      if (modalWins) modalWins.textContent = userProfile.wins;
+
+      const modalRate = document.getElementById('statRate');
+      if (modalRate) modalRate.textContent = userProfile.winRate;
+    }
+
+    function openEditProfileModal() {
+      closeModals();
+      tempSelectedAvatar = userProfile.avatar;
+      tempSelectedFlag = userProfile.flag;
+
+      const input = document.getElementById('realProfileNameInput');
+      if (input) input.value = userProfile.name;
+
+      renderProfileSelectors();
+      document.getElementById('editProfileModal').classList.add('open');
+    }
+
+    function renderProfileSelectors() {
+      const avatarGrid = document.getElementById('avatarGridSelector');
+      if (avatarGrid) {
+        avatarGrid.innerHTML = '';
+        AVATAR_OPTIONS.forEach(av => {
+          const btn = document.createElement('div');
+          btn.style.fontSize = '26px';
+          btn.style.textAlign = 'center';
+          btn.style.padding = '6px 2px';
+          btn.style.borderRadius = '10px';
+          btn.style.cursor = 'pointer';
+          btn.style.border = av === tempSelectedAvatar ? '2px solid #FFDF00' : '1px solid #752273';
+          btn.style.background = av === tempSelectedAvatar ? '#521350' : '#2A0429';
+          btn.textContent = av;
+          btn.onclick = () => {
+            tempSelectedAvatar = av;
+            renderProfileSelectors();
+          };
+          avatarGrid.appendChild(btn);
+        });
+      }
+
+      const flagGrid = document.getElementById('flagGridSelector');
+      if (flagGrid) {
+        flagGrid.innerHTML = '';
+        FLAG_OPTIONS.forEach(fl => {
+          const btn = document.createElement('div');
+          btn.style.fontSize = '24px';
+          btn.style.textAlign = 'center';
+          btn.style.padding = '6px 2px';
+          btn.style.borderRadius = '10px';
+          btn.style.cursor = 'pointer';
+          btn.style.border = fl === tempSelectedFlag ? '2px solid #FFDF00' : '1px solid #752273';
+          btn.style.background = fl === tempSelectedFlag ? '#521350' : '#2A0429';
+          btn.textContent = fl;
+          btn.onclick = () => {
+            tempSelectedFlag = fl;
+            renderProfileSelectors();
+          };
+          flagGrid.appendChild(btn);
+        });
+      }
+    }
+
+    function saveCustomUserProfile() {
+      const input = document.getElementById('realProfileNameInput');
+      const val = input ? input.value.trim() : '';
+      if (val) userProfile.name = val;
+      userProfile.avatar = tempSelectedAvatar;
+      userProfile.flag = tempSelectedFlag;
+
+      try {
+        localStorage.setItem('royalLudo_user_profile', JSON.stringify(userProfile));
+      } catch (e) {}
+
+      applyUserProfileToDom();
+      closeModals();
+      playCoinSound();
+      showNotificationToast('👑 Profile Updated: ' + userProfile.name + ' ' + userProfile.flag);
+    }
+
     function openProfileModal() {
       document.getElementById('profileModal').classList.add('open');
     }
@@ -4004,6 +4550,7 @@
         gameState.equippedDice = id;
         renderDiceCollections();
         playCoinSound();
+        updateEquippedDiceSkinOn3dCube();
         showNotificationToast('🎲 Equipped "' + name + '"!');
         return;
       }
@@ -4205,6 +4752,127 @@
     // ========================================================
     let turnTimerInterval = null;
     let turnTimeLeft = 15;
+
+    
+    // INTERACTIVE OPPONENT GIFTS ENGINE
+    let currentGiftTargetSlot = 1;
+
+    function openOpponentGiftLauncher(slotIndex) {
+      currentGiftTargetSlot = slotIndex;
+      const targetNameElem = document.getElementById(`name-slot-${slotIndex}`);
+      const targetName = targetNameElem ? targetNameElem.textContent : 'Opponent';
+      
+      const textElem = document.getElementById('giftTargetNameText');
+      if (textElem) textElem.textContent = 'Target: ' + targetName;
+
+      document.getElementById('opponentGiftModal').classList.add('open');
+    }
+
+    function launchOpponentGift(emoji, soundType) {
+      closeModals();
+      const targetPod = document.getElementById(`hud-slot-${currentGiftTargetSlot}`);
+      const sourcePod = document.getElementById('hud-slot-0');
+      if (!targetPod || !sourcePod) return;
+
+      const sourceRect = sourcePod.getBoundingClientRect();
+      const targetRect = targetPod.getBoundingClientRect();
+
+      // Spawn projectile
+      const proj = document.createElement('div');
+      proj.className = 'gift-projectile';
+      proj.textContent = emoji;
+      proj.style.left = (sourceRect.left + sourceRect.width / 2) + 'px';
+      proj.style.top = (sourceRect.top + sourceRect.height / 2) + 'px';
+      document.body.appendChild(proj);
+
+      playTone(400, 'sine', 0.1, 0.2);
+
+      // Animate fly to target
+      setTimeout(() => {
+        proj.style.left = (targetRect.left + targetRect.width / 2) + 'px';
+        proj.style.top = (targetRect.top + targetRect.height / 2) + 'px';
+        proj.style.transform = 'scale(1.4) rotate(360deg)';
+      }, 50);
+
+      // Impact on target
+      setTimeout(() => {
+        proj.remove();
+        targetPod.classList.remove('avatar-recoil');
+        void targetPod.offsetWidth;
+        targetPod.classList.add('avatar-recoil');
+
+        // Play gift impact sound
+        if (soundType === 'punch') {
+          playTone(180, 'square', 0.2, 0.4);
+          showSpeechBubble(currentGiftTargetSlot, 'Ouch! That hurt! 🥊');
+        } else if (soundType === 'squish') {
+          playTone(320, 'sawtooth', 0.25, 0.35);
+          showSpeechBubble(currentGiftTargetSlot, 'Ketchup in my eye! 🍅');
+        } else if (soundType === 'bomb') {
+          playTone(120, 'sawtooth', 0.35, 0.4);
+          showSpeechBubble(currentGiftTargetSlot, 'Boom! My hair! 💣😱');
+        } else if (soundType === 'splash') {
+          playTone(480, 'sine', 0.2, 0.3);
+          showSpeechBubble(currentGiftTargetSlot, 'So hot! ☕🔥');
+        } else if (soundType === 'rose') {
+          playTone(660, 'triangle', 0.2, 0.3);
+          showSpeechBubble(currentGiftTargetSlot, 'Aww, thank you! 💖');
+        } else if (soundType === 'crown') {
+          playTone(880, 'triangle', 0.3, 0.35);
+          showSpeechBubble(currentGiftTargetSlot, 'I am the King! 👑😎');
+        }
+      }, 720);
+    }
+
+    // COMBO ANNOUNCER
+    function showComboAnnouncer(text) {
+      let banner = document.getElementById('gameAnnouncerBanner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'gameAnnouncerBanner';
+        banner.className = 'arcade-announcer-banner';
+        document.body.appendChild(banner);
+      }
+      banner.textContent = text;
+      banner.classList.add('show');
+      playTone(880, 'triangle', 0.15, 0.3);
+      setTimeout(() => playTone(1174.66, 'sine', 0.25, 0.3), 75);
+
+      setTimeout(() => {
+        banner.classList.remove('show');
+      }, 1600);
+    }
+
+    // DOUBLE MATCH BET
+    function doubleMatchBet() {
+      if (gameState.gold < gameState.selectedBet) {
+        showNotificationToast('❌ Not enough coins to double the bet!');
+        return;
+      }
+      gameState.gold -= gameState.selectedBet;
+      gameState.selectedBet *= 2;
+      updateCurrencyDisplay();
+      playCoinSound();
+      showComboAnnouncer('💰 BET DOUBLED! HIGH STAKES!');
+      
+      const titleElem = document.getElementById('tableTitleDisplay');
+      if (titleElem) {
+        titleElem.textContent = `${(gameState.selectedVariation || 'classic').toUpperCase()} (${gameState.selectedBet.toLocaleString()} 🪙)`;
+      }
+      showSpeechBubble(1, 'I ACCEPT! 💰');
+      showSpeechBubble(2, 'LET\'S DO THIS! 🔥');
+    }
+
+    // VOICE MIC TOGGLE
+    let isVoiceMicActive = true;
+    function toggleVoiceMic() {
+      isVoiceMicActive = !isVoiceMicActive;
+      const bars = document.querySelector('.voice-bars');
+      if (bars) {
+        bars.style.display = isVoiceMicActive ? 'flex' : 'none';
+      }
+      showNotificationToast('Voice Microphone ' + (isVoiceMicActive ? 'Transmitting 🎙️' : 'Muted 🔇'));
+    }
 
     function startTurnTimer() {
       stopTurnTimer();
