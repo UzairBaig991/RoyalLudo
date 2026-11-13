@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+package-lock.json.bak
+*/node_modules/
+
+# Expo / React Native
+.expo/
+dist/
+web-build/
+*.hbc
+.metro-health-check*
+
+# Builds & Outputs
+build/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# IDE & System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

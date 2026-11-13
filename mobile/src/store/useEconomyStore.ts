@@ -1,0 +1,60 @@
+import { create } from 'zustand';
+import { DICE_CATALOG, BOARD_SKINS, INITIAL_WALLET } from '../../../shared/src/constants/economy';
+import type { ShopItem } from '../../../shared/src/types';
+
+interface EconomyState {
+  gold: number;
+  gems: number;
+  ownedItems: string[];
+  diceCatalog: ShopItem[];
+  boardCatalog: ShopItem[];
+  addGold: (amount: number) => void;
+  addGems: (amount: number) => void;
+  spendGold: (amount: number) => boolean;
+  spendGems: (amount: number) => boolean;
+  purchaseItem: (item: ShopItem) => boolean;
+}
+
+export const useEconomyStore = create<EconomyState>((set, get) => ({
+  gold: INITIAL_WALLET.gold,
+  gems: INITIAL_WALLET.gems,
+  ownedItems: ['dice_classic_gold', 'board_royal_navy'],
+  diceCatalog: DICE_CATALOG,
+  boardCatalog: BOARD_SKINS,
+
+  addGold: (amount) => set((s) => ({ gold: s.gold + amount })),
+  addGems: (amount) => set((s) => ({ gems: s.gems + amount })),
+
+  spendGold: (amount) => {
+    if (get().gold < amount) return false;
+    set((s) => ({ gold: s.gold - amount }));
+    return true;
+  },
+
+  spendGems: (amount) => {
+    if (get().gems < amount) return false;
+    set((s) => ({ gems: s.gems - amount }));
+    return true;
+  },
+
+  purchaseItem: (item) => {
+    const { gold, gems, ownedItems } = get();
+    if (ownedItems.includes(item.id)) return false;
+
+    if (item.currency === 'gold') {
+      if (gold < item.cost) return false;
+      set((s) => ({
+        gold: s.gold - item.cost,
+        ownedItems: [...s.ownedItems, item.id],
+      }));
+      return true;
+    } else {
+      if (gems < item.cost) return false;
+      set((s) => ({
+        gems: s.gems - item.cost,
+        ownedItems: [...s.ownedItems, item.id],
+      }));
+      return true;
+    }
+  },
+}));

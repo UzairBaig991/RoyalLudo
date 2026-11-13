@@ -1,0 +1,33 @@
+{
+  "name": "royal-ludo",
+  "version": "1.0.0",
+  "description": "Royal Ludo - Commercial-Quality Multiplayer Mobile Board Game",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "mobile"
+  ],
+  "scripts": {
+    "start:server": "node --no-warnings --experimental-strip-types --loader ./scripts/ts-loader.mjs server/src/server.ts",
+    "start:mobile": "node scripts/start-mobile.mjs",
+    "start:mobile:tunnel": "npm --prefix mobile run start -- --tunnel",
+    "test": "node scripts/test-all.mjs",
+    "test:engine": "node --no-warnings --experimental-strip-types --loader ./scripts/ts-loader.mjs shared/tests/engine.runner.ts",
+    "test:server": "node --no-warnings --experimental-strip-types --loader ./scripts/ts-loader.mjs server/tests/server.runner.ts",
+    "test:mobile": "node --no-warnings --experimental-strip-types --loader ./scripts/ts-loader.mjs mobile/tests/mobile.runner.ts",
+    "build:shared": "npm --prefix shared run build",
+    "build:server": "npm --prefix server run build"
+  },
+  "keywords": [
+    "ludo",
+    "ludo-star",
+    "multiplayer",
+    "expo",
+    "react-native",
+    "socket.io",
+    "typescript"
+  ],
+  "author": "Royal Ludo Engineering Team",
+  "license": "UNLICENSED"
+}

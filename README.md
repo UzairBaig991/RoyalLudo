@@ -66,27 +66,24 @@ d:\LudoGame/
 ## 🚀 Getting Started
 
 ### 1. Run Automated Test Suite
-To execute all 84 unit and integration tests across the engine, backend, and client:
+To execute all 87 unit and integration tests across the engine, backend, and client:
 ```bash
 npm test
 ```
 
-### 2. Start Backend Server
+### 2. Start Backend Server & Web Client
 ```bash
 npm run start:server
 ```
-The server will be available at `http://localhost:4000` with the health check at `http://localhost:4000/health`.
+The server and web client will be available at:
+- **Web Game Client**: `http://localhost:4000/` or `http://localhost:4000/play`
+- **Health Endpoint**: `http://localhost:4000/health`
 
-### 3. Launch Mobile Client (Expo)
-```bash
-cd mobile
-npx expo start
-```
-Or from root:
+### 3. Launch Mobile Client (Expo Go)
 ```bash
 npm run start:mobile
 ```
-Scan the QR code with Expo Go on Android or iOS, or press `a` for Android Emulator / `w` for Web.
+The launcher automatically binds Metro to your physical Wi-Fi IP (e.g. `192.168.100.174`). Scan the terminal QR code in **Expo Go** or connect to `exp://192.168.100.174:8081`. Press `w` to test in Chrome/Edge.
 
 ---
 

@@ -1,0 +1,16 @@
+{
+  "name": "@royal-ludo/shared",
+  "version": "1.0.0",
+  "description": "Shared game engine, rules, models, and types for Royal Ludo",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --experimental-strip-types --loader ../scripts/ts-loader.mjs tests/engine.runner.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
