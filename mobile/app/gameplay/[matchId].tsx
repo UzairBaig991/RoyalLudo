@@ -57,7 +57,13 @@ export default function LiveGameScreen() {
   // Screen 15 (Game Chat) and Screen 16 (Game Menu) modal states
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
+  const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
   const [voiceOn, setVoiceOn] = useState<boolean>(false);
+
+  // Auto-Roll Toggle & In-game Celebration Banners
+  const [autoRollEnabled, setAutoRollEnabled] = useState<boolean>(false);
+  const [captureBanner, setCaptureBanner] = useState<string | null>(null);
+  const [celebrateSix, setCelebrateSix] = useState<boolean>(false);
 
   // Floating Animated Reactions & Speech Bubble
   const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string; anim: Animated.Value }[]>([]);
@@ -168,11 +174,14 @@ export default function LiveGameScreen() {
     }
   };
 
-  // Handle Turn Countdown Timer
+  // Handle Turn Countdown Timer with low-time warning sounds
   useEffect(() => {
     setTurnSecondsLeft(12);
     const interval = setInterval(() => {
       setTurnSecondsLeft((prev) => {
+        if (prev <= 4 && prev > 1 && isMyTurn) {
+          sfxEngine.playTimerWarning();
+        }
         if (prev <= 1) {
           if (isMyTurn) {
             if (canRollDice) {
@@ -189,6 +198,33 @@ export default function LiveGameScreen() {
 
     return () => clearInterval(interval);
   }, [currentTurnSeat, gameState?.turnPhase, isMyTurn, canRollDice]);
+
+  // Celebrate rolling a 6 with special sound and celebratory banner
+  useEffect(() => {
+    if (lastDiceRoll === 6 && !isRolling) {
+      setCelebrateSix(true);
+      if (isMyTurn) {
+        sfxEngine.playRollSix();
+        triggerReaction('🎲');
+      }
+      const timer = setTimeout(() => {
+        setCelebrateSix(false);
+      }, 2600);
+      return () => clearTimeout(timer);
+    } else {
+      setCelebrateSix(false);
+    }
+  }, [lastDiceRoll, isRolling, isMyTurn]);
+
+  // Auto-roll trigger if user enabled Auto-Roll
+  useEffect(() => {
+    if (autoRollEnabled && canRollDice && !isRolling) {
+      const autoTimer = setTimeout(() => {
+        handleRoll();
+      }, 350);
+      return () => clearTimeout(autoTimer);
+    }
+  }, [autoRollEnabled, canRollDice, isRolling]);
 
   // Handle Game Over
   useEffect(() => {
@@ -222,9 +258,11 @@ export default function LiveGameScreen() {
         if (move.capturesToken) {
           sfxEngine.playCapture();
           triggerReaction('💥');
+          setCaptureBanner('⚔️ SMASH! Opponent Captured! +1 Free Turn!');
+          setTimeout(() => setCaptureBanner(null), 2800);
         } else if (move.isFinish) {
           sfxEngine.playFinish();
-          triggerReaction('⭐');
+          triggerReaction('👑');
         } else {
           sfxEngine.playTokenStep();
         }
@@ -300,7 +338,7 @@ export default function LiveGameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 1. TOP HEADER (Screen 14 · Live game + Exit Option) */}
+      {/* 1. TOP HEADER (Screen 14 · Live game + Exit & Rules Options) */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -319,14 +357,25 @@ export default function LiveGameScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.exitBtn}
-          onPress={handlePromptExit}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="exit-outline" size={16} color="#FFFFFF" />
-          <Text style={styles.exitBtnText}>Exit</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRightActions}>
+          <TouchableOpacity
+            style={styles.rulesBtn}
+            onPress={() => setShowRulesModal(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="help-circle-outline" size={16} color={NOVA_COLORS.gold} />
+            <Text style={styles.rulesBtnText}>Rules</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.exitBtn}
+            onPress={handlePromptExit}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="exit-outline" size={15} color="#FFFFFF" />
+            <Text style={styles.exitBtnText}>Exit</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* 2. TOP OPPONENTS ROW */}
@@ -365,10 +414,14 @@ export default function LiveGameScreen() {
       <View style={styles.boardWrapper}>
         <LudoBoardSvg
           size={BOARD_SIZE}
+          gameState={gameState}
+          validMoves={gameState.validMoves}
+          onSelectToken={(seatIndex, tokenId) => {
+            handleSelectToken(seatIndex, tokenId);
+          }}
           onTilePress={(gridX, gridY) => {
-            const move = gameState.validMoves.find((m) => m.fromStep !== undefined);
-            if (move && isMyTurn) {
-              handleSelectToken(0, move.tokenId);
+            if (isMyTurn && gameState.validMoves.length > 0) {
+              handleSelectToken(0, gameState.validMoves[0].tokenId);
             }
           }}
           onTokenPress={(seatIndex, tokenId) => {
@@ -410,6 +463,19 @@ export default function LiveGameScreen() {
           <View style={[styles.playerCard, styles.playerCardSpacer]} />
         )}
       </View>
+
+      {/* CELEBRATION BANNERS */}
+      {celebrateSix && (
+        <View style={styles.celebrationBanner}>
+          <Text style={styles.celebrationBannerText}>🎉 SIX! Roll again! ⚡</Text>
+        </View>
+      )}
+
+      {captureBanner && (
+        <View style={styles.captureBanner}>
+          <Text style={styles.captureBannerText}>{captureBanner}</Text>
+        </View>
+      )}
 
       {/* ACTIVE SPEECH BUBBLE */}
       {activeSpeech && (
@@ -467,6 +533,54 @@ export default function LiveGameScreen() {
         </ScrollView>
       </View>
 
+      {/* TURN TIMER PROGRESS BAR */}
+      <View style={styles.timerProgressContainer}>
+        <View style={styles.timerMetaRow}>
+          <View style={styles.timerMetaLeft}>
+            <View
+              style={[
+                styles.timerPulsingDot,
+                {
+                  backgroundColor:
+                    turnSecondsLeft <= 3
+                      ? '#ff4757'
+                      : turnSecondsLeft <= 6
+                      ? '#ffd700'
+                      : '#2ed573',
+                },
+              ]}
+            />
+            <Text style={styles.timerLabel}>
+              {isMyTurn ? 'YOUR TURN' : `${gameState.players[currentTurnSeat]?.username || 'PLAYER'}'S TURN`}
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.timerCountdown,
+              turnSecondsLeft <= 3 && styles.timerCountdownCritical,
+            ]}
+          >
+            {turnSecondsLeft < 10 ? `0${turnSecondsLeft}s` : `${turnSecondsLeft}s`}
+          </Text>
+        </View>
+        <View style={styles.timerTrack}>
+          <View
+            style={[
+              styles.timerFill,
+              {
+                width: `${Math.max(0, Math.min(100, (turnSecondsLeft / 12) * 100))}%`,
+                backgroundColor:
+                  turnSecondsLeft <= 3
+                    ? '#ff4757'
+                    : turnSecondsLeft <= 6
+                    ? '#ffd700'
+                    : '#2ed573',
+              },
+            ]}
+          />
+        </View>
+      </View>
+
       {/* 5. INTERACTIVE DIE & ACTION CARD (Figma Surface #30254e) */}
       <View style={styles.actionCard}>
         <View style={styles.dieWrapper}>
@@ -485,11 +599,31 @@ export default function LiveGameScreen() {
           <Text style={styles.statusSubtitle}>{getSubStatus()}</Text>
         </View>
 
-        {canRollDice && (
-          <TouchableOpacity style={styles.tapPrompt} onPress={handleRoll}>
-            <Ionicons name="finger-print" size={24} color={NOVA_COLORS.accentPurple} />
+        <View style={styles.actionRightControls}>
+          <TouchableOpacity
+            style={[styles.autoRollToggle, autoRollEnabled && styles.autoRollToggleActive]}
+            onPress={() => {
+              sfxEngine.playTokenStep();
+              setAutoRollEnabled((prev) => !prev);
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={autoRollEnabled ? 'flash' : 'flash-outline'}
+              size={12}
+              color={autoRollEnabled ? '#0d101e' : NOVA_COLORS.textMuted}
+            />
+            <Text style={[styles.autoRollText, autoRollEnabled && styles.autoRollTextActive]}>
+              {autoRollEnabled ? 'Auto ⚡' : 'Auto'}
+            </Text>
           </TouchableOpacity>
-        )}
+
+          {canRollDice && (
+            <TouchableOpacity style={styles.tapPrompt} onPress={handleRoll}>
+              <Ionicons name="finger-print" size={24} color={NOVA_COLORS.accentPurple} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* 6. BOTTOM BAR (Chat & Voice) */}
@@ -656,6 +790,97 @@ export default function LiveGameScreen() {
             <Text style={styles.menuForfeitHint}>
               Leaving forfeits your entry coins.
             </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ======================================================= */}
+      {/* QUICK RULES MODAL                                       */}
+      {/* ======================================================= */}
+      <Modal visible={showRulesModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.rulesCard}>
+            <View style={styles.sheetHeader}>
+              <View>
+                <Text style={styles.sheetTitle}>Royal Ludo Rules</Text>
+                <Text style={styles.sheetSubtitle}>Master the board and claim the crown</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowRulesModal(false)}
+                style={styles.sheetCloseBtn}
+              >
+                <Ionicons name="close" size={22} color={NOVA_COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.rulesList} showsVerticalScrollIndicator={false}>
+              <View style={styles.ruleItem}>
+                <Text style={styles.ruleEmoji}>🎲</Text>
+                <View style={styles.ruleTextWrap}>
+                  <Text style={styles.ruleHeading}>Roll a 6 to Enter</Text>
+                  <Text style={styles.ruleDesc}>
+                    Tokens stay safe in the yard until you roll a 6 to move them onto the track.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.ruleItem}>
+                <Text style={styles.ruleEmoji}>⚡</Text>
+                <View style={styles.ruleTextWrap}>
+                  <Text style={styles.ruleHeading}>Bonus Turns</Text>
+                  <Text style={styles.ruleDesc}>
+                    Rolling a 6 or capturing an opponent's piece awards an immediate extra roll!
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.ruleItem}>
+                <Text style={styles.ruleEmoji}>🛡️</Text>
+                <View style={styles.ruleTextWrap}>
+                  <Text style={styles.ruleHeading}>Safe Star Zones</Text>
+                  <Text style={styles.ruleDesc}>
+                    The 4 starting tiles and 4 Star (🌟) tiles are safe havens. Tokens on these tiles cannot be captured.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.ruleItem}>
+                <Text style={styles.ruleEmoji}>⚔️</Text>
+                <View style={styles.ruleTextWrap}>
+                  <Text style={styles.ruleHeading}>Capturing Opponents</Text>
+                  <Text style={styles.ruleDesc}>
+                    Landing on an unprotected opponent sends their token back to base and gives you a free turn!
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.ruleItem}>
+                <Text style={styles.ruleEmoji}>👑</Text>
+                <View style={styles.ruleTextWrap}>
+                  <Text style={styles.ruleHeading}>Victory Condition</Text>
+                  <Text style={styles.ruleDesc}>
+                    First player to navigate all 4 tokens around the board and into the home triangle wins the match!
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.ruleItem}>
+                <Text style={styles.ruleEmoji}>🚫</Text>
+                <View style={styles.ruleTextWrap}>
+                  <Text style={styles.ruleHeading}>Three 6s Penalty</Text>
+                  <Text style={styles.ruleDesc}>
+                    Rolling three consecutive 6s forfeits your turn to keep matches fair and competitive.
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            <NovaButton
+              title="Got It! Back to Match"
+              variant="primary"
+              onPress={() => setShowRulesModal(false)}
+              style={styles.ruleCloseBtn}
+            />
           </View>
         </View>
       </Modal>
@@ -1124,5 +1349,173 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 8,
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rulesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderWidth: 1,
+    borderColor: NOVA_COLORS.gold,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
+    gap: 4,
+  },
+  rulesBtnText: {
+    color: NOVA_COLORS.gold,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  celebrationBanner: {
+    backgroundColor: 'rgba(255, 215, 0, 0.22)',
+    borderWidth: 1.5,
+    borderColor: NOVA_COLORS.gold,
+    borderRadius: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    marginVertical: 2,
+  },
+  celebrationBannerText: {
+    color: NOVA_COLORS.gold,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  captureBanner: {
+    backgroundColor: 'rgba(255, 71, 87, 0.25)',
+    borderWidth: 1.5,
+    borderColor: '#ff4757',
+    borderRadius: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    marginVertical: 2,
+  },
+  captureBannerText: {
+    color: '#ff4757',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  timerProgressContainer: {
+    backgroundColor: '#13182b',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginVertical: 3,
+    borderWidth: 1,
+    borderColor: '#222943',
+  },
+  timerMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  timerMetaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  timerPulsingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  timerLabel: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  timerCountdown: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  timerCountdownCritical: {
+    color: '#ff4757',
+  },
+  timerTrack: {
+    height: 4,
+    backgroundColor: '#222943',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  timerFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  actionRightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  autoRollToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#191e33',
+    borderWidth: 1,
+    borderColor: '#30254e',
+    paddingHorizontal: 7,
+    paddingVertical: 6,
+    borderRadius: 10,
+    gap: 3,
+  },
+  autoRollToggleActive: {
+    backgroundColor: NOVA_COLORS.gold,
+    borderColor: NOVA_COLORS.gold,
+  },
+  autoRollText: {
+    color: NOVA_COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  autoRollTextActive: {
+    color: '#0d101e',
+    fontWeight: '900',
+  },
+  rulesCard: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 20,
+    padding: 18,
+    width: '92%',
+    maxHeight: '82%',
+    borderWidth: 1.5,
+    borderColor: '#30254e',
+  },
+  rulesList: {
+    marginVertical: 12,
+  },
+  ruleItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 10,
+  },
+  ruleEmoji: {
+    fontSize: 22,
+  },
+  ruleTextWrap: {
+    flex: 1,
+  },
+  ruleHeading: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  ruleDesc: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  ruleCloseBtn: {
+    marginTop: 6,
   },
 });

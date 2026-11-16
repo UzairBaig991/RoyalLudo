@@ -11,6 +11,7 @@ interface LudoBoardSvgProps {
   size?: number;
   gameState?: GameState;
   validMoves?: ValidMove[];
+  selectedTokenId?: number | null;
   onSelectToken?: (seatIndex: number, tokenId: number) => void;
   onTilePress?: (gridX: number, gridY: number) => void;
   onTokenPress?: (seatIndex: number, tokenId: number) => void;
@@ -21,6 +22,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
   size,
   gameState,
   validMoves = [],
+  selectedTokenId,
   onSelectToken,
   onTilePress,
   onTokenPress,
@@ -39,6 +41,22 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
       points.push(`${cx + (r * 0.45) * Math.cos(innerAngle)},${cy + (r * 0.45) * Math.sin(innerAngle)}`);
     }
     return <Polygon points={points.join(' ')} fill={color} />;
+  };
+
+  // Directional chevron arrow centered at (cx, cy)
+  const renderArrow = (cx: number, cy: number, direction: 'UP' | 'RIGHT' | 'DOWN' | 'LEFT', color = '#ffffff') => {
+    const s = tileSize * 0.28;
+    let points = '';
+    if (direction === 'UP') {
+      points = `${cx},${cy - s} ${cx - s * 0.75},${cy + s * 0.45} ${cx},${cy + s * 0.1} ${cx + s * 0.75},${cy + s * 0.45}`;
+    } else if (direction === 'RIGHT') {
+      points = `${cx + s},${cy} ${cx - s * 0.45},${cy - s * 0.75} ${cx - s * 0.1},${cy} ${cx - s * 0.45},${cy + s * 0.75}`;
+    } else if (direction === 'DOWN') {
+      points = `${cx},${cy + s} ${cx - s * 0.75},${cy - s * 0.45} ${cx},${cy - s * 0.1} ${cx + s * 0.75},${cy - s * 0.45}`;
+    } else if (direction === 'LEFT') {
+      points = `${cx - s},${cy} ${cx + s * 0.45},${cy - s * 0.75} ${cx + s * 0.1},${cy} ${cx + s * 0.45},${cy + s * 0.75}`;
+    }
+    return <Polygon points={points} fill={color} opacity={0.92} />;
   };
 
   // Render 6x6 Yard for a quadrant
@@ -129,6 +147,8 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
         let cellBg = ROYAL_COLORS.primaryBg;
         let isSafeStar = false;
         let starColor = ROYAL_COLORS.gold;
+        let arrowDirection: 'UP' | 'RIGHT' | 'DOWN' | 'LEFT' | null = null;
+        let isStartCell = false;
 
         // Colored Home Stretch Paths
         if (r === 7 && c >= 1 && c <= 5) cellBg = COLOR_MAP.GREEN.primary; // Green Home stretch
@@ -136,19 +156,23 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
         else if (r === 7 && c >= 9 && c <= 13) cellBg = COLOR_MAP.BLUE.primary; // Blue Home stretch
         else if (c === 7 && r >= 9 && r <= 13) cellBg = COLOR_MAP.RED.primary; // Red Home stretch
 
-        // Colored Starting Cells
+        // Colored Starting Cells with Movement Direction Arrows
         else if (r === 6 && c === 1) {
           cellBg = COLOR_MAP.GREEN.primary;
-          isSafeStar = true;
+          arrowDirection = 'RIGHT';
+          isStartCell = true;
         } else if (r === 1 && c === 8) {
           cellBg = COLOR_MAP.YELLOW.primary;
-          isSafeStar = true;
+          arrowDirection = 'DOWN';
+          isStartCell = true;
         } else if (r === 8 && c === 13) {
           cellBg = COLOR_MAP.BLUE.primary;
-          isSafeStar = true;
+          arrowDirection = 'LEFT';
+          isStartCell = true;
         } else if (r === 13 && c === 6) {
           cellBg = COLOR_MAP.RED.primary;
-          isSafeStar = true;
+          arrowDirection = 'UP';
+          isStartCell = true;
         }
 
         // Star Cells (8 steps from starts)
@@ -168,7 +192,11 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
               stroke={ROYAL_COLORS.border}
               strokeWidth={0.8}
             />
-            {isSafeStar && renderStar(x + tileSize / 2, y + tileSize / 2, tileSize * 0.35, starColor)}
+            {isStartCell && arrowDirection ? (
+              renderArrow(x + tileSize / 2, y + tileSize / 2, arrowDirection, '#ffffff')
+            ) : isSafeStar ? (
+              renderStar(x + tileSize / 2, y + tileSize / 2, tileSize * 0.35, starColor)
+            ) : null}
           </G>
         );
       }
@@ -204,6 +232,126 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
     );
   };
 
+  // Render destination landing cell previews for the current player's valid moves
+  const renderDestinationHighlights = () => {
+    if (!gameState || !validMoves || validMoves.length === 0) return null;
+    const activePlayer = gameState.players.find((p) => p.seatIndex === currentTurnSeat);
+    if (!activePlayer) return null;
+
+    return validMoves.map((move, index) => {
+      let destCoord: { row: number; col: number } | null = null;
+      try {
+        destCoord = LudoBoard.resolveGridCoordinate(activePlayer.color, move.tokenId, move.toStep);
+      } catch (e) {
+        destCoord = null;
+      }
+      if (!destCoord) return null;
+
+      const cx = destCoord.col * tileSize + tileSize / 2;
+      const cy = destCoord.row * tileSize + tileSize / 2;
+      const r = tileSize * 0.44;
+
+      if (move.capturesToken) {
+        // Glowing enemy target / capture cell with crosshairs
+        return (
+          <G key={`dest_cap_${move.tokenId}_${index}`}>
+            <Circle
+              cx={cx}
+              cy={cy}
+              r={r}
+              fill="rgba(255, 71, 87, 0.35)"
+              stroke="#ff4757"
+              strokeWidth={2.5}
+            />
+            <Circle
+              cx={cx}
+              cy={cy}
+              r={r * 0.65}
+              fill="none"
+              stroke="#ff4757"
+              strokeWidth={1.5}
+              strokeDasharray="4,2"
+            />
+            <Circle cx={cx} cy={cy} r={3} fill="#ff4757" />
+          </G>
+        );
+      }
+
+      if (move.isFinish) {
+        // Glowing Royal Finish Cell with Golden Star
+        return (
+          <G key={`dest_fin_${move.tokenId}_${index}`}>
+            <Circle
+              cx={cx}
+              cy={cy}
+              r={r}
+              fill="rgba(244, 196, 48, 0.4)"
+              stroke={ROYAL_COLORS.gold}
+              strokeWidth={2.5}
+            />
+            {renderStar(cx, cy, r * 0.55, ROYAL_COLORS.gold)}
+          </G>
+        );
+      }
+
+      // Standard Move Landing Target
+      return (
+        <G key={`dest_step_${move.tokenId}_${index}`}>
+          <Circle
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="rgba(0, 242, 254, 0.22)"
+            stroke="#00f2fe"
+            strokeWidth={2}
+            strokeDasharray="4,2"
+          />
+          <Circle cx={cx} cy={cy} r={r * 0.3} fill="#00f2fe" opacity={0.85} />
+        </G>
+      );
+    });
+  };
+
+  // Interactive destination tap targets for effortless tap-to-move
+  const renderDestinationTapTargets = () => {
+    if (!gameState || !validMoves || validMoves.length === 0) return null;
+    const activePlayer = gameState.players.find((p) => p.seatIndex === currentTurnSeat);
+    if (!activePlayer) return null;
+
+    return validMoves.map((move, index) => {
+      let destCoord: { row: number; col: number } | null = null;
+      try {
+        destCoord = LudoBoard.resolveGridCoordinate(activePlayer.color, move.tokenId, move.toStep);
+      } catch (e) {
+        destCoord = null;
+      }
+      if (!destCoord) return null;
+
+      const cellX = destCoord.col * tileSize;
+      const cellY = destCoord.row * tileSize;
+
+      return (
+        <TouchableOpacity
+          key={`dest_tap_${move.tokenId}_${index}`}
+          activeOpacity={0.6}
+          onPress={() => {
+            if (onTokenPress) onTokenPress(currentTurnSeat, move.tokenId);
+            if (onSelectToken) onSelectToken(currentTurnSeat, move.tokenId);
+            if (onTilePress) onTilePress(destCoord!.col, destCoord!.row);
+          }}
+          style={{
+            position: 'absolute',
+            left: cellX,
+            top: cellY,
+            width: tileSize,
+            height: tileSize,
+            zIndex: 9,
+          }}
+        />
+      );
+    });
+  };
+
   // Render all active player tokens
   const renderTokens = () => {
     if (!gameState) return null;
@@ -237,6 +385,11 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
         const { player, token, isValid } = item;
         const color = COLOR_MAP[player.color as keyof typeof COLOR_MAP] || COLOR_MAP.RED;
 
+        const move = validMoves.find((m) => m.tokenId === token.id && player.seatIndex === currentTurnSeat);
+        const isCaptureMove = !!move?.capturesToken;
+        const isFinishMove = !!move?.isFinish;
+        const isExitMove = !!move?.isEntry;
+
         // Slight offset if stacked on same tile
         const offset = items.length > 1 ? (idx - (items.length - 1) / 2) * 5 : 0;
         const tokenDiameter = tileSize * 0.85;
@@ -259,13 +412,25 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
                 height: tokenDiameter,
                 borderRadius: tokenDiameter / 2,
                 backgroundColor: color.primary,
-                borderColor: token.isShielded ? '#83e6c0' : isValid ? ROYAL_COLORS.goldLight : '#FFFFFF',
-                borderWidth: token.isShielded ? 3 : isValid ? 2.5 : 1.5,
-                transform: [{ scale: isValid ? 1.12 : 1 }],
-                elevation: isValid ? 8 : 4,
-                shadowColor: token.isShielded ? '#83e6c0' : isValid ? ROYAL_COLORS.gold : '#000',
-                shadowOpacity: isValid ? 0.9 : 0.4,
-                shadowRadius: isValid ? 6 : 3,
+                borderColor: token.isShielded
+                  ? '#83e6c0'
+                  : isCaptureMove
+                  ? '#ff4757'
+                  : isValid
+                  ? ROYAL_COLORS.goldLight
+                  : '#FFFFFF',
+                borderWidth: token.isShielded ? 3 : isValid ? 2.8 : 1.5,
+                transform: [{ scale: isValid ? 1.14 : 1 }],
+                elevation: isValid ? 9 : 4,
+                shadowColor: token.isShielded
+                  ? '#83e6c0'
+                  : isCaptureMove
+                  ? '#ff4757'
+                  : isValid
+                  ? ROYAL_COLORS.gold
+                  : '#000',
+                shadowOpacity: isValid ? 0.95 : 0.4,
+                shadowRadius: isValid ? 7 : 3,
               },
             ]}
           >
@@ -287,6 +452,22 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
                 <Text style={styles.stackCountText}>{items.length}</Text>
               ) : null}
             </View>
+
+            {/* Action Badge for Playable Token */}
+            {isValid && (
+              <View
+                style={[
+                  styles.tokenActionBadge,
+                  isCaptureMove && styles.badgeCapture,
+                  isFinishMove && styles.badgeFinish,
+                  isExitMove && styles.badgeExit,
+                ]}
+              >
+                <Text style={styles.tokenActionText}>
+                  {isCaptureMove ? '⚔️' : isFinishMove ? '👑' : isExitMove ? '🚀' : '•'}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
         );
       });
@@ -312,7 +493,13 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
 
         {/* Center Finish Triangles */}
         {renderCenterTriangles()}
+
+        {/* Destination Landing Highlights */}
+        {renderDestinationHighlights()}
       </Svg>
+
+      {/* Interactive Destination Tap Targets */}
+      {renderDestinationTapTargets()}
 
       {/* Interactive Token Layer */}
       {renderTokens()}
@@ -343,5 +530,38 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 9,
     fontWeight: '900',
+  },
+  tokenActionBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: ROYAL_COLORS.cardBg,
+    borderWidth: 1.2,
+    borderColor: ROYAL_COLORS.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
+  },
+  badgeCapture: {
+    backgroundColor: '#ff4757',
+    borderColor: '#ffffff',
+  },
+  badgeFinish: {
+    backgroundColor: '#ffd700',
+    borderColor: '#ffffff',
+  },
+  badgeExit: {
+    backgroundColor: '#2ed573',
+    borderColor: '#ffffff',
+  },
+  tokenActionText: {
+    fontSize: 9,
+    lineHeight: 11,
   },
 });

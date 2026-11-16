@@ -116,6 +116,52 @@ class SoundEngine {
     } catch (_) {}
   }
 
+  public playTimerWarning(): void {
+    if (this.isHapticEnabled() && Platform.OS !== 'web') {
+      Vibration.vibrate(25);
+    }
+    if (!this.isSoundEnabled()) return;
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(800, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } catch (_) {}
+  }
+
+  public playRollSix(): void {
+    if (this.isHapticEnabled() && Platform.OS !== 'web') {
+      Vibration.vibrate([0, 40, 40, 80]);
+    }
+    if (!this.isSoundEnabled()) return;
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      [587.33, 880, 1174.66].forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, now + i * 0.06);
+        gain.gain.setValueAtTime(0.25, now + i * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + i * 0.06);
+        osc.stop(now + i * 0.06 + 0.22);
+      });
+    } catch (_) {}
+  }
+
   public playFinish(): void {
     this.playSafeStar();
   }
