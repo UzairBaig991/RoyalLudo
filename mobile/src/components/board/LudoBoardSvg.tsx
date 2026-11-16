@@ -84,6 +84,12 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
       { cx: innerX + innerSize * 0.7, cy: innerY + innerSize * 0.7 },
     ];
 
+    const isYardTurn =
+      (colorKey === 'RED' && currentTurnSeat === 0) ||
+      (colorKey === 'GREEN' && currentTurnSeat === 1) ||
+      (colorKey === 'YELLOW' && currentTurnSeat === 2) ||
+      (colorKey === 'BLUE' && currentTurnSeat === 3);
+
     return (
       <G key={`yard_${colorKey}`}>
         {/* Outer Colored Yard */}
@@ -93,8 +99,8 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
           width={yardSize}
           height={yardSize}
           fill={color.primary}
-          stroke={ROYAL_COLORS.border}
-          strokeWidth={1.5}
+          stroke={isYardTurn ? ROYAL_COLORS.gold : ROYAL_COLORS.border}
+          strokeWidth={isYardTurn ? 2.5 : 1.5}
         />
         {/* Inner Platter */}
         <Rect
@@ -104,9 +110,23 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
           height={innerSize}
           rx={16}
           fill={ROYAL_COLORS.cardBg}
-          stroke={color.primary}
-          strokeWidth={2}
+          stroke={isYardTurn ? ROYAL_COLORS.goldLight : color.primary}
+          strokeWidth={isYardTurn ? 2.8 : 2}
         />
+        {/* Active Yard Glowing Turn Dash Ring */}
+        {isYardTurn && (
+          <Rect
+            x={innerX - 2}
+            y={innerY - 2}
+            width={innerSize + 4}
+            height={innerSize + 4}
+            rx={18}
+            fill="none"
+            stroke={ROYAL_COLORS.gold}
+            strokeWidth={1.5}
+            strokeDasharray="6,3"
+          />
+        )}
         {/* 4 Yard Slots */}
         {slotCenters.map((slot, i) => (
           <Circle

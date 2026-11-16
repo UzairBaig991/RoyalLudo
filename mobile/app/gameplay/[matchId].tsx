@@ -80,6 +80,28 @@ export default function LiveGameScreen() {
   const [turnSecondsLeft, setTurnSecondsLeft] = useState<number>(12);
   const [roundNumber, setRoundNumber] = useState<number>(8);
 
+  // Bouncing Turn Indicator Arrow (Ludo Star Style)
+  const arrowBounceAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(arrowBounceAnim, {
+          toValue: 5,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(arrowBounceAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
   const isTwoPlayerMode =
     routePlayers === '2' ||
     gameState?.rules.playerCount === 2 ||
@@ -291,20 +313,21 @@ export default function LiveGameScreen() {
 
   const getStatusMessage = () => {
     if (isRolling) return 'Rolling dice…';
-    if (lastDiceRoll === 6) return 'A six! Roll again.';
+    if (lastDiceRoll === 6) return '🎉 A six! Roll again!';
     if (isMyTurn) {
-      if (gameState?.turnPhase === 'SELECT_TOKEN') return 'Select a token to move!';
-      return 'Your turn to roll!';
+      if (gameState?.turnPhase === 'SELECT_TOKEN') return 'Select your token to move!';
+      return 'Your turn! Tap Red dice to roll';
     }
-    const currentName = gameState?.players[currentTurnSeat]?.username || 'Maya';
-    return `${currentName} is thinking…`;
+    const currentName = gameState?.players[currentTurnSeat]?.username || 'Opponent';
+    return `${currentName}'s turn to roll`;
   };
 
   const getSubStatus = () => {
     if (isMyTurn) {
-      return `Tap the dice  ·  ${turnSecondsLeft}s left`;
+      return `Dice at Red card  ·  ${turnSecondsLeft}s left`;
     }
-    return `Turn in progress  ·  ${turnSecondsLeft}s left`;
+    const currentName = gameState?.players[currentTurnSeat]?.username || 'Opponent';
+    return `Dice with ${currentName}  ·  ${turnSecondsLeft}s left`;
   };
 
   if (!gameState) {
@@ -334,6 +357,114 @@ export default function LiveGameScreen() {
     username: 'Sam',
     tokensHome: 0,
     seatIndex: 3,
+  };
+
+  // Helper to render each player's corner card with Dynamic Moving Dice & Bouncing Turn Arrow (Ludo Star Style)
+  const renderPlayerCard = (
+    seatIndex: number,
+    player: { username: string; tokensHome: number; seatIndex: number },
+    colorHex: string,
+    colorName: 'RED' | 'GREEN' | 'YELLOW' | 'BLUE',
+    badgeLabel?: string
+  ) => {
+    const isThisTurn = currentTurnSeat === seatIndex;
+    const isMe = seatIndex === 0;
+
+    return (
+      <View style={styles.playerCardContainer}>
+        {/* BOUNCING TURN INDICATOR ARROW (Ludo Star Style) */}
+        {isThisTurn && (
+          <Animated.View
+            style={[
+              styles.turnArrowContainer,
+              {
+                transform: [{ translateY: arrowBounceAnim }],
+              },
+            ]}
+          >
+            <View style={[styles.turnArrowBadge, { backgroundColor: colorHex }]}>
+              <Ionicons name="caret-down" size={12} color="#0d101e" />
+              <Text style={styles.turnArrowText}>
+                {isMe ? (canRollDice ? 'ROLL! 👇' : 'YOUR TURN') : `${colorName} 👇`}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* PLAYER CARD WITH MOVING DICE POD */}
+        <View
+          style={[
+            styles.playerCard,
+            isThisTurn && [styles.playerCardActive, { borderColor: colorHex }],
+          ]}
+        >
+          <View style={styles.playerCardLeft}>
+            <View style={[styles.playerDot, { backgroundColor: colorHex }]}>
+              <Text style={styles.playerDotInitial}>
+                {player.username.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.playerMeta}>
+              <View style={styles.nameBadgeRow}>
+                <Text style={styles.playerName} numberOfLines={1}>
+                  {player.username}
+                </Text>
+                {badgeLabel && (
+                  <NovaBadge
+                    label={badgeLabel}
+                    color={seatIndex === 2 ? 'gold' : 'mint'}
+                  />
+                )}
+              </View>
+              <Text style={[styles.playerStatus, isThisTurn && styles.statusActive]}>
+                {isThisTurn
+                  ? isRolling
+                    ? 'Rolling…'
+                    : isMe
+                    ? canRollDice
+                      ? 'Tap dice'
+                      : 'Move token'
+                    : 'Thinking…'
+                  : `${player.tokensHome} home`}
+              </Text>
+            </View>
+          </View>
+
+          {/* DYNAMIC MOVING DICE POD (Moves to the active player!) */}
+          <View style={styles.playerDicePod}>
+            {isThisTurn ? (
+              <TouchableOpacity
+                activeOpacity={isMe && canRollDice ? 0.75 : 1}
+                disabled={!isMe || !canRollDice}
+                onPress={isMe ? handleRoll : undefined}
+                style={[
+                  styles.activeDieWrap,
+                  isMe && canRollDice && styles.activeDieWrapClickable,
+                ]}
+              >
+                <NovaDie
+                  value={lastDiceRoll || 6}
+                  size={42}
+                  rolling={isRolling}
+                  disabled={!isMe || !canRollDice}
+                  onPress={isMe ? handleRoll : undefined}
+                  theme="nova"
+                />
+                {isMe && canRollDice && !isRolling && (
+                  <View style={styles.tapPillOverlay}>
+                    <Text style={styles.tapPillText}>TAP</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.inactiveDiceSlot}>
+                <Ionicons name="dice-outline" size={18} color="rgba(255,255,255,0.2)" />
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -382,32 +513,19 @@ export default function LiveGameScreen() {
       <View style={styles.playersRow}>
         {/* Top-Left Slot: Green (Player 1 in 4P mode, Hidden spacer in 2P mode) */}
         {!isTwoPlayerMode ? (
-          <View style={[styles.playerCard, currentTurnSeat === 1 && styles.playerCardActive]}>
-            <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.mint }]} />
-            <View style={styles.playerMeta}>
-              <Text style={styles.playerName} numberOfLines={1}>{p1.username}</Text>
-              <Text style={styles.playerStatus}>
-                {currentTurnSeat === 1 ? 'Rolling…' : `${p1.tokensHome} tokens home`}
-              </Text>
-            </View>
-          </View>
+          renderPlayerCard(1, p1, NOVA_COLORS.mint, 'GREEN')
         ) : (
-          <View style={[styles.playerCard, styles.playerCardSpacer]} />
+          <View style={[styles.playerCardContainer, styles.playerCardSpacer]} />
         )}
 
         {/* Top-Right Slot: Yellow (Companion in 2P mode, Player 2 in 4P mode — DIAGONAL) */}
-        <View style={[styles.playerCard, currentTurnSeat === 2 && styles.playerCardActive]}>
-          <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.gold }]} />
-          <View style={styles.playerMeta}>
-            <View style={styles.nameBadgeRow}>
-              <Text style={styles.playerName} numberOfLines={1}>{p2.username}</Text>
-              {isTwoPlayerMode && <NovaBadge label="DIAGONAL" color="gold" />}
-            </View>
-            <Text style={[styles.playerStatus, currentTurnSeat === 2 && styles.statusActive]}>
-              {currentTurnSeat === 2 ? 'Rolling…' : `${p2.tokensHome} home · Diagonal`}
-            </Text>
-          </View>
-        </View>
+        {renderPlayerCard(
+          2,
+          p2,
+          NOVA_COLORS.gold,
+          'YELLOW',
+          isTwoPlayerMode ? 'DIAGONAL' : undefined
+        )}
       </View>
 
       {/* 3. CENTER LUDO BOARD */}
@@ -435,32 +553,19 @@ export default function LiveGameScreen() {
       {/* 4. BOTTOM OPPONENTS ROW */}
       <View style={styles.playersRow}>
         {/* Bottom-Left Slot: Red (Player 0 / You — Seat 0) */}
-        <View style={[styles.playerCard, isMyTurn && styles.playerCardActive]}>
-          <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.coral }]} />
-          <View style={styles.playerMeta}>
-            <View style={styles.nameBadgeRow}>
-              <Text style={styles.playerName} numberOfLines={1}>Alex · You</Text>
-              {isTwoPlayerMode && <NovaBadge label="YOU (RED)" color="mint" />}
-            </View>
-            <Text style={[styles.playerStatus, isMyTurn && styles.statusActive]}>
-              {isMyTurn ? 'Your turn to roll' : `${p0.tokensHome} tokens home`}
-            </Text>
-          </View>
-        </View>
+        {renderPlayerCard(
+          0,
+          p0,
+          NOVA_COLORS.coral,
+          'RED',
+          isTwoPlayerMode ? 'YOU (RED)' : undefined
+        )}
 
         {/* Bottom-Right Slot: Blue (Player 3 in 4P mode, Hidden spacer in 2P mode) */}
         {!isTwoPlayerMode ? (
-          <View style={[styles.playerCard, currentTurnSeat === 3 && styles.playerCardActive]}>
-            <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.blue }]} />
-            <View style={styles.playerMeta}>
-              <Text style={styles.playerName} numberOfLines={1}>{p3.username}</Text>
-              <Text style={styles.playerStatus}>
-                {currentTurnSeat === 3 ? 'Rolling…' : `${p3.tokensHome} token home`}
-              </Text>
-            </View>
-          </View>
+          renderPlayerCard(3, p3, NOVA_COLORS.blue, 'BLUE')
         ) : (
-          <View style={[styles.playerCard, styles.playerCardSpacer]} />
+          <View style={[styles.playerCardContainer, styles.playerCardSpacer]} />
         )}
       </View>
 
@@ -581,22 +686,28 @@ export default function LiveGameScreen() {
         </View>
       </View>
 
-      {/* 5. INTERACTIVE DIE & ACTION CARD (Figma Surface #30254e) */}
-      <View style={styles.actionCard}>
-        <View style={styles.dieWrapper}>
-          <NovaDie
-            value={lastDiceRoll || 6}
-            size={58}
-            rolling={isRolling}
-            onPress={handleRoll}
-            disabled={!canRollDice}
-            theme="nova"
+      {/* 5. TURN ACTION CONSOLE */}
+      <View style={styles.actionConsole}>
+        <View style={styles.actionConsoleLeft}>
+          <View
+            style={[
+              styles.turnRoleDot,
+              {
+                backgroundColor:
+                  currentTurnSeat === 0
+                    ? NOVA_COLORS.coral
+                    : currentTurnSeat === 1
+                    ? NOVA_COLORS.mint
+                    : currentTurnSeat === 2
+                    ? NOVA_COLORS.gold
+                    : NOVA_COLORS.blue,
+              },
+            ]}
           />
-        </View>
-
-        <View style={styles.actionTextWrap}>
-          <Text style={styles.statusTitle}>{getStatusMessage()}</Text>
-          <Text style={styles.statusSubtitle}>{getSubStatus()}</Text>
+          <View style={styles.actionTextWrap}>
+            <Text style={styles.statusTitle}>{getStatusMessage()}</Text>
+            <Text style={styles.statusSubtitle}>{getSubStatus()}</Text>
+          </View>
         </View>
 
         <View style={styles.actionRightControls}>
@@ -619,8 +730,13 @@ export default function LiveGameScreen() {
           </TouchableOpacity>
 
           {canRollDice && (
-            <TouchableOpacity style={styles.tapPrompt} onPress={handleRoll}>
-              <Ionicons name="finger-print" size={24} color={NOVA_COLORS.accentPurple} />
+            <TouchableOpacity
+              style={styles.bottomRollBtn}
+              onPress={handleRoll}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="dice" size={16} color="#0d101e" />
+              <Text style={styles.bottomRollBtnText}>Roll</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1003,42 +1119,88 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 4,
+    paddingTop: 14,
   },
-  playerCard: {
+  playerCardContainer: {
     width: '48%',
-    backgroundColor: NOVA_COLORS.surfaceCard,
-    borderRadius: 14,
-    padding: 8,
+    position: 'relative',
+  },
+  turnArrowContainer: {
+    position: 'absolute',
+    top: -20,
+    alignSelf: 'center',
+    zIndex: 30,
+  },
+  turnArrowBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'transparent',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+    gap: 3,
+    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
   },
-  playerCardActive: {
-    borderColor: NOVA_COLORS.accentPurple,
-    backgroundColor: '#1f2642',
+  turnArrowText: {
+    color: '#0d101e',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
-  playerCardSpacer: {
-    opacity: 0,
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
-  },
-  nameBadgeRow: {
+  playerCard: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 14,
+    paddingHorizontal: 7,
+    paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 4,
+    borderWidth: 1.8,
+    borderColor: 'transparent',
+    minHeight: 52,
+  },
+  playerCardActive: {
+    backgroundColor: '#1f2642',
+    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.7,
+    shadowRadius: 6,
+  },
+  playerCardSpacer: {
+    opacity: 0,
+  },
+  playerCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 4,
   },
   playerDot: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#ffffff',
-    marginRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+  },
+  playerDotInitial: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '900',
   },
   playerMeta: {
     flex: 1,
+    minWidth: 0,
+  },
+  nameBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   playerName: {
     color: NOVA_COLORS.textPrimary,
@@ -1054,10 +1216,89 @@ const styles = StyleSheet.create({
     color: NOVA_COLORS.accentPurple,
     fontWeight: '700',
   },
+  playerDicePod: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeDieWrap: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  activeDieWrapClickable: {
+    transform: [{ scale: 1.05 }],
+  },
+  tapPillOverlay: {
+    position: 'absolute',
+    bottom: -6,
+    backgroundColor: NOVA_COLORS.gold,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#0d101e',
+    elevation: 5,
+  },
+  tapPillText: {
+    color: '#0d101e',
+    fontSize: 8,
+    fontWeight: '900',
+  },
+  inactiveDiceSlot: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   boardWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 4,
+  },
+  actionConsole: {
+    backgroundColor: NOVA_COLORS.surfaceBadge,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  actionConsoleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    gap: 8,
+  },
+  turnRoleDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: '#ffffff',
+  },
+  bottomRollBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: NOVA_COLORS.gold,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 9,
+    gap: 4,
+  },
+  bottomRollBtnText: {
+    color: '#0d101e',
+    fontSize: 12,
+    fontWeight: '900',
   },
   actionCard: {
     backgroundColor: NOVA_COLORS.surfaceBadge,
@@ -1075,13 +1316,13 @@ const styles = StyleSheet.create({
   },
   statusTitle: {
     color: NOVA_COLORS.textPrimary,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '800',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   statusSubtitle: {
     color: NOVA_COLORS.accentPurple,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   tapPrompt: {
