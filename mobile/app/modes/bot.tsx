@@ -31,11 +31,17 @@ const DIFFICULTIES = [
 export default function PlayComputerScreen() {
   const router = useRouter();
   const [selectedDiff, setSelectedDiff] = useState('balanced');
+  const [playerCount, setPlayerCount] = useState<2 | 4>(2);
 
   const handlePlayBot = () => {
     router.push({
       pathname: '/gameplay/[matchId]',
-      params: { matchId: `bot_${selectedDiff}`, mode: 'bot', difficulty: selectedDiff },
+      params: {
+        matchId: `bot_${selectedDiff}`,
+        mode: 'bot',
+        difficulty: selectedDiff,
+        players: playerCount.toString(),
+      },
     } as any);
   };
 
@@ -61,6 +67,39 @@ export default function PlayComputerScreen() {
         <Text style={styles.subtext}>
           Sharpen your strategy before your next match.
         </Text>
+
+        <Text style={styles.label}>MATCH TYPE</Text>
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={[styles.toggleBtn, playerCount === 2 && styles.toggleBtnActive]}
+            onPress={() => setPlayerCount(2)}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.toggleBtnText,
+                playerCount === 2 && styles.toggleBtnTextActive,
+              ]}
+            >
+              2 Players (1v1 Diagonal)
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.toggleBtn, playerCount === 4 && styles.toggleBtnActive]}
+            onPress={() => setPlayerCount(4)}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                styles.toggleBtnText,
+                playerCount === 4 && styles.toggleBtnTextActive,
+              ]}
+            >
+              4 Players (Full Table)
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={styles.label}>DIFFICULTY</Text>
 
@@ -141,6 +180,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.8,
     marginBottom: 12,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    width: '100%',
+    backgroundColor: '#191e33',
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 20,
+    gap: 6,
+  },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  toggleBtnActive: {
+    backgroundColor: NOVA_COLORS.accentPurple,
+  },
+  toggleBtnText: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  toggleBtnTextActive: {
+    color: '#0d101e',
+    fontWeight: '800',
   },
   diffList: {
     width: '100%',

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { NOVA_COLORS } from '../../src/theme/colors';
 import { NovaHeader } from '../../src/components/nova/NovaHeader';
+import { NovaBadge } from '../../src/components/nova/NovaBadge';
 import { NovaButton } from '../../src/components/nova/NovaButton';
 
 export default function PassAndPlayScreen() {
@@ -23,10 +24,18 @@ export default function PassAndPlayScreen() {
     setPlayers(updated);
   };
 
+  const activePlayers =
+    playerCount === 2
+      ? [
+          { id: 0, seatIndex: 0, name: players[0].name, label: 'Player 1 (Red · Bottom-Left)', color: NOVA_COLORS.coral },
+          { id: 2, seatIndex: 2, name: players[1].name, label: 'Player 2 (Yellow · Diagonal Companion)', color: NOVA_COLORS.gold },
+        ]
+      : players.slice(0, playerCount).map((p, idx) => ({ ...p, seatIndex: idx }));
+
   const handleStart = () => {
     router.push({
       pathname: '/gameplay/[matchId]',
-      params: { matchId: 'local_pass_play', mode: 'pass_and_play', players: playerCount },
+      params: { matchId: 'local_pass_play', mode: 'pass_and_play', players: playerCount.toString() },
     } as any);
   };
 
@@ -70,9 +79,17 @@ export default function PassAndPlayScreen() {
           ))}
         </View>
 
+        {playerCount === 2 && (
+          <NovaBadge
+            label="DIAGONAL OPPOSITION (RED vs YELLOW)"
+            color="gold"
+            style={styles.diagBadge}
+          />
+        )}
+
         {/* Player Names List */}
         <View style={styles.playersList}>
-          {players.slice(0, playerCount).map((p, idx) => (
+          {activePlayers.map((p, idx) => (
             <View key={p.id} style={styles.playerRow}>
               <View style={[styles.colorDot, { backgroundColor: p.color }]} />
               <View style={styles.playerInfo}>
@@ -195,6 +212,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
     marginTop: 10,
+  },
+  diagBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 10,
+    marginBottom: 4,
   },
   footer: {
     paddingHorizontal: 20,

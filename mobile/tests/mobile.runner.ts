@@ -154,6 +154,29 @@ function runMobileTests() {
   assert(chestReward.coins === 3500 && chestReward.gems === 35, 'Clan chest awards 3,500 coins and 35 gems');
   assert(useSocialStore.getState().clanChestClaimed === true, 'Clan chest marked claimed');
 
+  // TEST 11: 2-Player Diagonal Opposition & In-Game Exit
+  console.log('\nTest Suite 11: 2-Player Diagonal Companion & Game Exit');
+  gameStore.startNewGame({
+    mode: 'classic',
+    playerCount: 2,
+    players: [
+      { id: 'p0', username: 'Alex', isBot: false },
+      { id: 'p2', username: 'Companion', isBot: true },
+    ],
+  });
+
+  const twoPState = useGameStore.getState().gameState;
+  assert(twoPState?.players.length === 2, '2-player game has exactly 2 players');
+  assert(twoPState?.activePlayerSeats[0] === 0, 'Player 1 is Seat 0 (Red)');
+  assert(twoPState?.activePlayerSeats[1] === 2, 'Player 2 is Seat 2 (Yellow - Diagonal Companion)');
+
+  const yellowStart = LudoBoard.resolveGridCoordinate('YELLOW', 0, 0);
+  assert(yellowStart.row === 1 && yellowStart.col === 8, 'Yellow start tile is grid (1, 8) diagonally opposite to Red (13, 6)');
+
+  // Test Exit
+  gameStore.resetGame();
+  assert(useGameStore.getState().gameState === null, 'Game reset safely exits match to lobby');
+
   console.log('\n====================================================');
   console.log(`MOBILE TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

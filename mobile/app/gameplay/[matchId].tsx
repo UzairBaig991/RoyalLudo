@@ -31,10 +31,11 @@ const BOARD_SIZE = Math.min(SCREEN_WIDTH - 24, SCREEN_HEIGHT * 0.44, 342);
 
 export default function LiveGameScreen() {
   const router = useRouter();
-  const { matchId, mode: routeMode, prize: routePrize } = useLocalSearchParams<{
+  const { matchId, mode: routeMode, prize: routePrize, players: routePlayers } = useLocalSearchParams<{
     matchId: string;
     mode?: string;
     prize?: string;
+    players?: string;
   }>();
 
   const { profile } = useAuthStore();
@@ -49,6 +50,7 @@ export default function LiveGameScreen() {
     selectAndMoveToken,
     usePowerUp,
     triggerBotTurn,
+    startNewGame,
     resetGame,
   } = useGameStore();
 
@@ -72,9 +74,59 @@ export default function LiveGameScreen() {
   const [turnSecondsLeft, setTurnSecondsLeft] = useState<number>(12);
   const [roundNumber, setRoundNumber] = useState<number>(8);
 
+  const isTwoPlayerMode =
+    routePlayers === '2' ||
+    gameState?.rules.playerCount === 2 ||
+    gameState?.players.length === 2;
+
+  // Initialize Game if opened directly or refreshed
+  useEffect(() => {
+    if (!gameState) {
+      const isTwo = routePlayers === '2';
+      const pCount: 2 | 4 = isTwo ? 2 : 4;
+      const myName = profile?.username || 'You';
+      const companionName = routeMode === 'bot' ? 'Nova Bot (Yellow)' : 'Companion (Yellow)';
+      startNewGame({
+        mode: (routeMode as any) || 'classic',
+        playerCount: pCount,
+        players: isTwo
+          ? [
+              { id: profile?.id || 'usr_me', username: myName, isBot: false },
+              { id: 'usr_companion', username: companionName, isBot: true },
+            ]
+          : [
+              { id: profile?.id || 'usr_me', username: myName, isBot: false },
+              { id: 'b1', username: 'Maya', isBot: true },
+              { id: 'b2', username: 'Zara', isBot: true },
+              { id: 'b3', username: 'Sam', isBot: true },
+            ],
+      });
+    }
+  }, [gameState, routePlayers]);
+
   const currentTurnSeat = gameState?.currentTurnSeat ?? 0;
   const isMyTurn = currentTurnSeat === 0;
   const canRollDice = isMyTurn && gameState?.turnPhase === 'ROLL_DICE' && !isRolling;
+
+  // Exit Prompt Handler
+  const handlePromptExit = () => {
+    Alert.alert(
+      'Exit Game',
+      'Are you sure you want to leave the game? Your match will end and you will return to the lobby.',
+      [
+        { text: 'Resume Play', style: 'cancel' },
+        {
+          text: 'Leave Game',
+          style: 'destructive',
+          onPress: () => {
+            sfxEngine.playTokenStep();
+            resetGame();
+            router.replace('/(tabs)');
+          },
+        },
+      ]
+    );
+  };
 
   const triggerReaction = (emoji: string) => {
     sfxEngine.playEmoji();
@@ -225,59 +277,85 @@ export default function LiveGameScreen() {
     );
   }
 
-  const p0 = gameState.players[0] || { username: profile?.username || 'Alex · You', tokensHome: 0 };
-  const p1 = gameState.players[1] || { username: 'Maya', tokensHome: 2 };
-  const p2 = gameState.players[2] || { username: 'Zara', tokensHome: 1 };
-  const p3 = gameState.players[3] || { username: 'Sam', tokensHome: 1 };
+  const p0 = gameState.players.find((p) => p.seatIndex === 0) || {
+    username: profile?.username || 'Alex · You',
+    tokensHome: 0,
+    seatIndex: 0,
+  };
+  const p1 = gameState.players.find((p) => p.seatIndex === 1) || {
+    username: 'Maya',
+    tokensHome: 0,
+    seatIndex: 1,
+  };
+  const p2 = gameState.players.find((p) => p.seatIndex === 2) || {
+    username: isTwoPlayerMode ? 'Companion' : 'Zara',
+    tokensHome: 0,
+    seatIndex: 2,
+  };
+  const p3 = gameState.players.find((p) => p.seatIndex === 3) || {
+    username: 'Sam',
+    tokensHome: 0,
+    seatIndex: 3,
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 1. TOP HEADER (Screen 14 · Live game) */}
+      {/* 1. TOP HEADER (Screen 14 · Live game + Exit Option) */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => setShowMenuModal(true)}
           activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={22} color={NOVA_COLORS.textPrimary} />
+          <Ionicons name="menu" size={20} color={NOVA_COLORS.textPrimary} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>Classic table</Text>
-
-        <View style={styles.headerBadges}>
-          <NovaBadge
-            label="◈  2,000 prize"
-            color="gold"
-            style={styles.prizeBadge}
-          />
-          <NovaBadge
-            label={`ROUND 0${roundNumber}`}
-            color="mint"
-            style={styles.roundBadge}
-          />
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerTitle}>
+            {isTwoPlayerMode ? '1v1 Diagonal Table' : 'Classic Table'}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {isTwoPlayerMode ? 'Red vs Yellow · Diagonal' : `Round 0${roundNumber} · 4 Players`}
+          </Text>
         </View>
+
+        <TouchableOpacity
+          style={styles.exitBtn}
+          onPress={handlePromptExit}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="exit-outline" size={16} color="#FFFFFF" />
+          <Text style={styles.exitBtnText}>Exit</Text>
+        </TouchableOpacity>
       </View>
 
       {/* 2. TOP OPPONENTS ROW */}
       <View style={styles.playersRow}>
-        {/* Player 1: Maya (Coral/Mint) */}
-        <View style={[styles.playerCard, currentTurnSeat === 1 && styles.playerCardActive]}>
-          <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.coral }]} />
-          <View style={styles.playerMeta}>
-            <Text style={styles.playerName} numberOfLines={1}>{p1.username}</Text>
-            <Text style={styles.playerStatus}>
-              {currentTurnSeat === 1 ? 'Rolling…' : `${p1.tokensHome} tokens home`}
-            </Text>
+        {/* Top-Left Slot: Green (Player 1 in 4P mode, Hidden spacer in 2P mode) */}
+        {!isTwoPlayerMode ? (
+          <View style={[styles.playerCard, currentTurnSeat === 1 && styles.playerCardActive]}>
+            <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.mint }]} />
+            <View style={styles.playerMeta}>
+              <Text style={styles.playerName} numberOfLines={1}>{p1.username}</Text>
+              <Text style={styles.playerStatus}>
+                {currentTurnSeat === 1 ? 'Rolling…' : `${p1.tokensHome} tokens home`}
+              </Text>
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={[styles.playerCard, styles.playerCardSpacer]} />
+        )}
 
-        {/* Player 2: Zara (Mint) */}
+        {/* Top-Right Slot: Yellow (Companion in 2P mode, Player 2 in 4P mode — DIAGONAL) */}
         <View style={[styles.playerCard, currentTurnSeat === 2 && styles.playerCardActive]}>
-          <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.mint }]} />
+          <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.gold }]} />
           <View style={styles.playerMeta}>
-            <Text style={styles.playerName} numberOfLines={1}>{p2.username}</Text>
-            <Text style={styles.playerStatus}>
-              {currentTurnSeat === 2 ? 'Rolling…' : `${p2.tokensHome} token home`}
+            <View style={styles.nameBadgeRow}>
+              <Text style={styles.playerName} numberOfLines={1}>{p2.username}</Text>
+              {isTwoPlayerMode && <NovaBadge label="DIAGONAL" color="gold" />}
+            </View>
+            <Text style={[styles.playerStatus, currentTurnSeat === 2 && styles.statusActive]}>
+              {currentTurnSeat === 2 ? 'Rolling…' : `${p2.tokensHome} home · Diagonal`}
             </Text>
           </View>
         </View>
@@ -288,7 +366,6 @@ export default function LiveGameScreen() {
         <LudoBoardSvg
           size={BOARD_SIZE}
           onTilePress={(gridX, gridY) => {
-            // Find if any of my valid moves are on this tile
             const move = gameState.validMoves.find((m) => m.fromStep !== undefined);
             if (move && isMyTurn) {
               handleSelectToken(0, move.tokenId);
@@ -304,27 +381,34 @@ export default function LiveGameScreen() {
 
       {/* 4. BOTTOM OPPONENTS ROW */}
       <View style={styles.playersRow}>
-        {/* Player 3: Alex · You (Blue/Coral) */}
+        {/* Bottom-Left Slot: Red (Player 0 / You — Seat 0) */}
         <View style={[styles.playerCard, isMyTurn && styles.playerCardActive]}>
-          <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.blue }]} />
+          <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.coral }]} />
           <View style={styles.playerMeta}>
-            <Text style={styles.playerName} numberOfLines={1}>Alex · You</Text>
+            <View style={styles.nameBadgeRow}>
+              <Text style={styles.playerName} numberOfLines={1}>Alex · You</Text>
+              {isTwoPlayerMode && <NovaBadge label="YOU (RED)" color="mint" />}
+            </View>
             <Text style={[styles.playerStatus, isMyTurn && styles.statusActive]}>
-              {isMyTurn ? 'Your turn' : `${p0.tokensHome} tokens home`}
+              {isMyTurn ? 'Your turn to roll' : `${p0.tokensHome} tokens home`}
             </Text>
           </View>
         </View>
 
-        {/* Player 4: Sam (Gold) */}
-        <View style={[styles.playerCard, currentTurnSeat === 3 && styles.playerCardActive]}>
-          <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.gold }]} />
-          <View style={styles.playerMeta}>
-            <Text style={styles.playerName} numberOfLines={1}>{p3.username}</Text>
-            <Text style={styles.playerStatus}>
-              {currentTurnSeat === 3 ? 'Rolling…' : `${p3.tokensHome} token home`}
-            </Text>
+        {/* Bottom-Right Slot: Blue (Player 3 in 4P mode, Hidden spacer in 2P mode) */}
+        {!isTwoPlayerMode ? (
+          <View style={[styles.playerCard, currentTurnSeat === 3 && styles.playerCardActive]}>
+            <View style={[styles.playerDot, { backgroundColor: NOVA_COLORS.blue }]} />
+            <View style={styles.playerMeta}>
+              <Text style={styles.playerName} numberOfLines={1}>{p3.username}</Text>
+              <Text style={styles.playerStatus}>
+                {currentTurnSeat === 3 ? 'Rolling…' : `${p3.tokensHome} token home`}
+              </Text>
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={[styles.playerCard, styles.playerCardSpacer]} />
+        )}
       </View>
 
       {/* ACTIVE SPEECH BUBBLE */}
@@ -645,9 +729,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerTitleWrap: {
+    alignItems: 'center',
+  },
   headerTitle: {
     color: NOVA_COLORS.textPrimary,
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  headerSubtitle: {
+    color: NOVA_COLORS.accentGold,
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  exitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 124, 124, 0.22)',
+    borderWidth: 1,
+    borderColor: NOVA_COLORS.coral,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    gap: 4,
+  },
+  exitBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '800',
   },
   headerBadges: {
@@ -683,6 +792,17 @@ const styles = StyleSheet.create({
   playerCardActive: {
     borderColor: NOVA_COLORS.accentPurple,
     backgroundColor: '#1f2642',
+  },
+  playerCardSpacer: {
+    opacity: 0,
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+  },
+  nameBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 4,
   },
   playerDot: {
     width: 28,

@@ -16,21 +16,23 @@ export default function MatchmakingScreen() {
   const mode = (params.mode as string) || 'classic';
   const prize = (params.prize as string) || '2,000';
   const entry = (params.entry as string) || '500';
+  const players = (params.players as string) || '4';
+  const isTwoPlayer = players === '2';
 
-  const [seconds, setSeconds] = useState(8);
-  const [playersFound, setPlayersFound] = useState(3);
+  const [seconds, setSeconds] = useState(isTwoPlayer ? 4 : 8);
+  const [playersFound, setPlayersFound] = useState(isTwoPlayer ? 1 : 3);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          setPlayersFound(4);
+          setPlayersFound(isTwoPlayer ? 2 : 4);
           // Navigate to live game
           setTimeout(() => {
             router.replace({
               pathname: '/gameplay/[matchId]',
-              params: { matchId: `match_${Date.now()}`, mode, prize },
+              params: { matchId: `match_${Date.now()}`, mode, prize, players },
             } as any);
           }, 800);
           return 0;
@@ -40,23 +42,29 @@ export default function MatchmakingScreen() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [isTwoPlayer, players]);
 
   return (
     <View style={styles.container}>
       <NovaHeader
         title="Finding your table"
-        subtitle={`Classic · 4 players · ${entry} coins`}
+        subtitle={`Classic · ${isTwoPlayer ? '2 players (1v1 Diagonal)' : '4 players'} · ${entry} coins`}
         showBack={true}
         onBack={() => router.back()}
       />
 
       <View style={styles.content}>
-        <NovaBadge label="MATCHMAKING" color="purple" style={styles.badge} />
+        <NovaBadge
+          label={isTwoPlayer ? '1v1 DIAGONAL DUEL' : 'MATCHMAKING'}
+          color="purple"
+          style={styles.badge}
+        />
 
-        <Text style={styles.heading}>Good company is on the way.</Text>
+        <Text style={styles.heading}>
+          {isTwoPlayer ? 'Finding your diagonal companion…' : 'Good company is on the way.'}
+        </Text>
 
-        {/* 4 Player Slots */}
+        {/* Player Slots */}
         <View style={styles.slotsGrid}>
           {/* Player 1: You */}
           <View style={styles.playerSlot}>
@@ -67,46 +75,64 @@ export default function MatchmakingScreen() {
             <Text style={styles.slotStatus}>Ready</Text>
           </View>
 
-          {/* Player 2: Maya */}
+          {/* Player 2: Companion (Yellow, Diagonal) */}
           <View style={styles.playerSlot}>
-            <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.mint }]}>
-              <View style={styles.innerDot} />
-            </View>
-            <Text style={styles.slotName}>Maya</Text>
-            <Text style={styles.slotStatus}>Ready</Text>
-          </View>
-
-          {/* Player 3: Sam */}
-          <View style={styles.playerSlot}>
-            <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.blue }]}>
-              <View style={styles.innerDot} />
-            </View>
-            <Text style={styles.slotName}>Sam</Text>
-            <Text style={styles.slotStatus}>Ready</Text>
-          </View>
-
-          {/* Player 4: Searching / Zara */}
-          <View style={styles.playerSlot}>
-            {playersFound === 4 ? (
-              <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.gold }]}>
-                <View style={styles.innerDot} />
-              </View>
+            {playersFound >= 2 ? (
+              <>
+                <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.gold }]}>
+                  <View style={styles.innerDot} />
+                </View>
+                <Text style={styles.slotName}>Companion</Text>
+                <Text style={styles.slotStatus}>Ready (Diagonal)</Text>
+              </>
             ) : (
-              <View style={[styles.avatarCircle, styles.searchingCircle]}>
-                <NovaDie value={3} size={36} rolling={true} theme="nova" />
-              </View>
+              <>
+                <View style={[styles.avatarCircle, styles.searchingCircle]}>
+                  <NovaDie value={2} size={36} rolling={true} theme="nova" />
+                </View>
+                <Text style={styles.slotName}>Companion</Text>
+                <Text style={styles.slotStatus}>Finding…</Text>
+              </>
             )}
-            <Text style={styles.slotName}>
-              {playersFound === 4 ? 'Zara' : 'Searching…'}
-            </Text>
-            <Text style={styles.slotStatus}>
-              {playersFound === 4 ? 'Ready' : 'Finding'}
-            </Text>
           </View>
+
+          {!isTwoPlayer && (
+            <>
+              {/* Player 3: Maya */}
+              <View style={styles.playerSlot}>
+                <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.mint }]}>
+                  <View style={styles.innerDot} />
+                </View>
+                <Text style={styles.slotName}>Maya</Text>
+                <Text style={styles.slotStatus}>Ready</Text>
+              </View>
+
+              {/* Player 4: Searching / Sam */}
+              <View style={styles.playerSlot}>
+                {playersFound === 4 ? (
+                  <>
+                    <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.blue }]}>
+                      <View style={styles.innerDot} />
+                    </View>
+                    <Text style={styles.slotName}>Sam</Text>
+                    <Text style={styles.slotStatus}>Ready</Text>
+                  </>
+                ) : (
+                  <>
+                    <View style={[styles.avatarCircle, styles.searchingCircle]}>
+                      <NovaDie value={4} size={36} rolling={true} theme="nova" />
+                    </View>
+                    <Text style={styles.slotName}>Sam</Text>
+                    <Text style={styles.slotStatus}>Finding…</Text>
+                  </>
+                )}
+              </View>
+            </>
+          )}
         </View>
 
         <Text style={styles.timerText}>
-          {playersFound} of 4 players ready · 00:{seconds < 10 ? `0${seconds}` : seconds}
+          {playersFound} of {isTwoPlayer ? 2 : 4} players ready · 00:{seconds < 10 ? `0${seconds}` : seconds}
         </Text>
       </View>
 
