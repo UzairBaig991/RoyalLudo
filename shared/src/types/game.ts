@@ -27,6 +27,7 @@ export interface Token {
   id: number; // 0, 1, 2, 3
   color: PlayerColor;
   position: TokenPosition;
+  isShielded?: boolean;
 }
 
 export interface Player {
@@ -80,8 +81,10 @@ export interface ValidMove {
   } | null;
 }
 
+export type PowerUpType = 'REROLL' | 'MAGIC_SIX' | 'SHIELD';
+
 export interface GameEvent {
-  type: 'DICE_ROLLED' | 'TOKEN_MOVED' | 'TOKEN_CAPTURED' | 'KILL_ACHIEVED' | 'TOKEN_FINISHED' | 'EXTRA_TURN' | 'TURN_PASSED' | 'PLAYER_WON';
+  type: 'DICE_ROLLED' | 'TOKEN_MOVED' | 'TOKEN_CAPTURED' | 'KILL_ACHIEVED' | 'TOKEN_FINISHED' | 'EXTRA_TURN' | 'TURN_PASSED' | 'PLAYER_WON' | 'POWER_UP_USED';
   seatIndex: number;
   payload: any;
   timestamp: number;
@@ -107,4 +110,5 @@ export interface GameState {
     rank: number;
   }[];
   history: GameEvent[];
+  powerUpsUsed?: Record<number, { reroll: number; magicSix: number; shield: number }>;
 }

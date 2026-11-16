@@ -9,6 +9,7 @@ import { NovaDie } from '../../src/components/nova/NovaDie';
 import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
 import { useMissionsStore } from '../../src/store/useMissionsStore';
+import { soundEffects } from '../../src/utils/soundEffects';
 
 const SEGMENTS = [
   { val: 100, color: '#30254e' },
@@ -30,6 +31,7 @@ export default function LuckyRollScreen() {
   const handleSpin = () => {
     if (spinning || !luckyRollAvailable) return;
     setSpinning(true);
+    soundEffects.playDiceRoll();
 
     const randomRotations = 4 + Math.random() * 3;
     Animated.timing(spinAnim, {
@@ -41,6 +43,7 @@ export default function LuckyRollScreen() {
       const wonCoins = performLuckyRoll();
       addGold(wonCoins);
       setSpinning(false);
+      soundEffects.playVictory();
       Alert.alert('Lucky Roll Victory! 🎲✨', `You won +${wonCoins} coins!`);
     });
   };

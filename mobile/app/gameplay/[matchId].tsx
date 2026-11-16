@@ -19,6 +19,7 @@ import { NovaBadge } from '../../src/components/nova/NovaBadge';
 import { NovaDie } from '../../src/components/nova/NovaDie';
 import { NovaButton } from '../../src/components/nova/NovaButton';
 import { LudoBoardSvg } from '../../src/components/board/LudoBoardSvg';
+import { soundEffects as sfxEngine } from '../../src/utils/soundEffects';
 import { useGameStore } from '../../src/store/useGameStore';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
@@ -37,7 +38,7 @@ export default function LiveGameScreen() {
   }>();
 
   const { profile } = useAuthStore();
-  const { addGold } = useEconomyStore();
+  const { gold, gems, addGold, spendGems } = useEconomyStore();
   const { soundEffects, gameMusic, allowVoiceChat, toggleSetting } = useSettingsStore();
 
   const {
@@ -46,6 +47,7 @@ export default function LiveGameScreen() {
     lastDiceRoll,
     rollDice,
     selectAndMoveToken,
+    usePowerUp,
     triggerBotTurn,
     resetGame,
   } = useGameStore();
@@ -54,6 +56,10 @@ export default function LiveGameScreen() {
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [voiceOn, setVoiceOn] = useState<boolean>(false);
+
+  // Floating Animated Reactions & Speech Bubble
+  const [floatingEmojis, setFloatingEmojis] = useState<{ id: string; emoji: string; anim: Animated.Value }[]>([]);
+  const [activeSpeech, setActiveSpeech] = useState<{ sender: string; text: string } | null>(null);
 
   // In-Game Chat History
   const [chatMessages, setChatMessages] = useState([
@@ -69,6 +75,46 @@ export default function LiveGameScreen() {
   const currentTurnSeat = gameState?.currentTurnSeat ?? 0;
   const isMyTurn = currentTurnSeat === 0;
   const canRollDice = isMyTurn && gameState?.turnPhase === 'ROLL_DICE' && !isRolling;
+
+  const triggerReaction = (emoji: string) => {
+    sfxEngine.playEmoji();
+    const anim = new Animated.Value(0);
+    const id = Date.now().toString() + Math.random();
+    setFloatingEmojis((prev) => [...prev, { id, emoji, anim }]);
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 1700,
+      useNativeDriver: true,
+    }).start(() => {
+      setFloatingEmojis((prev) => prev.filter((item) => item.id !== id));
+    });
+  };
+
+  const handleUsePowerUp = (type: 'REROLL' | 'MAGIC_SIX' | 'SHIELD') => {
+    if (!isMyTurn) {
+      Alert.alert('Turn Required', 'Wait for your turn to activate boosters!');
+      return;
+    }
+    const cost = type === 'MAGIC_SIX' ? 2 : 1;
+    if (gems < cost) {
+      Alert.alert('Gems Needed', `This booster requires ${cost} gems. Visit the Shop to get gems!`, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Go to Shop', onPress: () => router.push('/shop/gems' as any) },
+      ]);
+      return;
+    }
+
+    const spent = spendGems(cost);
+    if (!spent) return;
+
+    sfxEngine.playPowerUp();
+    const res = usePowerUp(0, type);
+    if (res.success) {
+      triggerReaction(type === 'MAGIC_SIX' ? '🎯' : type === 'SHIELD' ? '🛡️' : '⚡');
+    } else {
+      Alert.alert('Booster', res.message);
+    }
+  };
 
   // Handle Turn Countdown Timer
   useEffect(() => {
@@ -98,6 +144,7 @@ export default function LiveGameScreen() {
       const winner = gameState.rankings[0];
       const isWinner = winner && (winner.username === profile?.username || winner.username === 'You' || winner.seatIndex === 0);
       if (isWinner) {
+        sfxEngine.playVictory();
         addGold(2000);
       }
       setTimeout(() => {
@@ -105,28 +152,44 @@ export default function LiveGameScreen() {
           pathname: '/gameplay/result',
           params: { won: isWinner ? 'true' : 'false', coins: '2000' },
         } as any);
-      }, 1200);
+      }, 1400);
     }
   }, [gameState?.turnPhase]);
 
   const handleRoll = () => {
     if (canRollDice) {
+      sfxEngine.playDiceRoll();
       rollDice(0);
     }
   };
 
   const handleSelectToken = (seatIndex: number, tokenId: number) => {
     if (seatIndex === currentTurnSeat && gameState?.turnPhase === 'SELECT_TOKEN') {
+      const move = gameState.validMoves.find((m) => m.tokenId === tokenId);
+      if (move) {
+        if (move.capturesToken) {
+          sfxEngine.playCapture();
+          triggerReaction('💥');
+        } else if (move.isFinish) {
+          sfxEngine.playFinish();
+          triggerReaction('⭐');
+        } else {
+          sfxEngine.playTokenStep();
+        }
+      }
       selectAndMoveToken(seatIndex, tokenId);
     }
   };
 
   const handleSendChat = (message: string) => {
     if (!message.trim()) return;
+    sfxEngine.playEmoji();
     setChatMessages((prev) => [
       ...prev,
       { id: Date.now().toString(), sender: 'YOU', text: message.trim() },
     ]);
+    setActiveSpeech({ sender: 'YOU', text: message.trim() });
+    setTimeout(() => setActiveSpeech(null), 3200);
     setChatInput('');
   };
 
@@ -262,6 +325,62 @@ export default function LiveGameScreen() {
             </Text>
           </View>
         </View>
+      </View>
+
+      {/* ACTIVE SPEECH BUBBLE */}
+      {activeSpeech && (
+        <View style={styles.speechBubble}>
+          <Text style={styles.speechBubbleText}>💬 {activeSpeech.sender}: {activeSpeech.text}</Text>
+        </View>
+      )}
+
+      {/* 4.5. BOOSTERS & QUICK REACTIONS BAR */}
+      <View style={styles.boostersAndReactionsRow}>
+        <View style={styles.boostersGroup}>
+          <TouchableOpacity
+            style={[styles.boosterBtn, (!isMyTurn || gems < 1) && styles.boosterBtnDisabled]}
+            onPress={() => handleUsePowerUp('REROLL')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.boosterEmoji}>⚡</Text>
+            <Text style={styles.boosterText}>Reroll 1◇</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.boosterBtn, (!isMyTurn || gems < 2) && styles.boosterBtnDisabled]}
+            onPress={() => handleUsePowerUp('MAGIC_SIX')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.boosterEmoji}>🎯</Text>
+            <Text style={styles.boosterText}>Six 2◇</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.boosterBtn, (!isMyTurn || gems < 1) && styles.boosterBtnDisabled]}
+            onPress={() => handleUsePowerUp('SHIELD')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.boosterEmoji}>🛡️</Text>
+            <Text style={styles.boosterText}>Shield 1◇</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.reactionsScroll}
+        >
+          {['😂', '😡', '🔥', '👑', '🎲', '💎', '👏'].map((em) => (
+            <TouchableOpacity
+              key={em}
+              style={styles.reactionPill}
+              onPress={() => triggerReaction(em)}
+              activeOpacity={0.6}
+            >
+              <Text style={styles.reactionEmoji}>{em}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* 5. INTERACTIVE DIE & ACTION CARD (Figma Surface #30254e) */}
@@ -456,6 +575,39 @@ export default function LiveGameScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* FLOATING EMOJI ANIMATED OVERLAY */}
+      {floatingEmojis.map((item) => (
+        <Animated.View
+          key={item.id}
+          pointerEvents="none"
+          style={[
+            styles.floatingEmoji,
+            {
+              opacity: item.anim.interpolate({
+                inputRange: [0, 0.2, 0.75, 1],
+                outputRange: [0, 1, 1, 0],
+              }),
+              transform: [
+                {
+                  translateY: item.anim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -160],
+                  }),
+                },
+                {
+                  scale: item.anim.interpolate({
+                    inputRange: [0, 0.3, 1],
+                    outputRange: [0.6, 1.4, 1.1],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.floatingEmojiText}>{item.emoji}</Text>
+        </Animated.View>
+      ))}
     </SafeAreaView>
   );
 }
@@ -769,5 +921,88 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
     marginTop: 10,
+  },
+  speechBubble: {
+    alignSelf: 'center',
+    backgroundColor: '#30254e',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: NOVA_COLORS.accentPurple,
+    marginVertical: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  speechBubbleText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  boostersAndReactionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 4,
+    gap: 8,
+  },
+  boostersGroup: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  boosterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#191e33',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#30254e',
+    gap: 4,
+  },
+  boosterBtnDisabled: {
+    opacity: 0.45,
+  },
+  boosterEmoji: {
+    fontSize: 13,
+  },
+  boosterText: {
+    color: NOVA_COLORS.accentPurple,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  reactionsScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingRight: 6,
+  },
+  reactionPill: {
+    backgroundColor: '#191e33',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#30254e',
+  },
+  reactionEmoji: {
+    fontSize: 16,
+  },
+  floatingEmoji: {
+    position: 'absolute',
+    bottom: 200,
+    alignSelf: 'center',
+    zIndex: 999,
+  },
+  floatingEmojiText: {
+    fontSize: 48,
+    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 8,
   },
 });

@@ -88,6 +88,24 @@ export default function DailyRewardsScreen() {
             </Text>
           </View>
         </NovaCard>
+
+        {/* Scratch & Win Banner */}
+        <TouchableOpacity
+          style={styles.scratchBanner}
+          activeOpacity={0.8}
+          onPress={() => router.push('/rewards/scratch' as any)}
+        >
+          <View style={styles.scratchBannerIcon}>
+            <Ionicons name="sparkles" size={24} color={NOVA_COLORS.accentGold} />
+          </View>
+          <View style={styles.scratchBannerMeta}>
+            <Text style={styles.scratchBannerTitle}>Daily Scratch & Win ✨</Text>
+            <Text style={styles.scratchBannerDesc}>
+              Scratch foils to win up to 2,500 coins & gems!
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={NOVA_COLORS.accentPurple} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.footer}>
@@ -204,6 +222,38 @@ const styles = StyleSheet.create({
   },
   surpriseDesc: {
     color: NOVA_COLORS.accentGold,
+    fontSize: 12,
+  },
+  scratchBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#191e33',
+    borderWidth: 1.5,
+    borderColor: NOVA_COLORS.accentPurple,
+    borderRadius: 20,
+    padding: 16,
+    marginTop: 14,
+  },
+  scratchBannerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 211, 123, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  scratchBannerMeta: {
+    flex: 1,
+  },
+  scratchBannerTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  scratchBannerDesc: {
+    color: NOVA_COLORS.textSecondary,
     fontSize: 12,
   },
   footer: {

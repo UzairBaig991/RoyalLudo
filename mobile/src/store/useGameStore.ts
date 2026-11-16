@@ -21,6 +21,11 @@ interface GameStoreState {
   }) => void;
   rollDice: (seatIndex: number, injectedRoll?: number) => void;
   selectAndMoveToken: (seatIndex: number, tokenId: number) => void;
+  usePowerUp: (
+    seatIndex: number,
+    type: 'REROLL' | 'MAGIC_SIX' | 'SHIELD',
+    targetTokenId?: number
+  ) => { success: boolean; message: string };
   triggerBotTurn: () => void;
   syncOnlineState: (serverState: GameState) => void;
   toggleSound: () => void;
@@ -100,6 +105,26 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     } catch (e) {
       console.warn('Move error:', e);
     }
+  },
+
+  usePowerUp: (seatIndex, type, targetTokenId) => {
+    const { game } = get();
+    if (!game) return { success: false, message: 'No active game.' };
+
+    const res = game.usePowerUp(seatIndex, type, targetTokenId);
+    if (res.success) {
+      set({
+        gameState: game.getState(),
+        lastDiceRoll: res.diceValue ?? get().lastDiceRoll,
+      });
+
+      if (type === 'REROLL' && res.validMoves && res.validMoves.length === 1) {
+        setTimeout(() => {
+          get().selectAndMoveToken(seatIndex, res.validMoves![0].tokenId);
+        }, 350);
+      }
+    }
+    return res;
   },
 
   triggerBotTurn: () => {

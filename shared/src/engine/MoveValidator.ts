@@ -63,7 +63,7 @@ export class MoveValidator {
                 (t) => t.position.state === 'PATH' && t.position.perimeterIndex === destPerimeterIndex
               );
 
-              if (opponentToken) {
+              if (opponentToken && !opponentToken.isShielded) {
                 capturesToken = {
                   color: otherPlayer.color,
                   tokenId: opponentToken.id,

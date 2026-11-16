@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import Svg, { Rect, Circle, Polygon, Path, G } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { ROYAL_COLORS, COLOR_MAP } from '../../theme/colors';
-import { LudoBoard } from '@royal-ludo/shared';
-import type { GameState, Player, Token, ValidMove } from '@royal-ludo/shared';
+import { LudoBoard } from '../../../../shared/src/engine/LudoBoard';
+import type { GameState, Player, Token, ValidMove } from '../../../../shared/src/types';
 
 interface LudoBoardSvgProps {
   boardSize?: number;
@@ -258,11 +259,11 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
                 height: tokenDiameter,
                 borderRadius: tokenDiameter / 2,
                 backgroundColor: color.primary,
-                borderColor: isValid ? ROYAL_COLORS.goldLight : '#FFFFFF',
-                borderWidth: isValid ? 2.5 : 1.5,
+                borderColor: token.isShielded ? '#83e6c0' : isValid ? ROYAL_COLORS.goldLight : '#FFFFFF',
+                borderWidth: token.isShielded ? 3 : isValid ? 2.5 : 1.5,
                 transform: [{ scale: isValid ? 1.12 : 1 }],
                 elevation: isValid ? 8 : 4,
-                shadowColor: isValid ? ROYAL_COLORS.gold : '#000',
+                shadowColor: token.isShielded ? '#83e6c0' : isValid ? ROYAL_COLORS.gold : '#000',
                 shadowOpacity: isValid ? 0.9 : 0.4,
                 shadowRadius: isValid ? 6 : 3,
               },
@@ -280,9 +281,11 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
                 },
               ]}
             >
-              {items.length > 1 && (
+              {token.isShielded ? (
+                <Ionicons name="shield" size={10} color="#0d101e" />
+              ) : items.length > 1 ? (
                 <Text style={styles.stackCountText}>{items.length}</Text>
-              )}
+              ) : null}
             </View>
           </TouchableOpacity>
         );

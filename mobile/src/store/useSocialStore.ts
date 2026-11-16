@@ -32,13 +32,22 @@ interface SocialState {
   inbox: InboxItem[];
   clubGoalProgress: number; // e.g. 384 of 500
   clubMessages: ClubChatMessage[];
+  clanChestLevel: number;
+  clanChestTrophies: number;
+  clanChestMaxTrophies: number;
+  clanChestClaimed: boolean;
   claimInboxItem: (id: string) => number;
   sendGiftToFriend: (friendName: string, amount: number, note: string) => boolean;
   addClubMessage: (message: string) => void;
   inviteFriend: (code: string) => void;
+  claimClanChest: () => { coins: number; gems: number };
 }
 
 export const useSocialStore = create<SocialState>((set, get) => ({
+  clanChestLevel: 7,
+  clanChestTrophies: 3840,
+  clanChestMaxTrophies: 5000,
+  clanChestClaimed: false,
   friends: [
     {
       id: 'f1',
@@ -177,5 +186,11 @@ export const useSocialStore = create<SocialState>((set, get) => ({
   },
   inviteFriend: (code: string) => {
     // invite logic
+  },
+  claimClanChest: () => {
+    const { clanChestClaimed } = get();
+    if (clanChestClaimed) return { coins: 0, gems: 0 };
+    set({ clanChestClaimed: true });
+    return { coins: 3500, gems: 35 };
   },
 }));

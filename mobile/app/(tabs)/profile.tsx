@@ -11,7 +11,17 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function PlayerProfileScreen() {
   const router = useRouter();
-  const { profile } = useAuthStore();
+  const { profile, matchHistory } = useAuthStore();
+
+  const stats = profile?.stats || {
+    matchesPlayed: 248,
+    matchesWon: 142,
+    winPercentage: 57.3,
+    tokensCaptured: 84,
+    tokensFinished: 76,
+    winStreak: 4,
+    highestWinStreak: 6,
+  };
 
   return (
     <ScrollView
@@ -55,20 +65,76 @@ export default function PlayerProfileScreen() {
         {/* Stats 3-Column Card */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={styles.statVal}>248</Text>
+            <Text style={styles.statVal}>{stats.matchesPlayed}</Text>
             <Text style={styles.statLabel}>Games</Text>
           </View>
 
           <View style={styles.statBox}>
-            <Text style={styles.statVal}>142</Text>
+            <Text style={styles.statVal}>{stats.matchesWon}</Text>
             <Text style={styles.statLabel}>Wins</Text>
           </View>
 
           <View style={styles.statBox}>
-            <Text style={styles.statVal}>57%</Text>
+            <Text style={styles.statVal}>{stats.winPercentage}%</Text>
             <Text style={styles.statLabel}>Win rate</Text>
           </View>
         </View>
+
+        {/* Combat Stats Card */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>{stats.tokensCaptured}</Text>
+            <Text style={styles.statLabel}>Kills</Text>
+          </View>
+
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>{stats.winStreak}🔥</Text>
+            <Text style={styles.statLabel}>Streak</Text>
+          </View>
+
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>{stats.tokensFinished}</Text>
+            <Text style={styles.statLabel}>Home</Text>
+          </View>
+        </View>
+
+        {/* Match History Card */}
+        <NovaCard variant="card" style={styles.historyCard}>
+          <View style={styles.historyHeader}>
+            <Text style={styles.sectionTitle}>Recent match history</Text>
+            <NovaBadge label="VERIFIED" color="mint" />
+          </View>
+
+          {matchHistory.map((item) => (
+            <View key={item.id} style={styles.historyItem}>
+              <View style={styles.historyMain}>
+                <View style={styles.historyTitleRow}>
+                  <View
+                    style={[
+                      styles.outcomeTag,
+                      item.outcome === 'WIN' ? styles.outcomeWin : styles.outcomeLoss,
+                    ]}
+                  >
+                    <Text style={styles.outcomeTagText}>{item.outcome}</Text>
+                  </View>
+                  <Text style={styles.historyOpponent}>{item.opponentName}</Text>
+                </View>
+                <Text style={styles.historySub}>
+                  {item.mode} · {item.tokensCaptured} Kills · {item.date}
+                </Text>
+              </View>
+
+              <Text
+                style={[
+                  styles.historyDelta,
+                  item.coinsDelta >= 0 ? styles.deltaWin : styles.deltaLoss,
+                ]}
+              >
+                {item.coinsDelta >= 0 ? `+${item.coinsDelta.toLocaleString()}` : item.coinsDelta.toLocaleString()} 🪙
+              </Text>
+            </View>
+          ))}
+        </NovaCard>
 
         {/* Achievements Card */}
         <NovaCard variant="card" style={styles.achievementsCard}>
@@ -213,6 +279,69 @@ const styles = StyleSheet.create({
   statLabel: {
     color: NOVA_COLORS.textSecondary,
     fontSize: 11,
+  },
+  historyCard: {
+    padding: 18,
+    marginBottom: 14,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  historyMain: {
+    flex: 1,
+    marginRight: 10,
+  },
+  historyTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 3,
+  },
+  outcomeTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  outcomeWin: {
+    backgroundColor: 'rgba(131, 230, 192, 0.2)',
+  },
+  outcomeLoss: {
+    backgroundColor: 'rgba(255, 124, 124, 0.2)',
+  },
+  outcomeTagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  historyOpponent: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  historySub: {
+    color: NOVA_COLORS.textMuted,
+    fontSize: 11,
+  },
+  historyDelta: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  deltaWin: {
+    color: NOVA_COLORS.accentMint,
+  },
+  deltaLoss: {
+    color: NOVA_COLORS.coral,
   },
   achievementsCard: {
     padding: 18,

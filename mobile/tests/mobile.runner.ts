@@ -131,6 +131,29 @@ function runMobileTests() {
   const redStart = LudoBoard.resolveGridCoordinate('RED', 0, 0);
   assert(redStart.row === 13 && redStart.col === 6, 'Red start tile is grid (13, 6)');
 
+  // TEST 9: In-Game Power-Ups & Booster Engine
+  console.log('\nTest Suite 9: In-Game Power-Ups & Booster Engine');
+  const magicRes = gameStore.usePowerUp(0, 'MAGIC_SIX');
+  assert(magicRes.success === true, 'Magic Six booster successfully activates on player turn');
+  assert(useGameStore.getState().gameState?.currentDiceValue === 6, 'Magic Six sets active dice value to 6');
+  assert(useGameStore.getState().gameState?.validMoves.length === 4, 'Magic Six unlocks all 4 tokens from base');
+
+  // TEST 10: Advanced Match History & Clan Chest Progression
+  console.log('\nTest Suite 10: Advanced Match History & Clan Progression');
+  auth.recordMatchResult({
+    opponentName: 'Test Rival',
+    mode: 'Classic Table',
+    outcome: 'WIN',
+    coinsDelta: 2000,
+    tokensCaptured: 3,
+  });
+  assert(useAuthStore.getState().matchHistory[0].opponentName === 'Test Rival', 'Match history records new match entry');
+  assert(useAuthStore.getState().profile?.stats.tokensCaptured! >= 3, 'Combat kills increment in persistent stats');
+
+  const chestReward = social.claimClanChest();
+  assert(chestReward.coins === 3500 && chestReward.gems === 35, 'Clan chest awards 3,500 coins and 35 gems');
+  assert(useSocialStore.getState().clanChestClaimed === true, 'Clan chest marked claimed');
+
   console.log('\n====================================================');
   console.log(`MOBILE TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

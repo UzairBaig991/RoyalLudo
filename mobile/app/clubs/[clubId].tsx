@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { NOVA_COLORS } from '../../src/theme/colors';
@@ -7,9 +7,28 @@ import { NovaHeader } from '../../src/components/nova/NovaHeader';
 import { NovaBadge } from '../../src/components/nova/NovaBadge';
 import { NovaCard } from '../../src/components/nova/NovaCard';
 import { NovaButton } from '../../src/components/nova/NovaButton';
+import { useSocialStore } from '../../src/store/useSocialStore';
+import { useEconomyStore } from '../../src/store/useEconomyStore';
+import { soundEffects } from '../../src/utils/soundEffects';
 
 export default function ClubOverviewScreen() {
   const router = useRouter();
+  const { clanChestLevel, clanChestTrophies, clanChestMaxTrophies, clanChestClaimed, claimClanChest } = useSocialStore();
+  const { addGold, addGems } = useEconomyStore();
+
+  const handleOpenChest = () => {
+    if (clanChestClaimed) return;
+    const rewards = claimClanChest();
+    if (rewards.coins > 0) {
+      addGold(rewards.coins);
+      addGems(rewards.gems);
+      soundEffects.playVictory();
+      Alert.alert(
+        '🏆 Clan Chest Claimed!',
+        `Your club achieved Level ${clanChestLevel}!\n\nWon:\n+${rewards.coins.toLocaleString()} Coins 🪙\n+${rewards.gems} Gems 💎`
+      );
+    }
+  };
 
   return (
     <ScrollView
@@ -38,6 +57,45 @@ export default function ClubOverviewScreen() {
             <NovaBadge label="#124 GLOBAL" color="gold" style={styles.badgeMargin} />
             <NovaBadge label="12 ONLINE" color="mint" />
           </View>
+        </NovaCard>
+
+        {/* Clan Chest Card */}
+        <NovaCard variant="card" style={styles.chestCard}>
+          <View style={styles.chestHeader}>
+            <View style={styles.chestTitleWrap}>
+              <Text style={styles.chestTitle}>Level {clanChestLevel} Clan Chest 🏆</Text>
+              <Text style={styles.chestSub}>
+                {clanChestTrophies.toLocaleString()} / {clanChestMaxTrophies.toLocaleString()} Trophies
+              </Text>
+            </View>
+            <NovaBadge
+              label={clanChestClaimed ? 'CLAIMED ✓' : 'UNLOCKED'}
+              color={clanChestClaimed ? 'purple' : 'gold'}
+            />
+          </View>
+
+          <View style={styles.chestTrack}>
+            <View
+              style={[
+                styles.chestFill,
+                { width: `${(clanChestTrophies / clanChestMaxTrophies) * 100}%` },
+              ]}
+            />
+          </View>
+
+          <View style={styles.chestRewardsRow}>
+            <Text style={styles.chestRewardItem}>🪙 3,500 Coins</Text>
+            <Text style={styles.chestRewardItem}>💎 35 Gems</Text>
+            <Text style={styles.chestRewardItem}>👑 Club Frame</Text>
+          </View>
+
+          <NovaButton
+            title={clanChestClaimed ? 'Chest Claimed ✓' : 'Open Clan Chest ✨'}
+            variant={clanChestClaimed ? 'dark' : 'gold'}
+            disabled={clanChestClaimed}
+            onPress={handleOpenChest}
+            style={styles.chestBtn}
+          />
         </NovaCard>
 
         {/* Club Activity */}
@@ -144,6 +202,59 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '800',
     marginBottom: 14,
+  },
+  chestCard: {
+    padding: 18,
+    borderRadius: 20,
+    marginBottom: 24,
+  },
+  chestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  chestTitleWrap: {
+    flex: 1,
+  },
+  chestTitle: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  chestSub: {
+    color: NOVA_COLORS.accentGold,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  chestTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#0d101e',
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  chestFill: {
+    height: '100%',
+    backgroundColor: NOVA_COLORS.accentGold,
+    borderRadius: 4,
+  },
+  chestRewardsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 14,
+    backgroundColor: '#191e33',
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  chestRewardItem: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  chestBtn: {
+    width: '100%',
   },
   activityList: {},
   activityRow: {
