@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
-  <script src="/socket.io/socket.io.js">
+  <script src="/socket.io/socket.io.js" onerror="console.log('Socket.io offline - running in standalone mode')"></script>
+  <script>
     // Complete authoritative game initializer
     function initGame(options = {}) {
       const count = options.playerCount || gameState.activePlayerCount || 4;
@@ -1134,6 +1135,48 @@
       line-height: 1;
     }
 
+    /* GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER */
+    .ls-turn-announcement-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 5px 12px;
+      margin: 2px auto 4px auto;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 12px;
+      background: rgba(231, 76, 60, 0.22);
+      border: 1.5px solid #E74C4C;
+      box-shadow: 0 0 12px rgba(231, 76, 60, 0.35);
+      transition: all 0.25s ease;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .ls-turn-banner-dot {
+      font-size: 11px;
+    }
+    .ls-turn-banner-text {
+      font-family: 'Fredoka', cursive;
+      font-size: 12px;
+      font-weight: 800;
+      color: #FFF;
+      letter-spacing: 0.5px;
+    }
+    .ls-turn-banner-pill {
+      font-size: 9px;
+      font-weight: 900;
+      background: #FFDF00;
+      color: #0d101e;
+      padding: 2px 7px;
+      border-radius: 6px;
+      animation: pulseTap 0.9s infinite alternate ease-in-out;
+    }
+    @keyframes pulseTap {
+      from { transform: scale(1); }
+      to { transform: scale(1.08); }
+    }
+
     /* TOP PLAYERS HUD ROW */
     .ls-opponents-hud-row {
       display: flex;
@@ -2191,8 +2234,8 @@
     <section class="screen-view" id="view-game">
       <!-- 1. TOP HEADER (Image 2 Screen 3 replica) -->
       <div class="ls-in-game-header">
-        <button class="ls-icon-btn" onclick="exitToHome()" title="Leave Match">☰</button>
-        <button class="ls-info-pill" onclick="openGameInfoModal()">INFO</button>
+        <button class="ls-icon-btn" onclick="openInGameMenu()" title="Match Menu (Three Lines)">☰</button>
+        <button class="ls-info-pill" onclick="openMatchRulesModal()">INFO</button>
         <div class="ls-win-pill">
           <span style="font-size: 15px; margin-right: 4px;">🏆</span>
           <span class="ls-win-text" id="tableTitleDisplay">WIN 2,000</span>
@@ -2203,6 +2246,13 @@
           <button class="ls-plus-btn" onclick="switchNavTab('shop')">+</button>
         </div>
         <button class="ls-icon-btn" onclick="switchNavTab('shop')" title="Shop">🛒</button>
+      </div>
+
+      <!-- GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER -->
+      <div class="ls-turn-announcement-banner" id="turnAnnouncementBanner">
+        <span class="ls-turn-banner-dot" id="turnBannerDot">🔴</span>
+        <span class="ls-turn-banner-text" id="turnBannerText">YOUR TURN TO ROLL!</span>
+        <span class="ls-turn-banner-pill" id="turnBannerPill">TAP DICE 🎲</span>
       </div>
 
       <!-- 2. TOP OPPONENTS HUD ROW -->
@@ -2814,6 +2864,105 @@
         </div>
       </div>
       <button class="ls-btn-gold" style="width: 100%; padding: 10px 0; margin-top: 14px; font-size: 13px;" onclick="closeModals()">SAVE & CLOSE</button>
+    </div>
+  </div>
+
+  <!-- MODAL: IN-GAME MATCH MENU (THREE LINES ☰) -->
+  <div class="modal-overlay" id="inGameMenuModal" onclick="if(event.target===this)closeModals()">
+    <div class="league-modal-box" style="padding: 20px; max-width: 330px; border-radius: 18px; border: 2px solid #FFDF00; box-shadow: 0 0 25px rgba(255, 223, 0, 0.35);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="font-family: 'Fredoka', cursive; font-size: 20px; font-weight: 800; color: #FFDF00; display: flex; align-items: center; gap: 8px;">
+          <span>⚙️</span> MATCH MENU
+        </div>
+        <button style="background: #E74C4C; border: none; color: #FFF; width: 28px; height: 28px; border-radius: 14px; font-weight: 900; cursor: pointer;" onclick="closeModals()">✕</button>
+      </div>
+
+      <div style="font-size: 12px; color: #D9A0D7; margin-bottom: 14px; text-align: center;">
+        Match is in progress. Choose an option:
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px;">
+        <!-- CONTINUE PLAYING -->
+        <button class="ls-btn-gold" style="width: 100%; padding: 11px 0; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="closeModals()">
+          <span>▶️</span> CONTINUE PLAYING
+        </button>
+
+        <!-- RESTART MATCH -->
+        <button class="side-control-btn" style="width: 100%; justify-content: center; padding: 10px 0; font-size: 12px; font-weight: 800; border-color: #3498DB; color: #3498DB; background: rgba(52, 152, 219, 0.15);" onclick="restartCurrentMatch()">
+          <span>🔄</span> RESTART MATCH
+        </button>
+
+        <!-- GAME RULES & INFO -->
+        <button class="side-control-btn" style="width: 100%; justify-content: center; padding: 10px 0; font-size: 12px; font-weight: 800; border-color: #2ECC71; color: #2ECC71; background: rgba(46, 204, 113, 0.15);" onclick="openMatchRulesModal()">
+          <span>📜</span> RULES & STAR ZONES
+        </button>
+
+        <!-- AUTO-PLAY TOGGLE -->
+        <button class="side-control-btn" id="menuAutoPlayBtn" style="width: 100%; justify-content: center; padding: 10px 0; font-size: 12px; font-weight: 800; border-color: #A66606; color: #FFDF00; background: rgba(255, 223, 0, 0.15);" onclick="toggleAutoPlayFromMenu()">
+          <span>🤖</span> AUTO-PLAY: OFF
+        </button>
+      </div>
+
+      <!-- Settings Toggles Inside Menu -->
+      <div style="background: rgba(0,0,0,0.35); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 12px; font-weight: 800; color: #FFF;">🔊 Sound Effects</span>
+          <button class="side-control-btn" id="menuSoundToggleBtn" style="padding: 3px 10px; font-size: 11px; font-weight: 900; border-color: #2ECC71; color: #2ECC71;" onclick="toggleSoundFromMenu()">ON</button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 12px; font-weight: 800; color: #FFF;">🎙️ Voice Transmit</span>
+          <button class="side-control-btn" id="menuVoiceToggleBtn" style="padding: 3px 10px; font-size: 11px; font-weight: 900; border-color: #2ECC71; color: #2ECC71;" onclick="toggleVoiceFromMenu()">ACTIVE</button>
+        </div>
+      </div>
+
+      <!-- EXIT MATCH (DANGER BUTTON) -->
+      <button class="side-control-btn" style="width: 100%; justify-content: center; padding: 10px 0; font-size: 13px; font-weight: 900; border-color: #E74C3C; color: #FFF; background: rgba(231, 76, 60, 0.35);" onclick="confirmExitMatch()">
+        <span>🚪</span> EXIT GAME (LEAVE MATCH)
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: DETAILED GAME RULES & STAR ZONES -->
+  <div class="modal-overlay" id="rulesModal" onclick="if(event.target===this)closeModals()">
+    <div class="league-modal-box" style="padding: 20px; max-width: 360px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="font-family: 'Fredoka', cursive; font-size: 18px; font-weight: 800; color: #FFDF00;">
+          📜 ROYAL LUDO RULES
+        </div>
+        <button style="background: #E74C4C; border: none; color: #FFF; width: 28px; height: 28px; border-radius: 14px; font-weight: 900; cursor: pointer;" onclick="closeModals()">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; max-height: 340px; overflow-y: auto; text-align: left;">
+        <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 10px; border-left: 3px solid #FFDF00;">
+          <div style="font-weight: 800; color: #FFDF00; font-size: 12px; margin-bottom: 2px;">🎲 Roll 6 to Exit Base</div>
+          <div style="font-size: 11px; color: #EEE; line-height: 1.4;">Tokens remain protected in your home yard until a 6 is rolled to deploy onto the track.</div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 10px; border-left: 3px solid #2ECC71;">
+          <div style="font-weight: 800; color: #2ECC71; font-size: 12px; margin-bottom: 2px;">🌟 Safe Star Havens</div>
+          <div style="font-size: 11px; color: #EEE; line-height: 1.4;">The 4 colored starting squares and 4 star-marked tiles are safe. Tokens on these tiles cannot be captured.</div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 10px; border-left: 3px solid #E74C4C;">
+          <div style="font-weight: 800; color: #E74C4C; font-size: 12px; margin-bottom: 2px;">⚔️ Capturing & Kill Requirement</div>
+          <div style="font-size: 11px; color: #EEE; line-height: 1.4;">Landing on an unprotected opponent sends their token back to yard and awards you a bonus roll! In Classic, at least 1 kill is required to enter your home corridor.</div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 10px; border-left: 3px solid #3498DB;">
+          <div style="font-weight: 800; color: #3498DB; font-size: 12px; margin-bottom: 2px;">⚡ Bonus Rolls</div>
+          <div style="font-size: 11px; color: #EEE; line-height: 1.4;">Rolling a 6 or capturing an opponent token grants an immediate extra roll. Three consecutive 6s pass the turn.</div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.06); padding: 10px; border-radius: 10px; border-left: 3px solid #9B59B6;">
+          <div style="font-weight: 800; color: #9B59B6; font-size: 12px; margin-bottom: 2px;">👑 Winning the Match</div>
+          <div style="font-size: 11px; color: #EEE; line-height: 1.4;">In Classic & Master, navigate all 4 tokens into the central home triangle. In Quick mode, first to land 2 tokens home wins!</div>
+        </div>
+      </div>
+
+      <button class="ls-btn-gold" style="width: 100%; padding: 10px 0; margin-top: 14px; font-size: 13px;" onclick="closeModals()">
+        GOT IT! BACK TO MATCH
+      </button>
     </div>
   </div>
 
@@ -3821,12 +3970,158 @@
 
     function updateTurnHUD() {
       const seat = gameState.currentTurnSeat;
-      document.querySelectorAll('.hud-player-box').forEach(b => b.classList.remove('turn-active'));
-      const activeBox = document.getElementById(`hud-slot-${seat}`);
-      if (activeBox) activeBox.classList.add('turn-active');
+      const isMyTurn = seat === 0;
+      const colors = ['#E74C4C', '#2ECC71', '#F1C40F', '#3498DB'];
+      const colorNames = ['RED', 'GREEN', 'YELLOW', 'BLUE'];
+      const activeColor = colors[seat];
+      
+      // Update Pod Highlighting and Inactive Player Dimming
+      for (let i = 0; i < 4; i++) {
+        const pod = document.getElementById(`hud-slot-${i}`);
+        if (pod) {
+          if (i === seat) {
+            pod.style.opacity = '1';
+            pod.style.borderColor = activeColor;
+            pod.style.boxShadow = `0 0 16px ${activeColor}`;
+            pod.classList.add('active-turn');
+          } else {
+            pod.style.opacity = '0.45';
+            pod.style.borderColor = 'transparent';
+            pod.style.boxShadow = 'none';
+            pod.classList.remove('active-turn');
+          }
+        }
+      }
+
+      // Update Giant Turn Announcement Banner
+      const banner = document.getElementById('turnAnnouncementBanner');
+      const bannerText = document.getElementById('turnBannerText');
+      const bannerPill = document.getElementById('turnBannerPill');
+      const bannerDot = document.getElementById('turnBannerDot');
+      if (banner && bannerText) {
+        banner.style.borderColor = activeColor;
+        banner.style.background = `${activeColor}25`;
+        banner.style.boxShadow = `0 0 14px ${activeColor}40`;
+        const dots = ['🔴', '🟢', '🟡', '🔵'];
+        if (bannerDot) bannerDot.textContent = dots[seat];
+
+        if (isMyTurn) {
+          if (gameState.phase === 'ROLL_DICE') {
+            bannerText.textContent = 'YOUR TURN TO ROLL!';
+            if (bannerPill) {
+              bannerPill.style.display = 'inline-block';
+              bannerPill.textContent = 'TAP DICE 🎲';
+            }
+          } else if (gameState.phase === 'SELECT_TOKEN') {
+            bannerText.textContent = 'YOUR TURN · SELECT TOKEN!';
+            if (bannerPill) {
+              bannerPill.style.display = 'inline-block';
+              bannerPill.textContent = 'MOVE ♟️';
+            }
+          }
+        } else {
+          const playerName = gameState.players[seat]?.name || colorNames[seat];
+          bannerText.textContent = `${colorNames[seat]} TURN (${playerName})`;
+          if (bannerPill) bannerPill.style.display = 'none';
+        }
+      }
+
+      // Bouncing Arrow
       const arrow = document.getElementById('turnArrow');
-      if (arrow) arrow.style.display = (seat === 0 && gameState.phase === 'ROLL_DICE') ? 'block' : 'none';
+      if (arrow) arrow.style.display = (isMyTurn && gameState.phase === 'ROLL_DICE') ? 'block' : 'none';
+
+      // 3D Dice Station Glow
+      const diceArena = document.getElementById('diceBtn');
+      if (diceArena) {
+        if (isMyTurn && gameState.phase === 'ROLL_DICE') {
+          diceArena.classList.add('turn-ready');
+        } else {
+          diceArena.classList.remove('turn-ready');
+        }
+      }
+
       updateHomeLockIndicators();
+    }
+
+    // ==========================================================
+    // IN-GAME MATCH MENU (THREE LINES ☰) HANDLERS
+    // ==========================================================
+    function openInGameMenu() {
+      playTone(520, 'sine', 0.08, 0.2);
+      // Sync toggle states with buttons
+      const autoBtn = document.getElementById('menuAutoPlayBtn');
+      if (autoBtn) {
+        autoBtn.textContent = gameState.isAutoPlay ? '🤖 AUTO-PLAY: ON' : '🤖 AUTO-PLAY: OFF';
+        autoBtn.style.color = gameState.isAutoPlay ? '#2ECC71' : '#FFDF00';
+        autoBtn.style.borderColor = gameState.isAutoPlay ? '#2ECC71' : '#A66606';
+      }
+      const soundBtn = document.getElementById('menuSoundToggleBtn');
+      if (soundBtn) {
+        soundBtn.textContent = soundEnabled ? 'ON' : 'OFF';
+        soundBtn.style.color = soundEnabled ? '#2ECC71' : '#E74C4C';
+        soundBtn.style.borderColor = soundEnabled ? '#2ECC71' : '#E74C4C';
+      }
+      const voiceBtn = document.getElementById('menuVoiceToggleBtn');
+      if (voiceBtn) {
+        voiceBtn.textContent = isVoiceMicActive ? 'ACTIVE' : 'MUTED';
+        voiceBtn.style.color = isVoiceMicActive ? '#2ECC71' : '#E74C4C';
+        voiceBtn.style.borderColor = isVoiceMicActive ? '#2ECC71' : '#E74C4C';
+      }
+      document.getElementById('inGameMenuModal').classList.add('open');
+    }
+
+    function toggleAutoPlayFromMenu() {
+      toggleAutoPlay();
+      const autoBtn = document.getElementById('menuAutoPlayBtn');
+      if (autoBtn) {
+        autoBtn.textContent = gameState.isAutoPlay ? '🤖 AUTO-PLAY: ON' : '🤖 AUTO-PLAY: OFF';
+        autoBtn.style.color = gameState.isAutoPlay ? '#2ECC71' : '#FFDF00';
+        autoBtn.style.borderColor = gameState.isAutoPlay ? '#2ECC71' : '#A66606';
+      }
+    }
+
+    function toggleSoundFromMenu() {
+      toggleSound();
+      const soundBtn = document.getElementById('menuSoundToggleBtn');
+      if (soundBtn) {
+        soundBtn.textContent = soundEnabled ? 'ON' : 'OFF';
+        soundBtn.style.color = soundEnabled ? '#2ECC71' : '#E74C4C';
+        soundBtn.style.borderColor = soundEnabled ? '#2ECC71' : '#E74C4C';
+      }
+    }
+
+    function toggleVoiceFromMenu() {
+      toggleVoiceMic();
+      const voiceBtn = document.getElementById('menuVoiceToggleBtn');
+      if (voiceBtn) {
+        voiceBtn.textContent = isVoiceMicActive ? 'ACTIVE' : 'MUTED';
+        voiceBtn.style.color = isVoiceMicActive ? '#2ECC71' : '#E74C4C';
+        voiceBtn.style.borderColor = isVoiceMicActive ? '#2ECC71' : '#E74C4C';
+      }
+    }
+
+    function restartCurrentMatch() {
+      closeModals();
+      playTone(440, 'triangle', 0.15, 0.25);
+      showNotificationToast('🔄 Restarting match...');
+      setTimeout(() => {
+        initGame({ playerCount: gameState.activePlayerCount || 2 });
+        showNotificationToast('🎲 Match restarted! Roll to play.');
+      }, 300);
+    }
+
+    function confirmExitMatch() {
+      if (confirm('Are you sure you want to leave the match? You will return to the lobby.')) {
+        closeModals();
+        playTone(300, 'sawtooth', 0.15, 0.2);
+        exitToHome();
+        showNotificationToast('Match exited. Welcome back to lobby.');
+      }
+    }
+
+    function openMatchRulesModal() {
+      closeModals();
+      document.getElementById('rulesModal').classList.add('open');
     }
 
     function updateHomeLockIndicators() {
@@ -3898,8 +4193,16 @@
     // ==========================================================
     function switchNavTab(tab) {
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      if (event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
+      const tabMap = {
+        'shop': '.nav-tab:nth-child(1)',
+        'friends': '.nav-tab:nth-child(2)',
+        'home': '.nav-tab-home',
+        'collections': '.nav-tab:nth-child(4)',
+        'chest': '.nav-tab:nth-child(5)'
+      };
+      if (tabMap[tab]) {
+        const el = document.querySelector(tabMap[tab]);
+        if (el) el.classList.add('active');
       }
 
       if (tab === 'home') {

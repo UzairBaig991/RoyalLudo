@@ -169,6 +169,30 @@ export default function LiveGameScreen() {
     );
   };
 
+  const handleRestartMatch = () => {
+    setShowMenuModal(false);
+    sfxEngine.playTokenStep();
+    const isTwo = routePlayers === '2';
+    const pCount: 2 | 4 = isTwo ? 2 : 4;
+    const myName = profile?.username || 'You';
+    const companionName = routeMode === 'bot' ? 'Nova Bot (Yellow)' : 'Companion (Yellow)';
+    startNewGame({
+      mode: (routeMode as any) || 'classic',
+      playerCount: pCount,
+      players: isTwo
+        ? [
+            { id: profile?.id || 'usr_me', username: myName, isBot: false },
+            { id: 'usr_companion', username: companionName, isBot: true },
+          ]
+        : [
+            { id: profile?.id || 'usr_me', username: myName, isBot: false },
+            { id: 'b1', username: 'Maya', isBot: true },
+            { id: 'b2', username: 'Zara', isBot: true },
+            { id: 'b3', username: 'Sam', isBot: true },
+          ],
+    });
+  };
+
   const triggerReaction = (emoji: string) => {
     sfxEngine.playEmoji();
     const anim = new Animated.Value(0);
@@ -926,13 +950,37 @@ export default function LiveGameScreen() {
       <Modal visible={showMenuModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.menuCard}>
-            <Text style={styles.menuTitle}>Take a moment</Text>
+            <Text style={styles.menuTitle}>⚙️ Match Menu</Text>
             <Text style={styles.menuSubtitle}>
-              The match is still live. Your turn timer continues.
+              Match is live · Select an action:
             </Text>
 
+            <NovaButton
+              title="▶️ Continue Playing"
+              variant="primary"
+              onPress={() => setShowMenuModal(false)}
+              style={styles.menuBtn}
+            />
+
+            <NovaButton
+              title="🔄 Restart Match"
+              variant="gold"
+              onPress={handleRestartMatch}
+              style={styles.menuBtn}
+            />
+
+            <NovaButton
+              title="📜 Game Rules & Star Zones"
+              variant="outline"
+              onPress={() => {
+                setShowMenuModal(false);
+                setShowRulesModal(true);
+              }}
+              style={styles.menuBtn}
+            />
+
             {/* Sound effects toggle */}
-            <View style={styles.settingRow}>
+            <View style={[styles.settingRow, { marginTop: 12 }]}>
               <Text style={styles.settingLabel}>Sound effects</Text>
               <TouchableOpacity
                 style={[styles.togglePill, soundEffects && styles.togglePillActive]}
@@ -953,33 +1001,29 @@ export default function LiveGameScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Voice chat toggle */}
+            {/* Auto-Roll toggle */}
             <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Voice chat</Text>
+              <Text style={styles.settingLabel}>Auto Roll</Text>
               <TouchableOpacity
-                style={[styles.togglePill, allowVoiceChat && styles.togglePillActive]}
-                onPress={() => toggleSetting('allowVoiceChat')}
+                style={[styles.togglePill, autoRollEnabled && styles.togglePillActive]}
+                onPress={() => setAutoRollEnabled((prev) => !prev)}
               >
-                <Text style={styles.togglePillText}>{allowVoiceChat ? 'Active' : 'Muted'}</Text>
+                <Text style={styles.togglePillText}>{autoRollEnabled ? 'Enabled ⚡' : 'Manual'}</Text>
               </TouchableOpacity>
             </View>
 
             <NovaButton
-              title="Back to game"
-              variant="primary"
-              onPress={() => setShowMenuModal(false)}
-              style={styles.menuBtn}
-            />
-
-            <NovaButton
-              title="Leave match"
+              title="🚪 Exit Game"
               variant="danger"
-              onPress={handleForfeit}
+              onPress={() => {
+                setShowMenuModal(false);
+                handlePromptExit();
+              }}
               style={styles.menuBtn}
             />
 
             <Text style={styles.menuForfeitHint}>
-              Leaving forfeits your entry coins.
+              Exiting returns you safely to the main lobby.
             </Text>
           </View>
         </View>
