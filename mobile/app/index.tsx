@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ROYAL_COLORS } from '../src/theme/colors';
+import { NOVA_COLORS } from '../src/theme/colors';
+import { NovaDie } from '../src/components/nova/NovaDie';
 import { useAuthStore } from '../src/store/useAuthStore';
 
 export default function SplashScreen() {
@@ -22,17 +23,16 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Royal Crown Crest */}
-      <View style={styles.crestCircle}>
-        <Text style={styles.crestEmoji}>👑</Text>
+      <View style={styles.dieWrap}>
+        <NovaDie value={6} size={84} theme="nova" />
       </View>
 
-      <Text style={styles.title}>ROYAL LUDO</Text>
-      <Text style={styles.subtitle}>THE KING OF BOARD GAMES</Text>
+      <Text style={styles.title}>LUDO NOVA</Text>
+      <Text style={styles.subtitle}>YOUR PEOPLE. YOUR NEXT GREAT GAME.</Text>
 
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="small" color={ROYAL_COLORS.gold} />
-        <Text style={styles.loadingText}>Entering the royal arena...</Text>
+        <ActivityIndicator size="small" color={NOVA_COLORS.accentPurple} />
+        <Text style={styles.loadingText}>Entering the arena…</Text>
       </View>
     </View>
   );
@@ -41,41 +41,25 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: ROYAL_COLORS.primaryBg,
+    backgroundColor: NOVA_COLORS.bg,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
-  crestCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: ROYAL_COLORS.cardBg,
-    borderWidth: 2,
-    borderColor: ROYAL_COLORS.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    shadowColor: ROYAL_COLORS.gold,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  crestEmoji: {
-    fontSize: 48,
+  dieWrap: {
+    marginBottom: 24,
   },
   title: {
-    color: ROYAL_COLORS.gold,
-    fontSize: 32,
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 34,
     fontWeight: '900',
-    letterSpacing: 3,
+    letterSpacing: 2,
     marginBottom: 6,
   },
   subtitle: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 12,
-    fontWeight: '700',
+    color: NOVA_COLORS.accentPurple,
+    fontSize: 11,
+    fontWeight: '800',
     letterSpacing: 2,
     marginBottom: 48,
   },
@@ -85,9 +69,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   loadingText: {
-    color: ROYAL_COLORS.textMuted,
+    color: NOVA_COLORS.textSecondary,
     fontSize: 13,
     marginLeft: 10,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });

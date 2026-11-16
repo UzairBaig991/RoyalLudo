@@ -1,259 +1,212 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ROYAL_COLORS } from '../../src/theme/colors';
-import { RoyalCard } from '../../src/components/ui/RoyalCard';
-import { RoyalButton } from '../../src/components/ui/RoyalButton';
-import { CurrencyBadge } from '../../src/components/ui/CurrencyBadge';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { NOVA_COLORS } from '../../src/theme/colors';
+import { NovaHeader } from '../../src/components/nova/NovaHeader';
+import { NovaBadge } from '../../src/components/nova/NovaBadge';
+import { NovaCard } from '../../src/components/nova/NovaCard';
+import { NovaDie } from '../../src/components/nova/NovaDie';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
-import { useAuthStore } from '../../src/store/useAuthStore';
-import type { ShopItem } from '../../../shared/src/types';
 
-export default function ShopScreen() {
-  const { gold, gems, diceCatalog, boardCatalog, ownedItems, purchaseItem, addGold, addGems } = useEconomyStore();
-  const { profile, updateProfile } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'dice' | 'boards' | 'currency'>('dice');
+export default function ShopHubScreen() {
+  const router = useRouter();
+  const { gold, gems } = useEconomyStore();
 
-  const handleBuy = (item: ShopItem) => {
-    const success = purchaseItem(item);
-    if (success) {
-      Alert.alert('Purchase Successful! 🎉', `You unlocked the ${item.name}!`);
-    } else {
-      Alert.alert('Insufficient Balance', `You need more ${item.currency} to purchase this item.`);
-    }
-  };
-
-  const handleEquip = (item: ShopItem) => {
-    if (item.type === 'dice') {
-      updateProfile({ equipped: { ...profile!.equipped, diceSkin: item.id } });
-    } else if (item.type === 'board') {
-      updateProfile({ equipped: { ...profile!.equipped, boardSkin: item.id } });
-    }
-    Alert.alert('Cosmetic Equipped', `${item.name} is now your active ${item.type}!`);
-  };
-
-  const items = activeTab === 'dice' ? diceCatalog : boardCatalog;
+  const categories = [
+    {
+      id: 'coins',
+      title: 'Coins',
+      desc: 'For your next game',
+      icon: 'sparkles',
+      color: NOVA_COLORS.accentGold,
+      route: '/shop/coins',
+    },
+    {
+      id: 'gems',
+      title: 'Gems',
+      desc: 'A little extra sparkle',
+      icon: 'diamond',
+      color: NOVA_COLORS.accentMint,
+      route: '/shop/gems',
+    },
+    {
+      id: 'dice',
+      title: 'Dice',
+      desc: 'Make every roll yours',
+      icon: 'cube',
+      color: NOVA_COLORS.accentPurple,
+      route: '/shop/dice',
+    },
+    {
+      id: 'boards',
+      title: 'Boards',
+      desc: 'Set the scene',
+      icon: 'grid',
+      color: NOVA_COLORS.blue,
+      route: '/shop/boards',
+    },
+  ];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Balances Pill Header */}
-        <View style={styles.balanceHeader}>
-          <Text style={styles.shopTitle}>Royal Bazaar</Text>
-          <View style={{ flexDirection: 'row' }}>
-            <CurrencyBadge type="gold" amount={gold} />
-            <View style={{ width: 8 }} />
-            <CurrencyBadge type="gems" amount={gems} />
-          </View>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+    >
+      <NovaHeader
+        title="A little extra magic"
+        subtitle="Make the game feel like you."
+        showBack={true}
+        onBack={() => router.back()}
+      />
+
+      <View style={styles.content}>
+        {/* Balance Badges Row */}
+        <View style={styles.badgesRow}>
+          <TouchableOpacity onPress={() => router.push('/shop/coins' as any)}>
+            <NovaBadge
+              label={`◈  ${gold.toLocaleString()}`}
+              color="gold"
+              style={styles.balanceBadge}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => router.push('/shop/gems' as any)}>
+            <NovaBadge
+              label={`◇  ${gems.toLocaleString()}`}
+              color="mint"
+              style={styles.balanceBadge}
+            />
+          </TouchableOpacity>
         </View>
 
-        {/* Tab Switcher */}
-        <View style={styles.tabBar}>
-          {(['dice', 'boards', 'currency'] as const).map((tab) => (
+        {/* Featured Collection Banner */}
+        <TouchableOpacity
+          style={styles.featuredCard}
+          onPress={() => router.push('/shop/dice' as any)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.featuredLeft}>
+            <NovaBadge
+              label="THE NOVA COLLECTION"
+              color="purple"
+              style={styles.featuredBadge}
+            />
+            <Text style={styles.featuredTitle}>Roll in your own style.</Text>
+            <Text style={styles.featuredLink}>Explore dice & themes  →</Text>
+          </View>
+
+          <View style={styles.featuredDieWrap}>
+            <NovaDie value={5} size={64} theme="nova" />
+          </View>
+        </TouchableOpacity>
+
+        {/* Category Grid */}
+        <Text style={styles.sectionHeading}>Find your favorite</Text>
+
+        <View style={styles.grid}>
+          {categories.map((cat) => (
             <TouchableOpacity
-              key={tab}
-              style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]}
-              onPress={() => setActiveTab(tab)}
+              key={cat.id}
+              style={styles.catCard}
+              onPress={() => router.push(cat.route as any)}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-                {tab === 'dice' ? '🎲 Dice Skins' : tab === 'boards' ? '🏰 Boards' : '🪙 Coin Packs'}
-              </Text>
+              <View style={[styles.catIconWrap, { backgroundColor: 'rgba(255, 255, 255, 0.08)' }]}>
+                <Ionicons name={cat.icon as any} size={24} color={cat.color} />
+              </View>
+              <Text style={styles.catTitle}>{cat.title}</Text>
+              <Text style={styles.catDesc}>{cat.desc}</Text>
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* Currency Packs Tab */}
-        {activeTab === 'currency' ? (
-          <View style={styles.currencyGrid}>
-            {[
-              { id: 'c1', goldAmt: 10000, price: '$0.99', badge: 'POPULAR' },
-              { id: 'c2', goldAmt: 50000, price: '$3.99', badge: 'BEST VALUE' },
-              { id: 'c3', goldAmt: 150000, price: '$9.99', badge: 'ROYAL CHEST' },
-              { id: 'c4', goldAmt: 500000, price: '$24.99', badge: 'TREASURY' },
-            ].map((pack) => (
-              <RoyalCard key={pack.id} style={styles.packCard} goldBorder>
-                <Text style={styles.packBadge}>{pack.badge}</Text>
-                <Text style={{ fontSize: 36, marginVertical: 8 }}>🪙</Text>
-                <Text style={styles.packGoldText}>{pack.goldAmt.toLocaleString()} Gold</Text>
-                <RoyalButton
-                  title={pack.price}
-                  variant="gold"
-                  size="small"
-                  onPress={() => {
-                    addGold(pack.goldAmt);
-                    Alert.alert('Transaction Complete', `Added ${pack.goldAmt.toLocaleString()} Gold to your wallet!`);
-                  }}
-                  style={{ marginTop: 10, width: '100%' }}
-                />
-              </RoyalCard>
-            ))}
-          </View>
-        ) : (
-          /* Collectibles Grid (Dice and Boards) */
-          <View style={styles.catalogGrid}>
-            {items.map((item) => {
-              const isOwned = ownedItems.includes(item.id);
-              const isEquipped =
-                item.type === 'dice'
-                  ? profile?.equipped.diceSkin === item.id
-                  : profile?.equipped.boardSkin === item.id;
-
-              return (
-                <RoyalCard key={item.id} style={styles.itemCard} goldBorder={item.rarity === 'royal'}>
-                  <View style={styles.itemHeader}>
-                    <Text style={[styles.rarityText, { color: item.rarity === 'legendary' ? '#F59E0B' : item.rarity === 'epic' ? '#A855F7' : ROYAL_COLORS.gold }]}>
-                      {item.rarity.toUpperCase()}
-                    </Text>
-                    {isEquipped && <Text style={styles.equippedBadge}>EQUIPPED</Text>}
-                  </View>
-
-                  <View style={styles.itemPreviewBox}>
-                    <Text style={{ fontSize: 44 }}>{item.type === 'dice' ? '🎲' : '🏰'}</Text>
-                  </View>
-
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemDesc} numberOfLines={2}>{item.description}</Text>
-
-                  {isOwned ? (
-                    <RoyalButton
-                      title={isEquipped ? 'IN USE' : 'EQUIP'}
-                      variant={isEquipped ? 'secondary' : 'gold'}
-                      size="small"
-                      disabled={isEquipped}
-                      onPress={() => handleEquip(item)}
-                      style={{ marginTop: 10 }}
-                    />
-                  ) : (
-                    <RoyalButton
-                      title={`${item.cost.toLocaleString()} ${item.currency === 'gold' ? '🪙' : '💎'}`}
-                      variant="gold"
-                      size="small"
-                      onPress={() => handleBuy(item)}
-                      style={{ marginTop: 10 }}
-                    />
-                  )}
-                </RoyalCard>
-              );
-            })}
-          </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: ROYAL_COLORS.primaryBg,
+  container: {
+    flexGrow: 1,
+    backgroundColor: NOVA_COLORS.bg,
+    paddingBottom: 28,
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
+  content: {
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
-  balanceHeader: {
+  badgesRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  shopTitle: {
-    color: ROYAL_COLORS.gold,
-    fontSize: 22,
-    fontWeight: '900',
-  },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: ROYAL_COLORS.cardBg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: ROYAL_COLORS.border,
-    padding: 4,
     marginBottom: 20,
   },
-  tabBtn: {
+  balanceBadge: {
+    marginRight: 10,
+  },
+  featuredCard: {
+    backgroundColor: NOVA_COLORS.surfaceBadge,
+    borderRadius: 24,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  featuredLeft: {
     flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 8,
   },
-  tabBtnActive: {
-    backgroundColor: ROYAL_COLORS.gold,
+  featuredBadge: {
+    marginBottom: 10,
   },
-  tabText: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  tabTextActive: {
-    color: '#0A0F1D',
+  featuredTitle: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 20,
     fontWeight: '800',
-  },
-  catalogGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  itemCard: {
-    width: '48%',
-    padding: 12,
-    marginBottom: 14,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  rarityText: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  equippedBadge: {
-    color: ROYAL_COLORS.green,
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  itemPreviewBox: {
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: ROYAL_COLORS.surfaceBg,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 8,
   },
-  itemName: {
-    color: ROYAL_COLORS.textPrimary,
-    fontSize: 14,
+  featuredLink: {
+    color: NOVA_COLORS.accentPurple,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  featuredDieWrap: {
+    marginLeft: 12,
+  },
+  sectionHeading: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 18,
     fontWeight: '800',
-    marginBottom: 2,
+    marginBottom: 14,
   },
-  itemDesc: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 10,
-    lineHeight: 14,
-  },
-  currencyGrid: {
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  packCard: {
+  catCard: {
     width: '48%',
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 20,
     padding: 16,
-    alignItems: 'center',
     marginBottom: 14,
-    position: 'relative',
   },
-  packBadge: {
-    color: ROYAL_COLORS.gold,
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1,
+  catIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
-  packGoldText: {
-    color: ROYAL_COLORS.textPrimary,
+  catTitle: {
+    color: NOVA_COLORS.textPrimary,
     fontSize: 16,
     fontWeight: '800',
+    marginBottom: 4,
+  },
+  catDesc: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

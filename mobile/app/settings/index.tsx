@@ -1,175 +1,174 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ROYAL_COLORS } from '../../src/theme/colors';
-import { RoyalCard } from '../../src/components/ui/RoyalCard';
-import { useGameStore } from '../../src/store/useGameStore';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { NOVA_COLORS } from '../../src/theme/colors';
+import { NovaHeader } from '../../src/components/nova/NovaHeader';
+import { useSettingsStore } from '../../src/store/useSettingsStore';
 
 export default function SettingsScreen() {
-  const { soundEnabled, vibrationEnabled, toggleSound, toggleVibration } = useGameStore();
-  const [musicEnabled, setMusicEnabled] = React.useState(true);
-  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-
-  const handleSupport = () => {
-    Alert.alert('Royal Support', 'For assistance, inquiries, or bug reports, please contact: support@royalludo.com');
-  };
-
-  const handlePrivacy = () => {
-    Alert.alert('Privacy Policy', 'Royal Ludo values your privacy. No personal data is sold or shared with 3rd parties.');
-  };
+  const router = useRouter();
+  const {
+    soundEffects,
+    gameMusic,
+    hapticFeedback,
+    allowVoiceChat,
+    notifications,
+    language,
+    toggleSetting,
+  } = useSettingsStore();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.sectionTitle}>AUDIO & HAPTICS</Text>
-        <RoyalCard style={styles.card}>
-          <View style={styles.settingRow}>
-            <View>
-              <Text style={styles.settingLabel}>Sound Effects</Text>
-              <Text style={styles.settingSub}>Dice rolling, token jumps and capture SFX</Text>
-            </View>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+    >
+      <NovaHeader
+        title="Just the way you like it"
+        subtitle="Settings"
+        showBack={true}
+        onBack={() => router.back()}
+      />
+
+      <View style={styles.content}>
+        {/* SOUND & PLAY */}
+        <Text style={styles.sectionHeader}>SOUND & PLAY</Text>
+        <View style={styles.groupCard}>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Sound effects</Text>
             <Switch
-              value={soundEnabled}
-              onValueChange={toggleSound}
-              thumbColor={soundEnabled ? ROYAL_COLORS.gold : '#718096'}
-              trackColor={{ false: ROYAL_COLORS.surfaceBg, true: ROYAL_COLORS.borderGold }}
+              value={soundEffects}
+              onValueChange={() => toggleSetting('soundEffects')}
+              trackColor={{ false: '#2a2e45', true: NOVA_COLORS.accentPurple }}
+              thumbColor="#ffffff"
             />
           </View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.settingRow}>
-            <View>
-              <Text style={styles.settingLabel}>Haptic Feedback</Text>
-              <Text style={styles.settingSub}>Vibrate device on your turn & captures</Text>
-            </View>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Game music</Text>
             <Switch
-              value={vibrationEnabled}
-              onValueChange={toggleVibration}
-              thumbColor={vibrationEnabled ? ROYAL_COLORS.gold : '#718096'}
-              trackColor={{ false: ROYAL_COLORS.surfaceBg, true: ROYAL_COLORS.borderGold }}
+              value={gameMusic}
+              onValueChange={() => toggleSetting('gameMusic')}
+              trackColor={{ false: '#2a2e45', true: NOVA_COLORS.accentPurple }}
+              thumbColor="#ffffff"
             />
           </View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.settingRow}>
-            <View>
-              <Text style={styles.settingLabel}>Background Music</Text>
-              <Text style={styles.settingSub}>Ambient royal orchestra music</Text>
-            </View>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Haptic feedback</Text>
             <Switch
-              value={musicEnabled}
-              onValueChange={setMusicEnabled}
-              thumbColor={musicEnabled ? ROYAL_COLORS.gold : '#718096'}
-              trackColor={{ false: ROYAL_COLORS.surfaceBg, true: ROYAL_COLORS.borderGold }}
+              value={hapticFeedback}
+              onValueChange={() => toggleSetting('hapticFeedback')}
+              trackColor={{ false: '#2a2e45', true: NOVA_COLORS.accentPurple }}
+              thumbColor="#ffffff"
             />
           </View>
-        </RoyalCard>
 
-        <Text style={styles.sectionTitle}>GAME NOTIFICATIONS</Text>
-        <RoyalCard style={styles.card}>
-          <View style={styles.settingRow}>
-            <View>
-              <Text style={styles.settingLabel}>Push Notifications</Text>
-              <Text style={styles.settingSub}>Daily card reminders & friend match invites</Text>
-            </View>
+          <View style={[styles.row, styles.lastRow]}>
+            <Text style={styles.rowLabel}>Allow voice chat</Text>
             <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              thumbColor={notificationsEnabled ? ROYAL_COLORS.gold : '#718096'}
-              trackColor={{ false: ROYAL_COLORS.surfaceBg, true: ROYAL_COLORS.borderGold }}
+              value={allowVoiceChat}
+              onValueChange={() => toggleSetting('allowVoiceChat')}
+              trackColor={{ false: '#2a2e45', true: NOVA_COLORS.accentPurple }}
+              thumbColor="#ffffff"
             />
           </View>
-        </RoyalCard>
+        </View>
 
-        <Text style={styles.sectionTitle}>INFORMATION & SUPPORT</Text>
-        <RoyalCard style={styles.card}>
-          <TouchableOpacity style={styles.navRow} onPress={handleSupport}>
-            <Text style={styles.navLabel}>Help & Customer Support</Text>
-            <Text style={styles.navArrow}>&gt;</Text>
+        {/* YOUR EXPERIENCE */}
+        <Text style={[styles.sectionHeader, { marginTop: 24 }]}>YOUR EXPERIENCE</Text>
+        <View style={styles.groupCard}>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Language</Text>
+            <Text style={styles.rowValue}>{language}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Notifications</Text>
+            <Switch
+              value={notifications}
+              onValueChange={() => toggleSetting('notifications')}
+              trackColor={{ false: '#2a2e45', true: NOVA_COLORS.accentPurple }}
+              thumbColor="#ffffff"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => router.push('/settings/privacy' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.rowLabel}>Account and privacy</Text>
+            <Ionicons name="chevron-forward" size={18} color={NOVA_COLORS.textSecondary} />
           </TouchableOpacity>
 
-          <View style={styles.divider} />
-
-          <TouchableOpacity style={styles.navRow} onPress={handlePrivacy}>
-            <Text style={styles.navLabel}>Privacy Policy & Terms</Text>
-            <Text style={styles.navArrow}>&gt;</Text>
+          <TouchableOpacity
+            style={[styles.row, styles.lastRow]}
+            onPress={() => router.push('/settings/rules' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.rowLabel}>Help and rules</Text>
+            <Ionicons name="chevron-forward" size={18} color={NOVA_COLORS.textSecondary} />
           </TouchableOpacity>
+        </View>
 
-          <View style={styles.divider} />
-
-          <View style={styles.navRow}>
-            <Text style={styles.navLabel}>Application Version</Text>
-            <Text style={styles.versionText}>1.0.0 (Royal Edition)</Text>
-          </View>
-        </RoyalCard>
-      </ScrollView>
-    </SafeAreaView>
+        <Text style={styles.versionTag}>Ludo Nova  ·  v1.0</Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: ROYAL_COLORS.primaryBg,
+  container: {
+    flexGrow: 1,
+    backgroundColor: NOVA_COLORS.bg,
+    paddingBottom: 28,
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
+  content: {
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
-  sectionTitle: {
-    color: ROYAL_COLORS.goldLight,
+  sectionHeader: {
+    color: NOVA_COLORS.textSecondary,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
     marginBottom: 10,
-    marginTop: 10,
+    paddingLeft: 4,
   },
-  card: {
-    marginBottom: 16,
-    padding: 16,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  groupCard: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 20,
+    paddingHorizontal: 16,
     paddingVertical: 4,
+    marginBottom: 8,
   },
-  settingLabel: {
-    color: ROYAL_COLORS.textPrimary,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  settingSub: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: ROYAL_COLORS.border,
-    marginVertical: 12,
-  },
-  navRow: {
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
-  navLabel: {
-    color: ROYAL_COLORS.textPrimary,
-    fontSize: 14,
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+  rowLabel: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 15,
     fontWeight: '600',
   },
-  navArrow: {
-    color: ROYAL_COLORS.textMuted,
-    fontSize: 16,
+  rowValue: {
+    color: NOVA_COLORS.accentPurple,
+    fontSize: 14,
     fontWeight: '700',
   },
-  versionText: {
-    color: ROYAL_COLORS.gold,
+  versionTag: {
+    color: NOVA_COLORS.textMuted,
     fontSize: 12,
-    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 28,
   },
 });

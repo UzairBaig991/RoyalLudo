@@ -1,114 +1,142 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ROYAL_COLORS } from '../../src/theme/colors';
-import { RoyalButton } from '../../src/components/ui/RoyalButton';
-import { useAuthStore } from '../../src/store/useAuthStore';
+import { NOVA_COLORS } from '../../src/theme/colors';
+import { NovaBadge } from '../../src/components/nova/NovaBadge';
+import { NovaBoardPreview } from '../../src/components/nova/NovaBoardPreview';
+import { NovaDie } from '../../src/components/nova/NovaDie';
+import { NovaButton } from '../../src/components/nova/NovaButton';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { loginAsGuest } = useAuthStore();
-
-  const handleGuest = () => {
-    loginAsGuest();
-    router.replace('/(tabs)');
-  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerArea}>
-        <View style={styles.crownCircle}>
-          <Text style={{ fontSize: 42 }}>👑</Text>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      bounces={false}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Top Status */}
+      <View style={styles.topStatus}>
+        <Text style={styles.clock}>9:41</Text>
+      </View>
+
+      {/* Badge */}
+      <View style={styles.badgeWrapper}>
+        <NovaBadge label="PLAY. CONNECT. REPEAT." color="purple" />
+      </View>
+
+      {/* Board & Die Illustration */}
+      <View style={styles.boardContainer}>
+        <NovaBoardPreview size={230} />
+        <View style={styles.diePosition}>
+          <NovaDie value={6} size={58} theme="nova" />
         </View>
-        <Text style={styles.title}>ROYAL LUDO</Text>
-        <Text style={styles.tagline}>Experience the majesty of real-time multiplayer board gameplay</Text>
       </View>
 
-      <View style={styles.cardBox}>
-        <RoyalButton
-          title="PLAY AS GUEST"
-          variant="gold"
-          size="large"
-          onPress={handleGuest}
-          style={styles.actionBtn}
+      {/* Title & Tagline */}
+      <View style={styles.textBlock}>
+        <Text style={styles.brandTitle}>LUDO</Text>
+        <Text style={styles.brandTitle}>NOVA</Text>
+        <Text style={styles.subtitle}>Your people. Your next great game.</Text>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.buttonBlock}>
+        <NovaButton
+          title="Let’s play"
+          onPress={() => router.push('/(auth)/setup' as any)}
+          variant="primary"
+          style={styles.primaryBtn}
         />
 
-        <RoyalButton
-          title="SIGN IN WITH EMAIL"
-          variant="secondary"
-          size="large"
+        <TouchableOpacity
           onPress={() => router.push('/(auth)/login')}
-          style={styles.actionBtn}
-        />
-
-        <RoyalButton
-          title="CREATE ACCOUNT"
-          variant="ghost"
-          size="medium"
-          onPress={() => router.push('/(auth)/register')}
-          style={styles.registerBtn}
-        />
+          style={styles.signInLink}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.signInText}>
+            Already a player? <Text style={styles.signInHighlight}>Sign in</Text>
+          </Text>
+        </TouchableOpacity>
       </View>
-
-      <Text style={styles.termsText}>
-        By playing, you agree to our Terms of Service & Privacy Policy.
-      </Text>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: ROYAL_COLORS.primaryBg,
-    padding: 24,
+    flexGrow: 1,
+    backgroundColor: NOVA_COLORS.bg,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 36,
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  headerArea: {
-    alignItems: 'center',
-    marginTop: 60,
+  topStatus: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 10,
   },
-  crownCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: ROYAL_COLORS.cardBg,
-    borderWidth: 2,
-    borderColor: ROYAL_COLORS.gold,
+  clock: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  badgeWrapper: {
+    alignItems: 'center',
+    marginVertical: 6,
+  },
+  boardContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginVertical: 14,
+    position: 'relative',
   },
-  title: {
-    color: ROYAL_COLORS.gold,
-    fontSize: 28,
+  diePosition: {
+    position: 'absolute',
+    right: 20,
+    bottom: -10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  textBlock: {
+    marginVertical: 10,
+  },
+  brandTitle: {
+    fontSize: 52,
     fontWeight: '900',
-    letterSpacing: 2,
-    marginBottom: 8,
+    color: NOVA_COLORS.textPrimary,
+    letterSpacing: -1.5,
+    lineHeight: 56,
   },
-  tagline: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 14,
-    textAlign: 'center',
-    paddingHorizontal: 20,
-    lineHeight: 20,
+  subtitle: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 15,
+    marginTop: 12,
+    lineHeight: 22,
   },
-  cardBox: {
+  buttonBlock: {
     width: '100%',
-    paddingHorizontal: 8,
+    alignItems: 'center',
+    marginTop: 16,
   },
-  actionBtn: {
+  primaryBtn: {
     marginBottom: 14,
-    width: '100%',
   },
-  registerBtn: {
-    marginTop: 4,
+  signInLink: {
+    paddingVertical: 8,
   },
-  termsText: {
-    color: ROYAL_COLORS.textMuted,
-    fontSize: 11,
-    textAlign: 'center',
-    marginBottom: 16,
+  signInText: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  signInHighlight: {
+    color: NOVA_COLORS.accentPurple,
+    fontWeight: '700',
   },
 });

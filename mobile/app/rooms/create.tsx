@@ -1,262 +1,238 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ROYAL_COLORS } from '../../src/theme/colors';
-import { RoyalCard } from '../../src/components/ui/RoyalCard';
-import { RoyalButton } from '../../src/components/ui/RoyalButton';
+import { Ionicons } from '@expo/vector-icons';
+import { NOVA_COLORS } from '../../src/theme/colors';
+import { NovaHeader } from '../../src/components/nova/NovaHeader';
+import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import type { GameMode } from '../../../shared/src/types';
 
 export default function CreateRoomScreen() {
   const router = useRouter();
   const { profile } = useAuthStore();
-  const [selectedMode, setSelectedMode] = useState<GameMode>('classic');
-  const [playerCount, setPlayerCount] = useState<2 | 4>(4);
-  const [entryFee, setEntryFee] = useState<number>(500);
 
-  const stakes = [500, 1000, 2500, 5000, 10000];
+  const [copied, setCopied] = useState(false);
+  const roomCode = 'N O V A 2 4';
 
-  const handleCreate = () => {
-    // Generate a random 6-digit royal room code
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = 'RL';
-    for (let i = 0; i < 4; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+  const handleCopy = () => {
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-    router.replace(`/rooms/${code}`);
+  const handleStartGame = () => {
+    router.push({
+      pathname: '/gameplay/[matchId]',
+      params: { matchId: 'room_nova24', mode: 'private' },
+    } as any);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.screenTitle}>Create Private Table</Text>
-        <Text style={styles.screenSub}>Set up custom rules, entry stakes and invite friends via table code</Text>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+    >
+      <NovaHeader
+        title="Room ready"
+        subtitle="Classic · 4 players · Private"
+        showBack={true}
+        onBack={() => router.back()}
+      />
 
-        {/* 1. Mode Selector */}
-        <Text style={styles.sectionLabel}>GAME VARIATION</Text>
-        <View style={styles.modesRow}>
-          {[
-            { id: 'classic', name: 'Classic', icon: '🏆' },
-            { id: 'master', name: 'Master', icon: '🛡️' },
-            { id: 'quick', name: 'Quick', icon: '⚡' },
-          ].map((m) => (
-            <TouchableOpacity
-              key={m.id}
-              style={[styles.modePill, selectedMode === m.id && styles.modePillActive]}
-              onPress={() => setSelectedMode(m.id as GameMode)}
-            >
-              <Text style={{ fontSize: 18, marginRight: 6 }}>{m.icon}</Text>
-              <Text style={[styles.modePillText, selectedMode === m.id && styles.modePillTextActive]}>
-                {m.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <View style={styles.content}>
+        {/* Room Code Card */}
+        <TouchableOpacity
+          style={styles.codeCard}
+          onPress={handleCopy}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.codeLabel}>ROOM CODE</Text>
+          <Text style={styles.codeText}>{roomCode}</Text>
+          <Text style={styles.tapToCopy}>
+            {copied ? '✓ Copied to clipboard!' : 'Tap to copy · Share with your friends'}
+          </Text>
+        </TouchableOpacity>
 
-        {/* 2. Player Count */}
-        <Text style={styles.sectionLabel}>PLAYERS</Text>
-        <View style={styles.countRow}>
-          <TouchableOpacity
-            style={[styles.countPill, playerCount === 2 && styles.countPillActive]}
-            onPress={() => setPlayerCount(2)}
-          >
-            <Text style={[styles.countText, playerCount === 2 && styles.countTextActive]}>
-              2 Players (1v1 Duel)
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.countPill, playerCount === 4 && styles.countPillActive]}
-            onPress={() => setPlayerCount(4)}
-          >
-            <Text style={[styles.countText, playerCount === 4 && styles.countTextActive]}>
-              4 Players (Classic)
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 3. Entry Stake */}
-        <Text style={styles.sectionLabel}>ENTRY STAKE (GOLD COINS)</Text>
-        <View style={styles.stakesGrid}>
-          {stakes.map((stake) => (
-            <TouchableOpacity
-              key={stake}
-              style={[styles.stakeCard, entryFee === stake && styles.stakeCardActive]}
-              onPress={() => setEntryFee(stake)}
-            >
-              <Text style={styles.stakeAmount}>{stake.toLocaleString()} 🪙</Text>
-              <Text style={styles.prizeLabel}>
-                Prize: {Math.floor(stake * playerCount * 0.9).toLocaleString()} 🪙
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Summary Card */}
-        <RoyalCard style={styles.summaryCard} goldBorder>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryKey}>Host</Text>
-            <Text style={styles.summaryVal}>{profile?.username || 'You'}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryKey}>Mode</Text>
-            <Text style={styles.summaryVal}>{selectedMode.toUpperCase()} ({playerCount}P)</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryKey}>Prize Pool</Text>
-            <Text style={[styles.summaryVal, { color: ROYAL_COLORS.gold }]}>
-              {Math.floor(entryFee * playerCount * 0.9).toLocaleString()} Gold 🪙
-            </Text>
-          </View>
-        </RoyalCard>
-
-        <RoyalButton
-          title="GENERATE TABLE"
-          variant="gold"
-          size="large"
-          onPress={handleCreate}
-          style={styles.createBtn}
+        <NovaButton
+          title="Share invite link"
+          variant="dark"
+          onPress={handleCopy}
+          icon={<Ionicons name="share-outline" size={18} color={NOVA_COLORS.textPrimary} />}
+          style={styles.shareBtn}
         />
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* Table Seats */}
+        <Text style={styles.seatsTitle}>Your table  ·  2 / 4</Text>
+
+        <View style={styles.seatsList}>
+          {/* Seat 1: Host */}
+          <View style={styles.seatRow}>
+            <View style={[styles.tokenDot, { backgroundColor: NOVA_COLORS.coral }]} />
+            <View style={styles.seatInfo}>
+              <Text style={styles.seatName}>{profile?.username || 'Alex Nova'}</Text>
+              <Text style={styles.seatRole}>You · Host</Text>
+            </View>
+            <View style={styles.checkWrap}>
+              <Ionicons name="checkmark" size={16} color="#0d101e" />
+            </View>
+          </View>
+
+          {/* Seat 2: Maya */}
+          <View style={styles.seatRow}>
+            <View style={[styles.tokenDot, { backgroundColor: NOVA_COLORS.mint }]} />
+            <View style={styles.seatInfo}>
+              <Text style={styles.seatName}>Maya</Text>
+              <Text style={styles.seatRole}>Ready to play</Text>
+            </View>
+            <View style={styles.checkWrap}>
+              <Ionicons name="checkmark" size={16} color="#0d101e" />
+            </View>
+          </View>
+
+          {/* Seat 3: Open */}
+          <TouchableOpacity
+            style={[styles.seatRow, styles.seatOpen]}
+            onPress={() => router.push('/(tabs)/friends' as any)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.tokenDot, styles.tokenOpen]}>
+              <Ionicons name="add" size={18} color={NOVA_COLORS.textMuted} />
+            </View>
+            <View style={styles.seatInfo}>
+              <Text style={styles.seatNameOpen}>Open seat</Text>
+              <Text style={styles.seatRole}>Invite a friend</Text>
+            </View>
+            <Ionicons name="person-add-outline" size={18} color={NOVA_COLORS.accentPurple} />
+          </TouchableOpacity>
+
+          {/* Seat 4: Open */}
+          <TouchableOpacity
+            style={[styles.seatRow, styles.seatOpen]}
+            onPress={() => router.push('/(tabs)/friends' as any)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.tokenDot, styles.tokenOpen]}>
+              <Ionicons name="add" size={18} color={NOVA_COLORS.textMuted} />
+            </View>
+            <View style={styles.seatInfo}>
+              <Text style={styles.seatNameOpen}>Open seat</Text>
+              <Text style={styles.seatRole}>Invite a friend</Text>
+            </View>
+            <Ionicons name="person-add-outline" size={18} color={NOVA_COLORS.accentPurple} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.footer}>
+        <NovaButton
+          title="Start game  ·  2 players ready"
+          variant="primary"
+          onPress={handleStartGame}
+        />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: ROYAL_COLORS.primaryBg,
+  container: {
+    flexGrow: 1,
+    backgroundColor: NOVA_COLORS.bg,
+    justifyContent: 'space-between',
+    paddingBottom: 28,
   },
-  scrollContent: {
+  content: {
+    paddingHorizontal: 20,
+    marginTop: 10,
+  },
+  codeCard: {
+    backgroundColor: NOVA_COLORS.surfaceBadge,
+    borderRadius: 20,
     padding: 20,
-    paddingBottom: 40,
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  screenTitle: {
-    color: ROYAL_COLORS.gold,
-    fontSize: 22,
-    fontWeight: '900',
-    marginBottom: 4,
-  },
-  screenSub: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 13,
-    marginBottom: 20,
-  },
-  sectionLabel: {
-    color: ROYAL_COLORS.goldLight,
+  codeLabel: {
+    color: NOVA_COLORS.accentPurple,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
-    marginBottom: 10,
+    marginBottom: 8,
+  },
+  codeText: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 6,
+  },
+  tapToCopy: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 12,
     marginTop: 8,
   },
-  modesRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+  shareBtn: {
+    marginBottom: 24,
   },
-  modePill: {
+  seatsTitle: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 14,
+  },
+  seatsList: {},
+  seatRow: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 16,
+    padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: ROYAL_COLORS.cardBg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: ROYAL_COLORS.border,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    flex: 1,
-    marginHorizontal: 4,
-    justifyContent: 'center',
-  },
-  modePillActive: {
-    borderColor: ROYAL_COLORS.gold,
-    backgroundColor: ROYAL_COLORS.surfaceBg,
-  },
-  modePillText: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  modePillTextActive: {
-    color: ROYAL_COLORS.gold,
-    fontWeight: '800',
-  },
-  countRow: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  countPill: {
-    flex: 1,
-    backgroundColor: ROYAL_COLORS.cardBg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: ROYAL_COLORS.border,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginHorizontal: 4,
-  },
-  countPillActive: {
-    borderColor: ROYAL_COLORS.gold,
-    backgroundColor: ROYAL_COLORS.surfaceBg,
-  },
-  countText: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  countTextActive: {
-    color: ROYAL_COLORS.gold,
-    fontWeight: '800',
-  },
-  stakesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  stakeCard: {
-    width: '48%',
-    backgroundColor: ROYAL_COLORS.cardBg,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: ROYAL_COLORS.border,
-    padding: 12,
     marginBottom: 10,
+  },
+  seatOpen: {
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'transparent',
+  },
+  tokenDot: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
-  stakeCardActive: {
-    borderColor: ROYAL_COLORS.gold,
-    backgroundColor: ROYAL_COLORS.surfaceBg,
+  tokenOpen: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
   },
-  stakeAmount: {
-    color: ROYAL_COLORS.textPrimary,
+  seatInfo: {
+    flex: 1,
+  },
+  seatName: {
+    color: NOVA_COLORS.textPrimary,
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
   },
-  prizeLabel: {
-    color: ROYAL_COLORS.gold,
-    fontSize: 11,
+  seatNameOpen: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 15,
     fontWeight: '600',
+  },
+  seatRole: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 11,
     marginTop: 2,
   },
-  summaryCard: {
-    marginBottom: 20,
-    padding: 14,
+  checkWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: NOVA_COLORS.accentMint,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  summaryKey: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 13,
-  },
-  summaryVal: {
-    color: ROYAL_COLORS.textPrimary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  createBtn: {
-    width: '100%',
+  footer: {
+    paddingHorizontal: 20,
+    marginTop: 16,
   },
 });

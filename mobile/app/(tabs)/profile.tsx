@@ -1,313 +1,251 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { NOVA_COLORS } from '../../src/theme/colors';
+import { NovaHeader } from '../../src/components/nova/NovaHeader';
+import { NovaBadge } from '../../src/components/nova/NovaBadge';
+import { NovaCard } from '../../src/components/nova/NovaCard';
+import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { useEconomyStore } from '../../src/store/useEconomyStore';
 
-export default function ShopScreen() {
+export default function PlayerProfileScreen() {
+  const router = useRouter();
   const { profile } = useAuthStore();
-  const { gold, gems, addGold, addGems } = useEconomyStore();
-
-  const handleBuyCoins = (amount: number, priceStr: string) => {
-    addGold(amount);
-    Alert.alert('Coins Purchased! 🪙', `Successfully added ${amount.toLocaleString()} Gold Coins to your wallet!`);
-  };
-
-  const handleBuyGems = (amount: number, priceStr: string) => {
-    addGems(amount);
-    Alert.alert('Gems Purchased! 💎', `Successfully added ${amount} Gems to your wallet!`);
-  };
-
-  const handleBuyVip = () => {
-    Alert.alert('Royal VIP Activated! 👑', 'Welcome to Royal VIP! Enjoy 2x XP, golden name tag and exclusive VIP frames!');
-  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>ROYAL SHOP</Text>
-          <Text style={styles.headerSub}>Coins, Gems & VIP Pass</Text>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+    >
+      <NovaHeader
+        title="Player profile"
+        subtitle=""
+        showBack={true}
+        onBack={() => router.back()}
+      />
+
+      <View style={styles.content}>
+        {/* Avatar & Identifiers */}
+        <View style={styles.profileHeader}>
+          <View style={styles.avatarCircle}>
+            <View style={styles.avatarDot} />
+          </View>
+          <Text style={styles.name}>{profile?.username || 'Alex Nova'}</Text>
+          <Text style={styles.playerMeta}>ID: 849 225  ·  Joined November 2026</Text>
+
+          <View style={styles.badgesRow}>
+            <NovaBadge label="LEVEL 12" color="mint" style={styles.badgeSpacing} />
+            <NovaBadge label="GOLD III" color="gold" />
+          </View>
         </View>
-        <View style={styles.walletRow}>
-          <Text style={styles.walletBadge}>🪙 {gold.toLocaleString()}</Text>
-          <Text style={styles.walletBadge}>💎 {gems}</Text>
+
+        {/* Level XP Progress Card */}
+        <NovaCard variant="card" style={styles.xpCard}>
+          <View style={styles.xpHeader}>
+            <Text style={styles.xpTitle}>Next stop: Level 13</Text>
+            <Text style={styles.xpCount}>720 / 1,000 XP</Text>
+          </View>
+          <View style={styles.progressBarTrack}>
+            <View style={[styles.progressBarFill, { width: '72%' }]} />
+          </View>
+        </NovaCard>
+
+        {/* Stats 3-Column Card */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>248</Text>
+            <Text style={styles.statLabel}>Games</Text>
+          </View>
+
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>142</Text>
+            <Text style={styles.statLabel}>Wins</Text>
+          </View>
+
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>57%</Text>
+            <Text style={styles.statLabel}>Win rate</Text>
+          </View>
         </View>
+
+        {/* Achievements Card */}
+        <NovaCard variant="card" style={styles.achievementsCard}>
+          <Text style={styles.sectionTitle}>Favorite achievements</Text>
+
+          <View style={styles.achievementsRow}>
+            {/* 1. First win */}
+            <View style={styles.achievementItem}>
+              <View style={[styles.achIconWrap, { backgroundColor: 'rgba(255, 211, 123, 0.15)' }]}>
+                <Ionicons name="trophy" size={24} color={NOVA_COLORS.accentGold} />
+              </View>
+              <Text style={styles.achName}>First win</Text>
+            </View>
+
+            {/* 2. Team spirit */}
+            <View style={styles.achievementItem}>
+              <View style={[styles.achIconWrap, { backgroundColor: 'rgba(185, 162, 255, 0.15)' }]}>
+                <Ionicons name="people" size={24} color={NOVA_COLORS.accentPurple} />
+              </View>
+              <Text style={styles.achName}>Team spirit</Text>
+            </View>
+
+            {/* 3. Hot streak */}
+            <View style={styles.achievementItem}>
+              <View style={[styles.achIconWrap, { backgroundColor: 'rgba(255, 124, 124, 0.15)' }]}>
+                <Ionicons name="flame" size={24} color={NOVA_COLORS.coral} />
+              </View>
+              <Text style={styles.achName}>Hot streak</Text>
+            </View>
+          </View>
+        </NovaCard>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* VIP Pass Hero Card */}
-        <View style={styles.vipCard}>
-          <View style={styles.vipHeader}>
-            <Text style={{ fontSize: 32 }}>👑</Text>
-            <View style={{ marginLeft: 12 }}>
-              <Text style={styles.vipTitle}>ROYAL VIP PASS</Text>
-              <Text style={styles.vipSub}>2x XP • Golden Chat Badge • Exclusive Frames</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.vipBtn} onPress={handleBuyVip}>
-            <Text style={styles.vipBtnText}>UNLOCK VIP ($4.99 / MO)</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* COIN PACKAGES */}
-        <Text style={styles.sectionHeader}>🪙 GOLD COIN PACKAGES</Text>
-        <View style={styles.packsGrid}>
-          {[
-            { amount: 10000, price: '$0.99', popular: false },
-            { amount: 50000, price: '$2.99', popular: true },
-            { amount: 250000, price: '$9.99', popular: false },
-            { amount: 1000000, price: '$29.99', popular: false },
-          ].map((pack) => (
-            <View key={pack.amount} style={styles.packCard}>
-              {pack.popular && (
-                <View style={styles.popularBadge}>
-                  <Text style={styles.popularText}>BEST VALUE</Text>
-                </View>
-              )}
-              <Text style={{ fontSize: 36, marginVertical: 6 }}>🪙</Text>
-              <Text style={styles.packAmount}>{pack.amount.toLocaleString()}</Text>
-              <Text style={styles.packCoinsLabel}>Gold Coins</Text>
-              <TouchableOpacity
-                style={styles.buyBtn}
-                onPress={() => handleBuyCoins(pack.amount, pack.price)}
-              >
-                <Text style={styles.buyBtnText}>{pack.price}</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-
-        {/* GEM PACKAGES */}
-        <Text style={styles.sectionHeader}>💎 GREEN GEM PACKAGES</Text>
-        <View style={styles.packsGrid}>
-          {[
-            { amount: 50, price: '$1.99', popular: false },
-            { amount: 250, price: '$7.99', popular: true },
-            { amount: 1000, price: '$24.99', popular: false },
-          ].map((pack) => (
-            <View key={pack.amount} style={styles.packCard}>
-              {pack.popular && (
-                <View style={styles.popularBadge}>
-                  <Text style={styles.popularText}>POPULAR</Text>
-                </View>
-              )}
-              <Text style={{ fontSize: 36, marginVertical: 6 }}>💎</Text>
-              <Text style={styles.packAmount}>{pack.amount}</Text>
-              <Text style={styles.packCoinsLabel}>Gems</Text>
-              <TouchableOpacity
-                style={[styles.buyBtn, { backgroundColor: '#27AE70' }]}
-                onPress={() => handleBuyGems(pack.amount, pack.price)}
-              >
-                <Text style={styles.buyBtnText}>{pack.price}</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-
-        {/* CAREER STATS */}
-        <Text style={styles.sectionHeader}>📊 CAREER STATISTICS</Text>
-        <View style={styles.statsCard}>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Player</Text>
-            <Text style={styles.statVal}>{profile?.username || 'Govind'}</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Matches Played</Text>
-            <Text style={styles.statVal}>142</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Win Rate</Text>
-            <Text style={styles.statVal}>68.4% (97 Wins)</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Highest Win Streak</Text>
-            <Text style={styles.statVal}>🔥 9 Wins</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Tokens Knocked Out</Text>
-            <Text style={styles.statVal}>⚔️ 384</Text>
-          </View>
-          <View style={styles.statRow}>
-            <Text style={styles.statLabel}>Total Gold Won</Text>
-            <Text style={[styles.statVal, { color: '#FFDF00' }]}>2,480,000 🪙</Text>
-          </View>
-        </View>
-
-        <View style={{ height: 90 }} />
-      </ScrollView>
-    </SafeAreaView>
+      <View style={styles.footer}>
+        <NovaButton
+          title="Edit profile"
+          variant="dark"
+          onPress={() => router.push('/(auth)/setup' as any)}
+        />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#370A36',
-  },
-  header: {
-    flexDirection: 'row',
+    flexGrow: 1,
+    backgroundColor: NOVA_COLORS.bg,
     justifyContent: 'space-between',
+    paddingBottom: 28,
+  },
+  content: {
+    paddingHorizontal: 20,
+    marginTop: 10,
+  },
+  profileHeader: {
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: '#521350',
-    backgroundColor: '#2F062E',
+    marginBottom: 20,
   },
-  headerTitle: {
-    color: '#FFDF00',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  headerSub: {
-    color: '#E6C985',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  walletRow: {
-    flexDirection: 'row',
-  },
-  walletBadge: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '800',
-    backgroundColor: '#1E051E',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginLeft: 6,
-    borderWidth: 1,
-    borderColor: '#752273',
-  },
-  scrollContent: {
-    padding: 14,
-  },
-  vipCard: {
-    backgroundColor: '#521350',
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#FFDF00',
-  },
-  vipHeader: {
-    flexDirection: 'row',
+  avatarCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: NOVA_COLORS.coral,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#ffffff',
     marginBottom: 12,
   },
-  vipTitle: {
-    color: '#FFDF00',
-    fontSize: 16,
-    fontWeight: '900',
+  avatarDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
   },
-  vipSub: {
-    color: '#D4B8D3',
-    fontSize: 11,
-    marginTop: 2,
+  name: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 4,
   },
-  vipBtn: {
-    backgroundColor: '#FFDF00',
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  vipBtnText: {
-    color: '#000',
+  playerMeta: {
+    color: NOVA_COLORS.textSecondary,
     fontSize: 12,
-    fontWeight: '900',
+    marginBottom: 14,
   },
-  sectionHeader: {
-    color: '#E6C985',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
-    marginBottom: 10,
-    marginTop: 6,
-  },
-  packsGrid: {
+  badgesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+  },
+  badgeSpacing: {
+    marginRight: 8,
+  },
+  xpCard: {
+    marginBottom: 14,
+    padding: 18,
+  },
+  xpHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  xpTitle: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  xpCount: {
+    color: NOVA_COLORS.accentPurple,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  progressBarTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: NOVA_COLORS.accentPurple,
+    borderRadius: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 14,
   },
-  packCard: {
-    width: '48%',
-    backgroundColor: '#521350',
-    borderRadius: 16,
-    padding: 12,
+  statBox: {
+    width: '31%',
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 18,
+    padding: 16,
     alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1.5,
-    borderColor: '#752273',
-  },
-  popularBadge: {
-    position: 'absolute',
-    top: -8,
-    backgroundColor: '#E74C4C',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  popularText: {
-    color: '#FFF',
-    fontSize: 8,
-    fontWeight: '900',
-  },
-  packAmount: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  packCoinsLabel: {
-    color: '#E6C985',
-    fontSize: 11,
-    marginBottom: 8,
-  },
-  buyBtn: {
-    backgroundColor: '#FFDF00',
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 20,
-    width: '100%',
-    alignItems: 'center',
-  },
-  buyBtnText: {
-    color: '#000',
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  statsCard: {
-    backgroundColor: '#521350',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1.5,
-    borderColor: '#752273',
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2F062E',
-  },
-  statLabel: {
-    color: '#D4B8D3',
-    fontSize: 12,
-    fontWeight: '700',
   },
   statVal: {
-    color: '#FFF',
-    fontSize: 12,
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 20,
     fontWeight: '800',
+    marginBottom: 4,
+  },
+  statLabel: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 11,
+  },
+  achievementsCard: {
+    padding: 18,
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  achievementsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  achievementItem: {
+    alignItems: 'center',
+  },
+  achIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  achName: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  footer: {
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
 });

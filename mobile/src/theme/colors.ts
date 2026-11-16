@@ -81,3 +81,39 @@ export const COLOR_MAP = {
     glow: ROYAL_COLORS.blueGlow,
   },
 };
+
+// ==========================================
+// FIGMA "LUDO NOVA" OFFICIAL DESIGN TOKENS
+// ==========================================
+export const NOVA_COLORS = {
+  bg: '#0d101e',
+  surfaceCard: '#191e33',
+  surfaceNav: '#131729',
+  surfaceBadge: '#30254e',
+  surfaceWhite: '#f6f5ff',
+  surfaceBoard: '#f0f1f9',
+  surfaceElevated: '#212744',
+
+  // Primary Action & Branding
+  accentPurple: '#b9a2ff',
+  accentPurpleDark: '#30254e',
+  accentGold: '#ffd37b',
+  accentMint: '#83e6c0',
+  accentCoral: '#ff7c7c',
+  accentCoralDark: '#f57085',
+  accentBlue: '#71aaff',
+  accentFacebook: '#3b5fbd',
+
+  // Text
+  textPrimary: '#f6f5ff',
+  textSecondary: '#a5aec9',
+  textMuted: '#6d7594',
+  textDark: '#0d101e',
+
+  // Four-player Ludo Nova quadrants
+  coral: '#ff7c7c',
+  mint: '#83e6c0',
+  blue: '#71aaff',
+  gold: '#ffd37b',
+  finishStar: '#30254e',
+};

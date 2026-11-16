@@ -1,0 +1,160 @@
+=== 01 · Welcome (2:2) ===
+Texts: ['PLAY. CONNECT. REPEAT.', 'LUDO NOVA', 'Your people. Your next great game.', 'Let’s play', 'Already a player?  Sign in']
+Key Frames: ['PLAY. CONNECT. REPEAT. badge', 'Ludo board', 'Coral home', 'Surface', 'Player token', 'Player token', 'Player token', 'Player token', 'Mint home', 'Surface', 'Player token', 'Player token', 'Player token', 'Player token', 'Blue home']
+
+=== 02 · Sign in (2:4) ===
+Texts: ['▰  ▰  ▱', 'Welcome to the table', 'Great games start with good company.', 'Save your progress, find your friends and make', 'Continue with Apple', 'Continue with Google', 'Continue with Facebook', 'or', 'Play as a guest', 'By continuing, you agree to our Terms of Servi']
+Key Frames: ['back icon', 'Surface', 'Die · 5', 'Continue with Apple button', 'Continue with Google button', 'Continue with Facebook button']
+
+=== 03 · Player setup (2:6) ===
+Texts: ['▰  ▰  ▱', 'Make it yours', 'Choose your name and a token to start.', 'YOUR PLAYER NAME', 'Alex Nova', 'CHOOSE YOUR COLOR', 'A little welcome gift', '2,000 coins to get you rolling.', 'Enter the lobby']
+Key Frames: ['back icon', 'Surface', 'Player token', 'Surface', 'Player token', 'Player token', 'check icon', 'Player token', 'Player token', 'Surface', 'star icon', 'Enter the lobby button']
+
+=== 04 · Home lobby (2:8) ===
+Texts: ['GOOD EVENING', 'Alex Nova', '◈  12,450', '◇  120', 'YOUR NEXT GREAT GAME', 'Good times. Great rolls.', 'The classic, with a little more magic.', 'Play online', 'Your kind of game', 'Team up', 'Win together', 'With friends', 'Your private table', 'Your daily gift is ready', 'Keep your 5-day streak going', 'Play', 'Friends', 'Clubs', 'Shop']
+Key Frames: ['Player token', 'settings icon', '◈  12,450 badge', '◇  120 badge', 'mail icon', 'Surface', 'YOUR NEXT GREAT GAME badge', 'Die · 5', 'Play online button', 'Surface', 'club icon', 'Surface', 'friends icon', 'Surface', 'star icon']
+
+=== 05 · Choose a mode (2:10) ===
+Texts: ['▰  ▰  ▱', 'Find your game', 'Different ways to play. One great feeling.', 'Play', 'Friends', 'Clubs', 'Shop', 'Classic', 'The original. Race all 4 tokens home.', '2–4 PLAYERS', 'Quick play', 'One token. Fast finish. More fun.', '~5 MIN', 'Team up', 'Two teams. One shared victory.', '2 VS 2', 'Private table', 'Make room for your favorite people.', 'FRIENDS', 'Offline', 'Pass and play, or challenge the bot.', 'NO WI-FI']
+Key Frames: ['back icon', 'Bottom navigation', 'home icon', 'friends icon', 'club icon', 'shop icon', 'Surface', 'Surface', 'Die · 1', 'Surface', 'Die · 2', 'Surface', 'Die · 3', 'Surface', 'Die · 4']
+
+=== 06 · Classic table (2:12) ===
+Texts: ['▰  ▰  ▱', 'Classic table', 'A timeless game. A fresh challenge.', 'CLASSIC', 'Choose your table', 'Players', '2 players', '4 players', 'Entry coins', 'Casual', 'Entry 100', '◈ 200', 'Prize pool', 'Popular', 'Entry 500', '◈ 1,000', 'Prize pool', 'High roller', 'Entry 2,500', '◈ 5,000', 'Prize pool', 'Virtual coins only · No cash value', 'Find a match  ·  500 coins']
+Key Frames: ['back icon', 'Surface', 'CLASSIC badge', '2 players button', '4 players button', 'Surface', 'Surface', 'Surface', 'Find a match  ·  500 coins button']
+
+=== 07 · Team up (2:14) ===
+Texts: ['▰  ▰  ▱', 'Better together', 'Pair up and bring your best game.', '2 VS 2', 'Two players. One winning team.', 'Help your partner bring every token home.', 'Choose your partner', 'Invite a friend', 'Team up with someone you know.', 'Find a teammate', 'Meet your next winning partner.', '◈  500 entry', '◈  2,000 pool', 'Find a teammate']
+Key Frames: ['back icon', 'Surface', 'Surface', '2 VS 2 badge', 'Surface', 'next icon', 'Surface', 'next icon', '◈  500 entry badge', '◈  2,000 pool badge', 'Find a teammate button']
+
+=== 08 · Private rooms (2:16) ===
+Texts: ['▰  ▰  ▱', 'Your private table', 'The best seat is the one beside your friends.', 'Same game. Your favorite people.', 'Create a room or hop into a friend’s game. No ', 'Create a room', 'Join with a code', 'Up to 4 players · Voice &amp; chat · Custom rules']
+Key Frames: ['back icon', 'Surface', 'Ludo board', 'Coral home', 'Surface', 'Player token', 'Player token', 'Player token', 'Player token', 'Mint home', 'Surface', 'Player token', 'Player token', 'Player token', 'Player token']
+
+=== 09 · Create room (2:18) ===
+Texts: ['▰  ▰  ▱', 'Room ready', 'Classic · 4 players · Private', 'ROOM CODE', 'N O V A 2 4', 'Tap to copy · Share with your friends', 'Share invite link', 'Your table  ·  2 / 4', 'Alex Nova', 'You · Host', 'Maya', 'Ready to play', 'Open seat', 'Invite a friend', 'Open seat', 'Invite a friend', 'Start game  ·  2 players ready']
+Key Frames: ['back icon', 'Surface', 'Surface', 'Share invite link button', 'Surface', 'Player token', 'check icon', 'Surface', 'Player token', 'check icon', 'Surface', 'Player token', 'plus icon', 'Surface', 'Player token']
+
+=== 10 · Join room (2:20) ===
+Texts: ['▰  ▰  ▱', 'Join your friends', 'There’s a seat waiting for you.', 'Enter room code', 'Ask your host for their 6-character code.', 'N', 'O', 'V', 'A', '2', '4', 'Your room, your rules', 'Private games are just for fun. Play free with', 'Join room', 'Room not found? Check the code with your host.']
+Key Frames: ['back icon', 'Surface', 'Die · 4', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'friends icon', 'Join room button']
+
+=== 11 · Pass and play (2:22) ===
+Texts: ['▰  ▰  ▱', 'Pass and play', 'One phone. Everyone’s invited.', 'Who’s at the table?', '2 players', '3 players', '4 players', 'Alex', 'Player 1', 'Maya', 'Player 2', 'Sam', 'Player 3', 'Zara', 'Player 4', 'No internet needed. Pass the phone after each ', 'Start local game']
+Key Frames: ['back icon', 'Surface', '2 players button', '3 players button', '4 players button', 'Surface', 'Player token', 'check icon', 'Surface', 'Player token', 'check icon', 'Surface', 'Player token', 'check icon', 'Surface']
+
+=== 12 · Play computer (2:24) ===
+Texts: ['▰  ▰  ▱', 'A little solo practice', 'Play your way. No pressure.', 'Meet Nova Bot', 'Sharpen your strategy before your next match.', 'DIFFICULTY', 'Easy', 'A friendly warm-up', 'Balanced', 'A little challenge, a lot of fun', 'Expert', 'Make every move count', 'Play Nova Bot']
+Key Frames: ['back icon', 'Surface', 'Die · 6', 'Surface', 'Surface', 'check icon', 'Surface', 'Play Nova Bot button']
+
+=== 13 · Matchmaking (2:26) ===
+Texts: ['▰  ▰  ▱', 'Finding your table', 'Classic · 4 players · 500 coins', 'MATCHMAKING', 'Good company is on the way.', 'You', 'Maya', 'Sam', 'Searching…', '3 of 4 players ready  ·  00:08', 'Cancel search']
+Key Frames: ['back icon', 'Surface', 'MATCHMAKING badge', 'Surface', 'Player token', 'Surface', 'Player token', 'Surface', 'Player token', 'Surface', 'Die · 3', 'Cancel search button']
+
+=== 14 · Live game (2:28) ===
+Texts: ['▰  ▰  ▱', 'Classic table', '◈  2,000 prize', 'ROUND 08', 'Maya', '2 tokens home', 'Zara', '1 token home', 'Alex · You', 'Your turn', 'Sam', '1 token home', 'A six! Roll again.', 'Tap the dice  ·  12s left', 'Chat', 'Voice off']
+Key Frames: ['back icon', 'Surface', '◈  2,000 prize badge', 'ROUND 08 badge', 'Player token', 'Player token', 'Ludo board', 'Coral home', 'Surface', 'Home slot', 'Player token', 'Home slot', 'Home slot', 'Home slot', 'Mint home']
+
+=== 15 · Game chat (2:30) ===
+Texts: ['▰  ▰  ▱', 'Classic table', 'Table chat', 'Be kind. Play fair. Have fun.', 'Good luck!', 'Nice move!', 'Well played', 'MAYA', 'That was a close one!', 'YOU', 'The comeback starts now.', 'Send a friendly message…']
+Key Frames: ['back icon', 'Surface', 'Ludo board', 'Coral home', 'Surface', 'Home slot', 'Player token', 'Home slot', 'Home slot', 'Home slot', 'Mint home', 'Surface', 'Home slot', 'Player token', 'Home slot']
+
+=== 16 · Game menu (2:32) ===
+Texts: ['▰  ▰  ▱', 'Classic table', 'Take a moment', 'The match is still live. Your turn timer conti', 'Sound effects', 'On', 'Game music', 'Off', 'Voice chat', 'Muted', 'Back to game', 'Leave match', 'Leaving forfeits your entry coins.']
+Key Frames: ['back icon', 'Surface', 'Ludo board', 'Coral home', 'Surface', 'Home slot', 'Player token', 'Home slot', 'Home slot', 'Home slot', 'Mint home', 'Surface', 'Home slot', 'Player token', 'Home slot']
+
+=== 17 · Match results (2:34) ===
+Texts: ['▰  ▰  ▱', 'A very good game', 'CLASSIC · 4 PLAYERS', 'Your table. Your victory.', '1st place  ·  All 4 tokens home', '+2,000', 'Coins won', '+120 XP', 'Level 12 → 13', 'Play again  ·  500 coins', 'Back to lobby']
+Key Frames: ['back icon', 'Surface', 'CLASSIC · 4 PLAYERS badge', 'Surface', 'trophy icon', 'Surface', 'Play again  ·  500 coins button', 'Back to lobby button']
+
+=== 18 · Friends (2:36) ===
+Texts: ['▰  ▰  ▱', 'Your people', 'A good game is better with friends.', 'Play', 'Friends', 'Clubs', 'Shop', 'Invite friends', 'ONLINE  4', 'ALL FRIENDS', 'Maya', 'Online · Ready to play', 'Play', 'Sam', 'In a classic game', 'Watch', 'Zara', 'Online · Ready to play', 'Play', 'Leo', 'Online · In the lobby', 'Play', 'Nina', 'Last played 2 hours ago', 'Invite']
+Key Frames: ['back icon', 'Bottom navigation', 'home icon', 'friends icon', 'club icon', 'shop icon', 'Surface', 'Invite friends button', 'ONLINE  4 badge', 'ALL FRIENDS badge', 'search icon', 'Surface', 'Player token', 'Surface', 'Surface']
+
+=== 19 · Invite friends (2:38) ===
+Texts: ['▰  ▰  ▱', 'Make room for friends', 'More familiar faces. More memorable games.', 'The best games start with “join me”.', 'Invite a friend and you’ll both get 500 coins ', 'YOUR INVITE CODE', 'A L E X 8 8', 'Share invite', 'Find friends on Facebook', '3 friends invited  ·  1,500 coins earned']
+Key Frames: ['back icon', 'Surface', 'friends icon', 'Surface', 'plus icon', 'Share invite button', 'Find friends on Facebook button']
+
+=== 20 · Player profile (2:40) ===
+Texts: ['▰  ▰  ▱', 'Player profile', 'Alex Nova', 'ID: 849 225  ·  Joined November 2026', 'LEVEL 12', 'GOLD III', 'Next stop: Level 13', '720 / 1,000 XP', '248', 'Games', '142', 'Wins', '57%', 'Win rate', 'Favorite achievements', 'First win', 'Team spirit', 'Hot streak', 'Edit profile']
+Key Frames: ['back icon', 'Surface', 'Player token', 'LEVEL 12 badge', 'GOLD III badge', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'trophy icon', 'friends icon', 'star icon', 'Edit profile button']
+
+=== 21 · Leagues (2:42) ===
+Texts: ['▰  ▰  ▱', 'Gold league', 'New week. New climb.', 'ENDS IN  2D 14H', 'Gold III', 'Top 10 move up to Platinum', 'Maya', '6,420', '#2', 'Arjun', '7,810', '#1', 'Zara', '5,960', '#3', '04', 'Sam', '5,240', '05', 'Leo', '4,890', '06', 'Nina', '4,720', '#18', 'You · Alex', '2,450 points', '↑ 3']
+Key Frames: ['back icon', 'Surface', 'ENDS IN  2D 14H badge', 'Surface', 'trophy icon', 'Player token', '#2 badge', 'Player token', '#1 badge', 'Player token', '#3 badge', 'Surface', 'Surface', 'Surface', 'Surface']
+
+=== 22 · Discover clubs (2:44) ===
+Texts: ['▰  ▰  ▱', 'Find your crew', 'Big laughs. Bigger team spirit.', 'Play', 'Friends', 'Clubs', 'Shop', 'Search clubs', 'Recommended for you', 'The Night Rollers', 'Chill games. Great company.', '28 / 30 members  ·  GOLD', 'Six Appeal', 'Always room for one more six.', '24 / 30 members  ·  GOLD', 'Good Roll Society', 'Play fair. Celebrate together.', '19 / 30 members  ·  SILVER', 'Create a club  ·  1,000 coins']
+Key Frames: ['back icon', 'Bottom navigation', 'home icon', 'friends icon', 'club icon', 'shop icon', 'Surface', 'Surface', 'search icon', 'Surface', 'club icon', 'Surface', 'club icon', 'Surface', 'club icon']
+
+=== 23 · Club overview (2:46) ===
+Texts: ['▰  ▰  ▱', 'The Night Rollers', 'A little competitive. A lot of fun.', 'Play', 'Friends', 'Clubs', 'Shop', 'THE NIGHT ROLLERS', 'Roll with us.', 'Gold club  ·  28 / 30 members', '#124 GLOBAL', '12 ONLINE', 'Club activity', 'Maya', 'Won a classic match · +120 XP', 'View', 'Leo', 'Sent 5 gifts to clubmates', 'View', 'Open club chat', 'Club info  ·  Members  ·  Weekly leaderboard']
+Key Frames: ['back icon', 'Bottom navigation', 'home icon', 'friends icon', 'club icon', 'shop icon', 'Surface', 'Surface', 'club icon', '#124 GLOBAL badge', '12 ONLINE badge', 'Surface', 'Player token', 'Surface', 'Surface']
+
+=== 24 · Club chat (2:48) ===
+Texts: ['▰  ▰  ▱', 'Night Rollers chat', '12 online  ·  Keep it friendly.', 'Club goal: 500 games this week', '384 / 500  ·  Keep rolling!', 'MAYA  ·  9:34', 'Anyone up for a quick team game? I’m ready for', 'YOU  ·  9:35', 'Count me in. Sending an invite!', 'Team table is open', 'Alex is looking for a teammate', 'Join table', 'Message your club…']
+Key Frames: ['back icon', 'Surface', 'Surface', 'star icon', 'Surface', 'Surface', 'Surface', 'friends icon', 'Surface', 'Surface', 'next icon']
+
+=== 25 · Events (2:50) ===
+Texts: ['▰  ▰  ▱', 'Something to play for', 'A little challenge makes every roll sweeter.', 'LIVE EVENT · 2D 14H LEFT', 'The weekend is yours.', 'Win 3 quick games. Unlock Nova dice.', 'Join the challenge', 'More ways to win', 'Evening Cup', '16 players · Starts in 24 min', '25,000 pool', 'Team Rush', 'Win together · Ends Sunday', '2× team XP']
+Key Frames: ['back icon', 'Surface', 'Surface', 'LIVE EVENT · 2D 14H LEFT badge', 'trophy icon', 'Join the challenge button', 'Surface', 'trophy icon', 'Surface', 'friends icon']
+
+=== 26 · Tournament (2:52) ===
+Texts: ['▰  ▰  ▱', 'Evening Cup', 'Make your next match a little more epic.', '25,000', 'COIN PRIZE POOL', '16 players  ·  Classic  ·  3 rounds', 'STARTS IN  24:16', 'Your path to the podium', '01', 'Qualifiers', '16 players → 8', '02', 'Semifinal', '8 players → 4', '03', 'The final table', '4 players · 1 champion', 'Entry 1,000 coins  ·  12 / 16 spots filled', 'Reserve my seat']
+Key Frames: ['back icon', 'Surface', 'Surface', 'trophy icon', 'STARTS IN  24:16 badge', 'Surface', 'Surface', 'Surface', 'Reserve my seat button']
+
+=== 27 · Season pass (2:54) ===
+Texts: ['▰  ▰  ▱', 'The Nova pass', 'Season 04 · Midnight magic', 'ENDS IN  18D 6H', 'Every game gets you closer.', 'Tier 7 of 30', '350 / 500 XP', 'TIER', 'FREE', 'PREMIUM', '07', '500 coins', 'Midnight dice', '08', '10 gems', '1,000 coins', '09', '100 coins', 'Nova trail', 'Unlock premium  ·  $4.99', 'Optional purchase · Rewards are virtual items']
+Key Frames: ['back icon', 'Surface', 'Surface', 'ENDS IN  18D 6H badge', 'Die · 6', 'Surface', 'Surface', 'Surface', 'Surface', 'gift icon', 'Surface', 'star icon', 'Surface', 'gift icon', 'Unlock premium  ·  $4.99 button']
+
+=== 28 · Daily rewards (2:56) ===
+Texts: ['▰  ▰  ▱', 'A little thank-you', 'Your daily moment of good fortune.', '5-DAY STREAK', 'Keep a good thing rolling.', 'DAY 1', 'N', '100', 'DAY 2', 'N', '200', 'DAY 3', 'N', '300', 'DAY 4', 'N', '400', 'DAY 5', 'N', '500', 'DAY 6', 'N', '750', 'Day 7 · A surprise awaits', 'Come back tomorrow to keep your streak.', 'Claim 500 coins']
+Key Frames: ['back icon', 'Surface', '5-DAY STREAK badge', 'Surface', 'Virtual coin', 'check icon', 'Surface', 'Virtual coin', 'check icon', 'Surface', 'Virtual coin', 'check icon', 'Surface', 'Virtual coin', 'check icon']
+
+=== 29 · Missions (2:58) ===
+Texts: ['▰  ▰  ▱', 'Small goals. Big fun.', 'New missions in  14h 22m', 'DAILY', 'WEEKLY', '2 of 4 complete', 'Finish all 4 to unlock a bonus chest.', 'Play 2 classic games', '2 / 2 games', '+100 XP', 'Send a friend a gift', '1 / 1 gifts', '+50 coins', 'Win a team game', '0 / 1 wins', '+150 XP', 'Bring 8 tokens home', '5 / 8 tokens', '+200 coins', 'Claim completed rewards']
+Key Frames: ['back icon', 'Surface', 'DAILY badge', 'WEEKLY badge', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface']
+
+=== 30 · Lucky roll (2:60) ===
+Texts: ['▰  ▰  ▱', 'Your lucky roll', 'One free chance to brighten your day.', 'FREE DAILY ROLL', '100', '25', '500', '10', '200', '50', 'A little luck goes a long way.', 'Free daily rewards. No purchase needed. Prizes', 'Take my free roll', 'Next free roll in 24 hours after claiming']
+Key Frames: ['back icon', 'Surface', 'FREE DAILY ROLL badge', 'Daily prize wheel', 'Prize segment', 'Prize segment', 'Prize segment', 'Prize segment', 'Prize segment', 'Prize segment', 'Die · 6', 'Wheel pointer', 'Take my free roll button']
+
+=== 31 · Shop (2:62) ===
+Texts: ['▰  ▰  ▱', 'A little extra magic', 'Make the game feel like you.', 'Play', 'Friends', 'Clubs', 'Shop', '◈  12,450', '◇  120', 'THE NOVA COLLECTION', 'Roll in your own style.', 'Explore dice &amp; themes  →', 'Find your favorite', 'N', 'Coins', 'For your next game', 'Gems', 'A little extra sparkle', 'Dice', 'Make every roll yours', 'Boards', 'Set the scene']
+Key Frames: ['back icon', 'Bottom navigation', 'home icon', 'friends icon', 'club icon', 'shop icon', 'Surface', '◈  12,450 badge', '◇  120 badge', 'Surface', 'THE NOVA COLLECTION badge', 'Die · 5', 'Surface', 'Virtual coin', 'Surface']
+
+=== 32 · Coin packs (2:64) ===
+Texts: ['▰  ▰  ▱', 'A few more rounds', 'Virtual coins for more games together.', 'BALANCE  12,450', 'N', 'Pocketful', '5,000', '$0.99', 'N', 'Good company', '25,000', '$3.99', 'BEST VALUE', 'N', 'Game night', '75,000', '$8.99', 'N', 'The big table', '200,000', '$19.99', 'Purchases are optional. Coins have no cash val', 'Restore purchases']
+Key Frames: ['back icon', 'Surface', 'BALANCE  12,450 badge', 'Surface', 'Virtual coin', 'Surface', 'Surface', 'Virtual coin', 'Surface', 'Surface', 'Virtual coin', 'Surface', 'Surface', 'Virtual coin', 'Surface']
+
+=== 33 · Gem packs (2:66) ===
+Texts: ['▰  ▰  ▱', 'A little sparkle', 'Gems for the things that make you smile.', 'BALANCE  120', 'A little shine', '50', '$0.99', 'Bright ideas', '250', '$3.99', 'Pure magic', '700', '$8.99', 'Supernova', '2,000', '$19.99', 'Purchases are optional. Gems have no cash valu', 'Restore purchases']
+Key Frames: ['back icon', 'Surface', 'BALANCE  120 badge', 'Surface', 'gem icon', 'Surface', 'Surface', 'gem icon', 'Surface', 'Surface', 'gem icon', 'Surface', 'Surface', 'gem icon', 'Surface']
+
+=== 34 · Dice collection (2:68) ===
+Texts: ['▰  ▰  ▱', 'Every roll, your style', 'Your collection · 6 of 24 dice', 'OWNED', 'ALL DICE', 'Midnight Nova', 'EQUIPPED · EPIC', 'Classic', 'Owned', 'Nova', 'Equipped', 'Coral', 'Owned', 'Mint', 'Owned', 'Golden', '250 gems', 'Blue hour', 'Pass reward', 'Cosmetic only. Every die has the same odds.']
+Key Frames: ['back icon', 'Surface', 'OWNED badge', 'ALL DICE badge', 'Surface', 'Die · 5', 'Surface', 'Die · 1', 'Surface', 'Die · 2', 'Surface', 'Die · 3', 'Surface', 'Die · 4', 'Surface']
+
+=== 35 · Board themes (2:70) ===
+Texts: ['▰  ▰  ▱', 'Set the scene', 'A fresh board. The same favorite game.', 'Nova classic', 'EQUIPPED', 'After hours', '500 gems', 'Candy club', 'Season reward', 'Themes never change the rules or your odds.']
+Key Frames: ['back icon', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface']
+
+=== 36 · Inbox (2:72) ===
+Texts: ['▰  ▰  ▱', 'A little news for you', 'Invites, gifts and the good stuff.', 'ALL', 'GIFTS  2', 'UPDATES', 'A gift from Maya', '500 coins · “For our next game!”', 'Claim  →', 'Your team is waiting', 'Sam invited you to a team table.', 'Join  →', 'Welcome to Gold III', 'A new league. A fresh challenge.', 'View  →', 'Your daily reward is ready', 'Keep your 5-day streak alive.', 'Open  →', 'A safer place to play', 'Read our updated fair-play guide.', 'Read  →', 'You’re all caught up.']
+Key Frames: ['back icon', 'Surface', 'ALL badge', 'GIFTS  2 badge', 'UPDATES badge', 'Surface', 'gift icon', 'Surface', 'mail icon', 'Surface', 'mail icon', 'Surface', 'mail icon', 'Surface', 'shield icon']
+
+=== 37 · Send a gift (2:74) ===
+Texts: ['▰  ▰  ▱', 'Send a little joy', 'Small gestures. Good company.', 'TO MAYA', 'Make their day.', 'Pick your gift', 'Good luck', '◈ 50', 'Big cheers', '◈ 100', 'Team spirit', '◈ 150', 'ADD A NOTE', 'Here’s to our next win!', '23 / 80', 'Your balance: 12,450 coins', 'Send gift  ·  50 coins']
+Key Frames: ['back icon', 'Surface', 'Surface', 'Player token', 'Surface', 'star icon', 'Surface', 'gift icon', 'Surface', 'gift icon', 'Surface', 'Send gift  ·  50 coins button']
+
+=== 38 · Settings (2:76) ===
+Texts: ['▰  ▰  ▱', 'Just the way you like it', 'Settings', 'SOUND &amp; PLAY', 'Sound effects', 'Game music', 'Haptic feedback', 'Allow voice chat', 'YOUR EXPERIENCE', 'Language', 'English', 'Notifications', 'On', 'Account and privacy', 'Help and rules', 'Ludo Nova  ·  v1.0']
+Key Frames: ['back icon', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'next icon', 'Surface']
+
+=== 39 · Account and privacy (2:78) ===
+Texts: ['▰  ▰  ▱', 'Account &amp; privacy', 'Your game. Your choices.', 'Your progress is safe', 'Connected with Apple · ID 849 225', 'PRIVACY', 'Show online status', 'Allow friend requests', 'Personalized offers', 'Blocked players', '3 players', 'Download my data', 'Privacy policy', 'Sign out', 'Delete account']
+Key Frames: ['back icon', 'Surface', 'Surface', 'shield icon', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'next icon', 'Surface', 'next icon']
+
+=== 40 · Help and rules (2:80) ===
+Texts: ['▰  ▰  ▱', 'A helping hand', 'A quick guide to your next good game.', 'HOW TO PLAY', 'SUPPORT', '01', 'Roll a six to get started', 'Bring a token out of your home base.', '02', 'Race, capture, stay safe', 'Land on a rival to send them home. Star spaces', '03', 'Bring all four tokens home', 'An exact roll takes you to the finish. The fir', 'Fair play and safety', 'Report, mute or block from a player profile.', 'Contact support', 'We’re here to help you keep the good games goi']
+Key Frames: ['back icon', 'Surface', 'HOW TO PLAY badge', 'SUPPORT badge', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'Surface', 'next icon', 'Contact support button']
+

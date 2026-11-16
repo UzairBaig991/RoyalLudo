@@ -1,159 +1,196 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ROYAL_COLORS } from '../../src/theme/colors';
-import { RoyalButton } from '../../src/components/ui/RoyalButton';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { NOVA_COLORS } from '../../src/theme/colors';
+import { NovaHeader } from '../../src/components/nova/NovaHeader';
+import { NovaBadge } from '../../src/components/nova/NovaBadge';
+import { NovaDie } from '../../src/components/nova/NovaDie';
+import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useAuthStore } from '../../src/store/useAuthStore';
-import { useGameStore } from '../../src/store/useGameStore';
 
 export default function MatchmakingScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { profile } = useAuthStore();
-  const { startNewGame } = useGameStore();
-  const [searchSeconds, setSearchSeconds] = useState(0);
+
+  const mode = (params.mode as string) || 'classic';
+  const prize = (params.prize as string) || '2,000';
+  const entry = (params.entry as string) || '500';
+
+  const [seconds, setSeconds] = useState(8);
+  const [playersFound, setPlayersFound] = useState(3);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setSearchSeconds((s) => s + 1);
+      setSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setPlayersFound(4);
+          // Navigate to live game
+          setTimeout(() => {
+            router.replace({
+              pathname: '/gameplay/[matchId]',
+              params: { matchId: `match_${Date.now()}`, mode, prize },
+            } as any);
+          }, 800);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
-    // Auto-match after 3 seconds for instant responsive gameplay
-    const matchTimer = setTimeout(() => {
-      startNewGame({
-        mode: 'classic',
-        playerCount: 4,
-        players: [
-          { id: profile?.userId || 'p1', username: profile?.username || 'You', isBot: false },
-          { id: 'usr_matched_2', username: 'QueenSophia', isBot: false },
-          { id: 'usr_matched_3', username: 'AlexTheKing', isBot: false },
-          { id: 'usr_matched_4', username: 'MarcusEmperor', isBot: false },
-        ],
-      });
-      router.replace('/gameplay/ranked_arena_match');
-    }, 3200);
-
-    return () => {
-      clearInterval(timer);
-      clearTimeout(matchTimer);
-    };
-  }, [profile, router]);
-
-  const handleCancel = () => {
-    router.replace('/(tabs)');
-  };
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.container}>
+      <NovaHeader
+        title="Finding your table"
+        subtitle={`Classic · 4 players · ${entry} coins`}
+        showBack={true}
+        onBack={() => router.back()}
+      />
+
       <View style={styles.content}>
-        {/* Animated Radar Circle */}
-        <View style={styles.radarOuter}>
-          <View style={styles.radarMiddle}>
-            <View style={styles.radarInner}>
-              <ActivityIndicator size="large" color={ROYAL_COLORS.gold} />
+        <NovaBadge label="MATCHMAKING" color="purple" style={styles.badge} />
+
+        <Text style={styles.heading}>Good company is on the way.</Text>
+
+        {/* 4 Player Slots */}
+        <View style={styles.slotsGrid}>
+          {/* Player 1: You */}
+          <View style={styles.playerSlot}>
+            <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.coral }]}>
+              <View style={styles.innerDot} />
             </View>
+            <Text style={styles.slotName}>You</Text>
+            <Text style={styles.slotStatus}>Ready</Text>
+          </View>
+
+          {/* Player 2: Maya */}
+          <View style={styles.playerSlot}>
+            <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.mint }]}>
+              <View style={styles.innerDot} />
+            </View>
+            <Text style={styles.slotName}>Maya</Text>
+            <Text style={styles.slotStatus}>Ready</Text>
+          </View>
+
+          {/* Player 3: Sam */}
+          <View style={styles.playerSlot}>
+            <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.blue }]}>
+              <View style={styles.innerDot} />
+            </View>
+            <Text style={styles.slotName}>Sam</Text>
+            <Text style={styles.slotStatus}>Ready</Text>
+          </View>
+
+          {/* Player 4: Searching / Zara */}
+          <View style={styles.playerSlot}>
+            {playersFound === 4 ? (
+              <View style={[styles.avatarCircle, { backgroundColor: NOVA_COLORS.gold }]}>
+                <View style={styles.innerDot} />
+              </View>
+            ) : (
+              <View style={[styles.avatarCircle, styles.searchingCircle]}>
+                <NovaDie value={3} size={36} rolling={true} theme="nova" />
+              </View>
+            )}
+            <Text style={styles.slotName}>
+              {playersFound === 4 ? 'Zara' : 'Searching…'}
+            </Text>
+            <Text style={styles.slotStatus}>
+              {playersFound === 4 ? 'Ready' : 'Finding'}
+            </Text>
           </View>
         </View>
 
-        <Text style={styles.searchTitle}>SEARCHING FOR OPPONENTS...</Text>
-        <Text style={styles.searchMode}>Classic Ludo • 4 Players • Gold League</Text>
+        <Text style={styles.timerText}>
+          {playersFound} of 4 players ready · 00:{seconds < 10 ? `0${seconds}` : seconds}
+        </Text>
+      </View>
 
-        <View style={styles.timerBadge}>
-          <Text style={styles.timerText}>Elapsed Time: 00:0{searchSeconds}</Text>
-        </View>
-
-        <View style={styles.playerCountPill}>
-          <Text style={styles.playerCountText}>Matched: 1/4 Players Found</Text>
-        </View>
-
-        <RoyalButton
-          title="CANCEL SEARCH"
-          variant="secondary"
-          size="medium"
-          onPress={handleCancel}
-          style={styles.cancelBtn}
+      <View style={styles.footer}>
+        <NovaButton
+          title="Cancel search"
+          variant="dark"
+          onPress={() => router.back()}
         />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-    backgroundColor: ROYAL_COLORS.primaryBg,
+    backgroundColor: NOVA_COLORS.bg,
+    justifyContent: 'space-between',
+    paddingBottom: 28,
   },
   content: {
-    flex: 1,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
+    marginTop: 10,
   },
-  radarOuter: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: 'rgba(214, 174, 98, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(214, 174, 98, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  badge: {
+    marginBottom: 16,
+  },
+  heading: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
     marginBottom: 32,
   },
-  radarMiddle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(214, 174, 98, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(214, 174, 98, 0.4)',
+  slotsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 32,
+  },
+  playerSlot: {
+    alignItems: 'center',
+  },
+  avatarCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  radarInner: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: ROYAL_COLORS.cardBg,
+    marginBottom: 10,
     borderWidth: 2,
-    borderColor: ROYAL_COLORS.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: '#ffffff',
   },
-  searchTitle: {
-    color: ROYAL_COLORS.gold,
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 2,
-    marginBottom: 6,
+  innerDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
   },
-  searchMode: {
-    color: ROYAL_COLORS.textSecondary,
-    fontSize: 13,
-    marginBottom: 20,
+  searchingCircle: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderStyle: 'dashed',
+    borderWidth: 1.5,
+    borderColor: NOVA_COLORS.accentPurple,
   },
-  timerBadge: {
-    backgroundColor: ROYAL_COLORS.cardBg,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: ROYAL_COLORS.border,
-    marginBottom: 12,
-  },
-  timerText: {
-    color: ROYAL_COLORS.goldLight,
-    fontSize: 12,
+  slotName: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 14,
     fontWeight: '700',
   },
-  playerCountPill: {
-    marginBottom: 36,
+  slotStatus: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 11,
+    marginTop: 2,
   },
-  playerCountText: {
-    color: ROYAL_COLORS.textMuted,
-    fontSize: 12,
+  timerText: {
+    color: NOVA_COLORS.accentPurple,
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 10,
   },
-  cancelBtn: {
-    width: 200,
+  footer: {
+    paddingHorizontal: 20,
   },
 });

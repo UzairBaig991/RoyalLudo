@@ -1,107 +1,155 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ROYAL_COLORS } from '../../src/theme/colors';
-import { RoyalButton } from '../../src/components/ui/RoyalButton';
+import { Ionicons } from '@expo/vector-icons';
+import { NOVA_COLORS } from '../../src/theme/colors';
+import { NovaHeader } from '../../src/components/nova/NovaHeader';
+import { NovaDie } from '../../src/components/nova/NovaDie';
+import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useAuthStore } from '../../src/store/useAuthStore';
 
-export default function LoginScreen() {
+export default function SignInScreen() {
   const router = useRouter();
   const { loginAsGuest } = useAuthStore();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Required', 'Please enter your email and password.');
-      return;
-    }
-    // Set authenticated user and navigate
-    loginAsGuest(email.split('@')[0] || 'RoyalPlayer');
+  const handleApple = () => {
+    loginAsGuest('ApplePlayer');
     router.replace('/(tabs)');
   };
 
+  const handleGoogle = () => {
+    loginAsGuest('GooglePlayer');
+    router.replace('/(tabs)');
+  };
+
+  const handleFacebook = () => {
+    loginAsGuest('FBPlayer');
+    router.replace('/(tabs)');
+  };
+
+  const handleGuest = () => {
+    loginAsGuest('Alex Nova');
+    router.push('/(auth)/setup' as any);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.headerTitle}>Welcome Back</Text>
-      <Text style={styles.headerSubtitle}>Sign in to resume your royal matches and claim your rewards.</Text>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>EMAIL ADDRESS</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="king@royalludo.com"
-          placeholderTextColor={ROYAL_COLORS.textMuted}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
-      </View>
-
-      <View style={styles.formGroup}>
-        <Text style={styles.label}>PASSWORD</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="••••••••••••"
-          placeholderTextColor={ROYAL_COLORS.textMuted}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
-
-      <RoyalButton
-        title="SIGN IN"
-        variant="gold"
-        size="large"
-        onPress={handleLogin}
-        style={styles.submitBtn}
+    <ScrollView
+      contentContainerStyle={styles.container}
+      bounces={false}
+      showsVerticalScrollIndicator={false}
+    >
+      <NovaHeader
+        title="Welcome to the table"
+        subtitle=""
+        showBack={true}
+        onBack={() => router.back()}
       />
-    </View>
+
+      <View style={styles.centerBlock}>
+        <View style={styles.dieWrapper}>
+          <NovaDie value={5} size={70} theme="nova" />
+        </View>
+
+        <Text style={styles.heading}>Great games start{'\n'}with good company.</Text>
+        <Text style={styles.subtext}>
+          Save your progress, find your friends and{'\n'}make every roll count.
+        </Text>
+      </View>
+
+      <View style={styles.actions}>
+        <NovaButton
+          title="Continue with Apple"
+          variant="white"
+          onPress={handleApple}
+          icon={<Ionicons name="logo-apple" size={20} color={NOVA_COLORS.textDark} />}
+          style={styles.btnSpacing}
+        />
+
+        <NovaButton
+          title="Continue with Google"
+          variant="dark"
+          onPress={handleGoogle}
+          icon={<Ionicons name="logo-google" size={20} color={NOVA_COLORS.textPrimary} />}
+          style={styles.btnSpacing}
+        />
+
+        <NovaButton
+          title="Continue with Facebook"
+          variant="facebook"
+          onPress={handleFacebook}
+          icon={<Ionicons name="logo-facebook" size={20} color="#ffffff" />}
+          style={styles.btnSpacing}
+        />
+
+        <Text style={styles.orText}>or</Text>
+
+        <TouchableOpacity onPress={handleGuest} activeOpacity={0.7} style={styles.guestLink}>
+          <Text style={styles.guestText}>Play as a guest</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.termsText}>
+          By continuing, you agree to our Terms of Service{'\n'}and Privacy Policy.
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: ROYAL_COLORS.primaryBg,
-    padding: 24,
-    justifyContent: 'center',
+    flexGrow: 1,
+    backgroundColor: NOVA_COLORS.bg,
+    justifyContent: 'space-between',
+    paddingBottom: 28,
   },
-  headerTitle: {
-    color: ROYAL_COLORS.textPrimary,
-    fontSize: 26,
+  centerBlock: {
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dieWrapper: {
+    marginBottom: 24,
+  },
+  heading: {
+    fontSize: 28,
     fontWeight: '800',
-    marginBottom: 6,
+    color: NOVA_COLORS.textPrimary,
+    textAlign: 'center',
+    lineHeight: 36,
   },
-  headerSubtitle: {
-    color: ROYAL_COLORS.textSecondary,
+  subtext: {
+    color: NOVA_COLORS.textSecondary,
     fontSize: 14,
-    marginBottom: 32,
+    textAlign: 'center',
+    marginTop: 12,
     lineHeight: 20,
   },
-  formGroup: {
-    marginBottom: 20,
+  actions: {
+    paddingHorizontal: 24,
+    width: '100%',
+    alignItems: 'center',
   },
-  label: {
-    color: ROYAL_COLORS.goldLight,
-    fontSize: 11,
+  btnSpacing: {
+    marginBottom: 12,
+  },
+  orText: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 13,
+    marginVertical: 8,
+  },
+  guestLink: {
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  guestText: {
+    color: NOVA_COLORS.accentPurple,
+    fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 8,
   },
-  input: {
-    backgroundColor: ROYAL_COLORS.cardBg,
-    borderWidth: 1,
-    borderColor: ROYAL_COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: ROYAL_COLORS.textPrimary,
-    fontSize: 15,
-  },
-  submitBtn: {
-    marginTop: 12,
+  termsText: {
+    color: NOVA_COLORS.textMuted,
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 16,
   },
 });

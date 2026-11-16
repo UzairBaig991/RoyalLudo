@@ -1,19 +1,19 @@
 import React from 'react';
 import { Stack } from 'expo-router';
-import { ROYAL_COLORS } from '../../src/theme/colors';
+import { NOVA_COLORS } from '../../src/theme/colors';
 
 export default function AuthLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: ROYAL_COLORS.primaryBg },
-        headerTintColor: ROYAL_COLORS.gold,
-        contentStyle: { backgroundColor: ROYAL_COLORS.primaryBg },
+        headerShown: false,
+        contentStyle: { backgroundColor: NOVA_COLORS.bg },
       }}
     >
-      <Stack.Screen name="welcome" options={{ headerShown: false }} />
-      <Stack.Screen name="login" options={{ title: 'Sign In' }} />
-      <Stack.Screen name="register" options={{ title: 'Create Account' }} />
+      <Stack.Screen name="welcome" />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="setup" />
+      <Stack.Screen name="register" />
     </Stack>
   );
 }

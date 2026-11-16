@@ -1,311 +1,261 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEconomyStore } from '../../src/store/useEconomyStore';
-
-interface Friend {
-  id: string;
-  name: string;
-  avatar: string;
-  level: number;
-  isOnline: boolean;
-  giftSent: boolean;
-}
-
-const INITIAL_FRIENDS: Friend[] = [
-  { id: 'f1', name: 'Shivali Mahajan', avatar: '👩', level: 12, isOnline: true, giftSent: false },
-  { id: 'f2', name: 'Sachin Kumar Sh', avatar: '🧔', level: 14, isOnline: true, giftSent: false },
-  { id: 'f3', name: 'Thiago Rodrigues', avatar: '👱‍♂️', level: 9, isOnline: false, giftSent: false },
-  { id: 'f4', name: 'Ammar Alhatmi', avatar: '👨', level: 18, isOnline: true, giftSent: false },
-  { id: 'f5', name: 'Phyrnai Syiem', avatar: '👨‍🦱', level: 21, isOnline: false, giftSent: false },
-  { id: 'f6', name: 'Elena Rostova', avatar: '👱‍♀️', level: 11, isOnline: true, giftSent: false },
-];
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { NOVA_COLORS } from '../../src/theme/colors';
+import { NovaHeader } from '../../src/components/nova/NovaHeader';
+import { NovaBadge } from '../../src/components/nova/NovaBadge';
+import { NovaButton } from '../../src/components/nova/NovaButton';
+import { useSocialStore } from '../../src/store/useSocialStore';
 
 export default function FriendsScreen() {
-  const { gold, gems, addGold } = useEconomyStore();
-  const [friends, setFriends] = useState<Friend[]>(INITIAL_FRIENDS);
+  const router = useRouter();
+  const { friends } = useSocialStore();
+  const [filter, setFilter] = useState<'online' | 'all'>('online');
+  const [search, setSearch] = useState('');
 
-  const handleSendGift = (id: string, name: string) => {
-    setFriends((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, giftSent: true } : f))
-    );
-    Alert.alert('Gift Dispatched! 🎁', `You sent 100 free coins to ${name}!`);
-  };
+  const onlineCount = friends.filter((f) => f.status === 'online').length;
 
-  const handleSendAll = () => {
-    setFriends((prev) => prev.map((f) => ({ ...f, giftSent: true })));
-    Alert.alert('All Gifts Sent! 🌟', 'Sent free daily coins to all your friends!');
-  };
+  const filteredFriends = friends.filter((f) => {
+    if (filter === 'online' && f.status === 'offline') return false;
+    if (search.trim() && !f.name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
-  const handleCollectGifts = () => {
-    addGold(600);
-    Alert.alert('Gifts Collected! 🪙', 'You collected 600 Gold Coins sent from 6 friends!');
+  const handleAction = (friend: typeof friends[0]) => {
+    if (friend.action === 'Play') {
+      router.push({
+        pathname: '/gameplay/[matchId]',
+        params: { matchId: `friend_${friend.id}`, mode: 'friends' },
+      } as any);
+    } else if (friend.action === 'Watch') {
+      router.push({
+        pathname: '/gameplay/[matchId]',
+        params: { matchId: `spectate_${friend.id}`, mode: 'spectate' },
+      } as any);
+    } else {
+      router.push('/friends/invite' as any);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>BUDDIES & FRIENDS</Text>
-          <Text style={styles.headerSub}>Send & Receive Daily Coins</Text>
-        </View>
-        <View style={styles.walletRow}>
-          <Text style={styles.walletBadge}>🪙 {gold.toLocaleString()}</Text>
-          <Text style={styles.walletBadge}>💎 {gems}</Text>
-        </View>
-      </View>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+      bounces={false}
+    >
+      <NovaHeader
+        title="Your people"
+        subtitle="A good game is better with friends."
+        showBack={true}
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Send / Collect Actions */}
-        <View style={styles.actionBanner}>
-          <TouchableOpacity style={styles.bannerBtnGreen} onPress={handleCollectGifts}>
-            <Text style={{ fontSize: 20 }}>🎁</Text>
-            <Text style={styles.bannerBtnText}>COLLECT ALL (600 🪙)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.bannerBtnGold} onPress={handleSendAll}>
-            <Text style={{ fontSize: 20 }}>📤</Text>
-            <Text style={styles.bannerBtnTextDark}>SEND TO ALL</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Invite Friend Promo */}
-        <View style={styles.inviteCard}>
-          <Text style={{ fontSize: 32 }}>💌</Text>
-          <View style={{ flex: 1, marginHorizontal: 12 }}>
-            <Text style={styles.inviteTitle}>Invite Friends to Royal Ludo</Text>
-            <Text style={styles.inviteSub}>Get 5,000 Gold Coins + 10 Gems for every buddy who joins!</Text>
+      <View style={styles.content}>
+        {/* Invite Friends Top Card */}
+        <TouchableOpacity
+          style={styles.inviteCard}
+          onPress={() => router.push('/friends/invite' as any)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.inviteIconCircle}>
+            <Ionicons name="person-add" size={20} color={NOVA_COLORS.accentPurple} />
           </View>
-          <TouchableOpacity
-            style={styles.inviteBtn}
-            onPress={() => Alert.alert('Share Link Copied! 📋', 'Send your invitation link: https://royalludo.app/invite?ref=govind')}
-          >
-            <Text style={styles.inviteBtnText}>INVITE</Text>
+          <View style={styles.inviteTextWrap}>
+            <Text style={styles.inviteTitle}>Invite friends</Text>
+            <Text style={styles.inviteDesc}>Get 500 coins for every friend who joins</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={NOVA_COLORS.textSecondary} />
+        </TouchableOpacity>
+
+        {/* Filter Badges Row */}
+        <View style={styles.badgesRow}>
+          <TouchableOpacity onPress={() => setFilter('online')} activeOpacity={0.7}>
+            <NovaBadge
+              label={`ONLINE  ${onlineCount}`}
+              color={filter === 'online' ? 'mint' : 'purple'}
+              style={styles.filterBadge}
+            />
           </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setFilter('all')} activeOpacity={0.7}>
+            <NovaBadge
+              label="ALL FRIENDS"
+              color={filter === 'all' ? 'gold' : 'purple'}
+              style={styles.filterBadge}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color={NOVA_COLORS.textMuted} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search friends…"
+            placeholderTextColor={NOVA_COLORS.textMuted}
+            value={search}
+            onChangeText={setSearch}
+          />
         </View>
 
         {/* Friends List */}
-        <Text style={styles.sectionHeader}>YOUR BUDDIES ({friends.length})</Text>
+        <View style={styles.list}>
+          {filteredFriends.map((f) => (
+            <View key={f.id} style={styles.friendRow}>
+              <View style={[styles.avatarCircle, { backgroundColor: f.avatarColor }]}>
+                <View style={styles.avatarDot} />
+              </View>
 
-        {friends.map((friend) => (
-          <View key={friend.id} style={styles.friendRow}>
-            {/* Avatar with Online Dot */}
-            <View style={styles.avatarContainer}>
-              <Text style={{ fontSize: 28 }}>{friend.avatar}</Text>
-              <View style={[styles.statusDot, { backgroundColor: friend.isOnline ? '#27AE70' : '#888' }]} />
-            </View>
+              <View style={styles.friendInfo}>
+                <Text style={styles.friendName}>{f.name}</Text>
+                <Text style={styles.friendSubtitle}>{f.subtitle}</Text>
+              </View>
 
-            {/* Friend Info */}
-            <View style={styles.friendInfo}>
-              <Text style={styles.friendName}>{friend.name}</Text>
-              <Text style={styles.friendLevel}>Level {friend.level} • {friend.isOnline ? '🟢 Online' : 'Offline'}</Text>
-            </View>
-
-            {/* Actions: Send Gift & Play */}
-            <View style={styles.friendActions}>
               <TouchableOpacity
-                style={[styles.giftBtn, friend.giftSent && styles.giftBtnSent]}
-                onPress={() => handleSendGift(friend.id, friend.name)}
-                disabled={friend.giftSent}
+                style={[
+                  styles.actionBtn,
+                  f.action === 'Play' && styles.actionPlay,
+                  f.action === 'Watch' && styles.actionWatch,
+                ]}
+                onPress={() => handleAction(f)}
+                activeOpacity={0.7}
               >
-                <Text style={styles.giftBtnText}>{friend.giftSent ? '✓ SENT' : '🪙 SEND'}</Text>
+                <Text
+                  style={[
+                    styles.actionText,
+                    f.action === 'Play' && styles.actionTextPlay,
+                  ]}
+                >
+                  {f.action}
+                </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        ))}
-
-        <View style={{ height: 90 }} />
-      </ScrollView>
-    </SafeAreaView>
+          ))}
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#370A36',
+    flexGrow: 1,
+    backgroundColor: NOVA_COLORS.bg,
+    paddingBottom: 24,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: '#521350',
-    backgroundColor: '#2F062E',
-  },
-  headerTitle: {
-    color: '#FFDF00',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  headerSub: {
-    color: '#E6C985',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  walletRow: {
-    flexDirection: 'row',
-  },
-  walletBadge: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '800',
-    backgroundColor: '#1E051E',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginLeft: 6,
-    borderWidth: 1,
-    borderColor: '#752273',
-  },
-  scrollContent: {
-    padding: 14,
-  },
-  actionBanner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  bannerBtnGreen: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#27AE70',
-    borderRadius: 14,
-    paddingVertical: 10,
-    marginRight: 6,
-  },
-  bannerBtnGold: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFDF00',
-    borderRadius: 14,
-    paddingVertical: 10,
-    marginLeft: 6,
-  },
-  bannerBtnText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '900',
-    marginLeft: 6,
-  },
-  bannerBtnTextDark: {
-    color: '#000',
-    fontSize: 11,
-    fontWeight: '900',
-    marginLeft: 6,
+  content: {
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
   inviteCard: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 18,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#521350',
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#F5A623',
+    marginBottom: 20,
+  },
+  inviteIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(185, 162, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  inviteTextWrap: {
+    flex: 1,
   },
   inviteTitle: {
-    color: '#FFDF00',
-    fontSize: 13,
-    fontWeight: '900',
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
   },
-  inviteSub: {
-    color: '#D4B8D3',
-    fontSize: 10,
+  inviteDesc: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 12,
     marginTop: 2,
   },
-  inviteBtn: {
-    backgroundColor: '#F5A623',
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+  badgesRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
   },
-  inviteBtnText: {
-    color: '#000',
-    fontSize: 11,
-    fontWeight: '900',
+  filterBadge: {
+    marginRight: 10,
   },
-  sectionHeader: {
-    color: '#E6C985',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  friendRow: {
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#521350',
+    backgroundColor: NOVA_COLORS.surfaceCard,
     borderRadius: 14,
-    padding: 10,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#752273',
+    paddingHorizontal: 14,
+    height: 46,
+    marginBottom: 16,
   },
-  avatarContainer: {
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 14,
+  },
+  list: {},
+  friendRow: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatarCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2F062E',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 14,
   },
-  statusDot: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#521350',
+  avatarDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
   },
   friendInfo: {
     flex: 1,
-    marginLeft: 10,
   },
   friendName: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: '800',
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
   },
-  friendLevel: {
-    color: '#E6C985',
-    fontSize: 10,
+  friendSubtitle: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 12,
     marginTop: 2,
   },
-  friendActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  actionBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: NOVA_COLORS.surfaceElevated,
   },
-  giftBtn: {
-    backgroundColor: '#FFDF00',
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+  actionPlay: {
+    backgroundColor: NOVA_COLORS.accentPurple,
   },
-  giftBtnSent: {
-    backgroundColor: '#370A36',
-    borderWidth: 1,
-    borderColor: '#752273',
+  actionWatch: {
+    backgroundColor: NOVA_COLORS.surfaceBadge,
   },
-  giftBtnText: {
-    color: '#000',
-    fontSize: 10,
-    fontWeight: '900',
+  actionText: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  actionTextPlay: {
+    color: NOVA_COLORS.textDark,
   },
 });
