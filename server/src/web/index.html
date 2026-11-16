@@ -1040,16 +1040,17 @@
       cursor: pointer;
     }
 
-    /* TOKEN PULSE */
-    .token-pulse-glow {
-      cursor: pointer;
-      filter: drop-shadow(0 0 8px #FFDF00) drop-shadow(0 0 14px #FFF);
-      animation: tokenHopAnim 0.8s infinite alternate ease-in-out;
+    /* STATIC TOKENS (NO ANIMATION / COMPLETELY STATIONARY) */
+    .token-group {
+      animation: none !important;
+      transform: none !important;
     }
 
-    @keyframes tokenHopAnim {
-      from { transform: scale(1); }
-      to { transform: scale(1.22); }
+    .token-selectable {
+      cursor: pointer;
+      filter: drop-shadow(0 0 6px #FFDF00);
+      animation: none !important;
+      transform: none !important;
     }
   
     /* ========================================================
@@ -4257,11 +4258,21 @@
             movableTokens.some(t => t.id === token.id);
 
           if (isMovable) {
-            group.setAttribute('class', 'token-group token-pulse-glow');
+            group.setAttribute('class', 'token-group token-selectable');
             group.onclick = (e) => {
               e.stopPropagation();
               onTokenClick(token.color, token.id);
             };
+
+            // Static gold selection indicator ring (completely stationary)
+            const selectRing = document.createElementNS(SVG_NS, 'circle');
+            selectRing.setAttribute('cx', cx);
+            selectRing.setAttribute('cy', cy);
+            selectRing.setAttribute('r', rOuter + 4);
+            selectRing.setAttribute('fill', 'none');
+            selectRing.setAttribute('stroke', '#FFDF00');
+            selectRing.setAttribute('stroke-width', '2.5');
+            group.appendChild(selectRing);
           }
 
           // Shadow
