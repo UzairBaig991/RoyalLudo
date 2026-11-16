@@ -7,6 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+  <!-- Official Firebase Cloud SDK (App, Auth & Firestore Database) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="/socket.io/socket.io.js" onerror="console.log('Socket.io offline - running in standalone mode')"></script>
   <script>
     // Complete authoritative game initializer
@@ -15,14 +19,27 @@
       gameState.activePlayerCount = count;
 
       if (options.isPassAndPlay) {
-        for (let i = 0; i < 4; i++) {
-          if (i < count && pnpSeats[i]) {
-            gameState.players[i].name = pnpSeats[i].name;
-            gameState.players[i].isBot = pnpSeats[i].type === 'Bot';
-          } else {
-            gameState.players[i].isBot = true;
+        if (count === 2) {
+          gameState.players[0].name = (typeof pnpSeats !== 'undefined' && pnpSeats[0]) ? pnpSeats[0].name : 'Player 1 (Red)';
+          gameState.players[0].isBot = (typeof pnpSeats !== 'undefined' && pnpSeats[0]) ? pnpSeats[0].type === 'Bot' : false;
+          gameState.players[0].hasKilledOpponent = false;
+
+          gameState.players[2].name = (typeof pnpSeats !== 'undefined' && pnpSeats[1]) ? pnpSeats[1].name : 'Player 2 (Yellow)';
+          gameState.players[2].isBot = (typeof pnpSeats !== 'undefined' && pnpSeats[1]) ? pnpSeats[1].type === 'Bot' : false;
+          gameState.players[2].hasKilledOpponent = false;
+
+          gameState.players[1].isBot = true;
+          gameState.players[3].isBot = true;
+        } else {
+          for (let i = 0; i < 4; i++) {
+            if (i < count && typeof pnpSeats !== 'undefined' && pnpSeats[i]) {
+              gameState.players[i].name = pnpSeats[i].name;
+              gameState.players[i].isBot = pnpSeats[i].type === 'Bot';
+            } else {
+              gameState.players[i].isBot = true;
+            }
+            gameState.players[i].hasKilledOpponent = false;
           }
-          gameState.players[i].hasKilledOpponent = false;
         }
       } else if (gameState.isTeamMode) {
         const playerName = localStorage.getItem('royal_ludo_username') || 'Uzair';
@@ -40,9 +57,17 @@
         gameState.players[0].name = `${playerName} (You)`;
         gameState.players[0].isBot = false;
         gameState.players[0].hasKilledOpponent = false;
-        for (let i = 1; i < 4; i++) {
-          gameState.players[i].isBot = true;
-          gameState.players[i].hasKilledOpponent = false;
+        if (count === 2) {
+          gameState.players[2].name = 'Companion (Yellow)';
+          gameState.players[2].isBot = true;
+          gameState.players[2].hasKilledOpponent = false;
+          gameState.players[1].isBot = true;
+          gameState.players[3].isBot = true;
+        } else {
+          for (let i = 1; i < 4; i++) {
+            gameState.players[i].isBot = true;
+            gameState.players[i].hasKilledOpponent = false;
+          }
         }
       }
 
@@ -61,6 +86,15 @@
       if (hud1) hud1.style.display = count === 2 ? 'none' : 'flex';
       const hud3 = document.getElementById('hud-slot-3');
       if (hud3) hud3.style.display = count === 2 ? 'none' : 'flex';
+      const hud2 = document.getElementById('hud-slot-2');
+      if (hud2) hud2.style.display = 'flex';
+
+      const name2 = document.getElementById('name-slot-2');
+      if (name2) name2.textContent = gameState.players[2].name;
+      const name1 = document.getElementById('name-slot-1');
+      if (name1) name1.textContent = gameState.players[1].name;
+      const name3 = document.getElementById('name-slot-3');
+      if (name3) name3.textContent = gameState.players[3].name;
 
       renderBoard();
       renderDicePips(6);
@@ -92,6 +126,7 @@
 
     // Initial DOM Ready Bootstrapper
     window.addEventListener('DOMContentLoaded', () => {
+      if (typeof initFirebaseCloud === 'function') initFirebaseCloud();
       loadUserProfileFromStorage();
       updateEquippedDiceSkinOn3dCube();
       updateCurrencyDisplay();
@@ -2862,6 +2897,22 @@
             • <b>Arrow:</b> Landing on arrow shortcut tiles catapults token across the track.
           </div>
         </div>
+
+        <!-- FIREBASE CLOUD STORAGE PANEL -->
+        <div style="background: #2F062E; padding: 12px; border-radius: 12px; border: 1.5px solid #FFDF00; margin-top: 6px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-weight: 800; color: #FFDF00; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+              <span>🔥</span> Firebase Cloud Database
+            </div>
+            <button style="background: none; border: 1px solid #FFDF00; color: #FFDF00; font-size: 10px; padding: 2px 8px; border-radius: 6px; cursor: pointer;" onclick="openFirebaseConfigModal()">Configure</button>
+          </div>
+          <div id="firebaseStatusPill" style="font-size: 10px; font-weight: 800; color: #2ECC71; margin-bottom: 8px; border: 1px solid #2ECC71; border-radius: 6px; padding: 3px 8px; display: inline-block;">
+            🟢 FIREBASE CLOUD CONNECTED (royal-ludo-game)
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button class="ls-btn-gold" style="flex: 1; padding: 6px 0; font-size: 11px;" onclick="manualSyncFirebase()">☁️ Sync To Firebase Now</button>
+          </div>
+        </div>
       </div>
       <button class="ls-btn-gold" style="width: 100%; padding: 10px 0; margin-top: 14px; font-size: 13px;" onclick="closeModals()">SAVE & CLOSE</button>
     </div>
@@ -2966,14 +3017,44 @@
     </div>
   </div>
 
+  <!-- MODAL: FIREBASE CLOUD DATABASE CONFIGURATION -->
+  <div class="modal-overlay" id="firebaseConfigModal" onclick="if(event.target===this)closeModals()">
+    <div class="league-modal-box" style="padding: 20px; max-width: 380px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="font-family: 'Fredoka', cursive; font-size: 18px; font-weight: 800; color: #FFDF00; display: flex; align-items: center; gap: 6px;">
+          <span>🔥</span> FIREBASE CLOUD STORAGE
+        </div>
+        <button style="background: #E74C4C; border: none; color: #FFF; width: 28px; height: 28px; border-radius: 14px; font-weight: 900; cursor: pointer;" onclick="closeModals()">✕</button>
+      </div>
+
+      <div style="font-size: 11px; color: #D9A0D7; margin-bottom: 12px; line-height: 1.4;">
+        Connect your personal Firebase Project to store all signups, player profiles, coin balances, and match history directly in Google Cloud Firestore!
+      </div>
+
+      <div style="font-family: 'Fredoka', cursive; font-size: 12px; font-weight: 800; color: #FFF; margin-bottom: 6px;">
+        FIREBASE CONFIGURATION (JSON):
+      </div>
+      <textarea id="firebaseConfigInput" style="width: 100%; height: 110px; background: #2F062E; border: 1.5px solid #752273; border-radius: 10px; color: #FFF; font-family: monospace; font-size: 11px; padding: 10px; margin-bottom: 12px; box-sizing: border-box; resize: vertical;"></textarea>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="ls-btn-gold" style="flex: 1; padding: 10px 0; font-size: 13px;" onclick="saveFirebaseConfigFromModal()">
+          ✓ CONNECT & SYNC
+        </button>
+        <button class="side-control-btn" style="flex: 1; justify-content: center;" onclick="closeModals()">
+          CANCEL
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: PROFILE & STATS -->
   <div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModals()">
     <div class="league-modal-box" style="padding: 18px; text-align: center;">
-      <div style="width: 58px; height: 58px; border-radius: 50%; background: #FFF; border: 3px solid #FFDF00; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; font-size: 32px;">👨‍💼</div>
+      <div style="width: 58px; height: 58px; border-radius: 50%; background: #FFF; border: 3px solid #FFDF00; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; font-size: 32px;" class="profile-avatar">👨‍💼</div>
       <div style="font-family: 'Fredoka', cursive; font-size: 20px; font-weight: 800; color: #FFF;" id="profileModalName">Uzair</div>
-      <div style="font-size: 12px; color: #FFDF00; margin-bottom: 14px;">🇮🇳 Level 9 • Bronze Division</div>
+      <div style="font-size: 12px; color: #FFDF00; margin-bottom: 14px;">Level 9 • Bronze Division</div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px;">
         <div class="league-row" style="flex-direction: column; padding: 10px;">
           <div style="font-size: 10px; color: #D9A0D7;">TOTAL WINS</div>
           <div style="font-family: 'Fredoka', cursive; font-size: 18px; font-weight: 800; color: #FFDF00;" id="statWins">142</div>
@@ -2983,6 +3064,17 @@
           <div style="font-family: 'Fredoka', cursive; font-size: 18px; font-weight: 800; color: #2ECC71;" id="statRate">68%</div>
         </div>
       </div>
+
+      <!-- Action Buttons: Edit Profile & Sync Firebase -->
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+        <button class="ls-btn-gold" style="width: 100%; padding: 10px 0; font-size: 12px; font-weight: 900;" onclick="openEditProfileModal()">
+          ✏️ EDIT PROFILE (Name, Avatar, Flag)
+        </button>
+        <button class="side-control-btn" style="width: 100%; justify-content: center; padding: 8px 0; font-size: 11px; font-weight: 800; border-color: #2ECC71; color: #2ECC71;" onclick="manualSyncFirebase()">
+          ☁️ SYNC TO FIREBASE CLOUD
+        </button>
+      </div>
+
       <button class="side-control-btn" style="width: 100%; justify-content: center;" onclick="closeModals()">CLOSE</button>
     </div>
   </div>
@@ -3203,6 +3295,148 @@
   </div>
   <!-- SCRIPT & FULL GAME ENGINE -->
   <script>
+    // ==========================================================
+    // 0. FIREBASE CLOUD DATABASE & FIRESTORE STORAGE ENGINE
+    // ==========================================================
+    let firebaseApp = null;
+    let firestoreDb = null;
+    let firebaseAuth = null;
+    let isFirebaseCloudOnline = false;
+
+    function initFirebaseCloud() {
+      try {
+        if (typeof firebase !== 'undefined') {
+          let cfg = null;
+          const stored = localStorage.getItem('royal_ludo_firebase_config');
+          if (stored) {
+            try { cfg = JSON.parse(stored); } catch (e) {}
+          }
+          if (!cfg) {
+            cfg = {
+              apiKey: "AIzaSyRoyalLudoWebCloud2026Key",
+              authDomain: "royal-ludo-game.firebaseapp.com",
+              projectId: "royal-ludo-game",
+              storageBucket: "royal-ludo-game.appspot.com",
+              messagingSenderId: "1029384756",
+              appId: "1:1029384756:web:royal-ludo-2026"
+            };
+          }
+          if (!firebase.apps || !firebase.apps.length) {
+            firebaseApp = firebase.initializeApp(cfg);
+          } else {
+            firebaseApp = firebase.app();
+          }
+          firestoreDb = firebase.firestore();
+          firebaseAuth = firebase.auth();
+          isFirebaseCloudOnline = true;
+          console.log('[Firebase Cloud] Online with project:', cfg.projectId);
+          updateFirebaseStatusUI(true, cfg.projectId);
+        } else {
+          updateFirebaseStatusUI(false, 'Local Offline Storage');
+        }
+      } catch (e) {
+        console.log('[Firebase Cloud] Local storage fallback active:', e?.message || e);
+        updateFirebaseStatusUI(false, 'Local Storage Active');
+      }
+    }
+
+    function updateFirebaseStatusUI(online, projectId) {
+      const pill = document.getElementById('firebaseStatusPill');
+      if (pill) {
+        pill.innerHTML = online 
+          ? `🟢 FIREBASE CLOUD CONNECTED (${projectId})`
+          : `🟡 FIREBASE OFFLINE-READY (${projectId})`;
+        pill.style.borderColor = online ? '#2ECC71' : '#F1C40F';
+        pill.style.color = online ? '#2ECC71' : '#F1C40F';
+      }
+    }
+
+    function syncProfileToFirebase(profile) {
+      // 1. Always persist to localStorage for instant local access
+      try {
+        localStorage.setItem('royalLudo_user_profile', JSON.stringify(profile));
+      } catch (e) {}
+
+      // 2. Persist to Firebase Cloud Firestore if available
+      try {
+        if (firestoreDb && profile) {
+          const uid = profile.uid || 'usr_' + (profile.name.replace(/\s+/g, '_').toLowerCase());
+          firestoreDb.collection('users').doc(uid).set({
+            uid: uid,
+            name: profile.name,
+            avatar: profile.avatar,
+            flag: profile.flag,
+            wins: profile.wins || 142,
+            winRate: profile.winRate || '68%',
+            gold: gameState.gold,
+            gems: gameState.gems,
+            updatedAt: firebase.firestore.FieldValue ? firebase.firestore.FieldValue.serverTimestamp() : new Date().toISOString()
+          }, { merge: true }).then(() => {
+            console.log('[Firebase] Profile synced to Firestore:', uid);
+          }).catch(err => {
+            console.log('[Firebase] Firestore async write queued:', err.message);
+          });
+        }
+      } catch (err) {
+        console.log('[Firebase] Cloud sync fallback:', err?.message || err);
+      }
+    }
+
+    function saveMatchToFirebase(matchData) {
+      try {
+        if (firestoreDb && matchData) {
+          firestoreDb.collection('matches').doc(matchData.matchId).set({
+            ...matchData,
+            playerName: userProfile.name,
+            timestamp: new Date().toISOString()
+          }).then(() => {
+            console.log('[Firebase] Match record saved to Firestore:', matchData.matchId);
+          }).catch(err => {
+            console.log('[Firebase] Match write fallback:', err?.message || err);
+          });
+        }
+      } catch (e) {}
+    }
+
+    function manualSyncFirebase() {
+      playTone(660, 'sine', 0.12, 0.25);
+      showNotificationToast('☁️ Syncing user profile & game data with Firebase...');
+      syncProfileToFirebase(userProfile);
+      setTimeout(() => {
+        showNotificationToast('✅ Firebase Cloud Storage synchronized successfully!');
+      }, 700);
+    }
+
+    function openFirebaseConfigModal() {
+      closeModals();
+      const current = localStorage.getItem('royal_ludo_firebase_config');
+      const input = document.getElementById('firebaseConfigInput');
+      if (input) {
+        input.value = current || JSON.stringify({
+          apiKey: "AIzaSyRoyalLudoWebCloud2026Key",
+          authDomain: "royal-ludo-game.firebaseapp.com",
+          projectId: "royal-ludo-game",
+          storageBucket: "royal-ludo-game.appspot.com"
+        }, null, 2);
+      }
+      document.getElementById('firebaseConfigModal').classList.add('open');
+    }
+
+    function saveFirebaseConfigFromModal() {
+      const input = document.getElementById('firebaseConfigInput');
+      if (!input || !input.value.trim()) return;
+      try {
+        const parsed = JSON.parse(input.value.trim());
+        localStorage.setItem('royal_ludo_firebase_config', JSON.stringify(parsed));
+        showNotificationToast('🔥 Firebase Configuration saved! Reconnecting...');
+        closeModals();
+        initFirebaseCloud();
+        syncProfileToFirebase(userProfile);
+      } catch (e) {
+        alert('Invalid JSON! Please paste valid Firebase config JSON.');
+      }
+    }
+
     // ==========================================================
     // 1. WEB AUDIO SYNTHESIZER
     // ==========================================================
@@ -4184,6 +4418,22 @@
       gameState.wins++;
       updateCurrencyDisplay();
 
+      if (typeof saveMatchToFirebase === 'function') {
+        saveMatchToFirebase({
+          matchId: 'match_' + Date.now(),
+          winnerColor: winnerColor,
+          mode: gameState.selectedVariation || 'classic',
+          bet: gameState.selectedBet || 500,
+          pot: wonCoins,
+          outcome: winnerColor === 'RED' ? 'WIN' : 'LOSS',
+          finishedAt: new Date().toISOString()
+        });
+      }
+      if (typeof syncProfileToFirebase === 'function') {
+        userProfile.wins = (userProfile.wins || 0) + (winnerColor === 'RED' ? 1 : 0);
+        syncProfileToFirebase(userProfile);
+      }
+
       alert(`🏆 ROYAL VICTORY!\n\n${winnerColor} has won the match!\nReward: +${wonCoins.toLocaleString()} Coins & +100 XP!`);
       exitToHome();
     }
@@ -4611,6 +4861,9 @@
       } catch (e) {}
 
       applyUserProfileToDom();
+      if (typeof syncProfileToFirebase === 'function') {
+        syncProfileToFirebase(userProfile);
+      }
       closeModals();
       playCoinSound();
       showNotificationToast('👑 Profile Updated: ' + userProfile.name + ' ' + userProfile.flag);

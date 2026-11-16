@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { UserProfile } from '../../../shared/src/types';
+import { firebaseService } from '../services/firebase';
 
 export interface MatchHistoryItem {
   id: string;
@@ -168,6 +169,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       createdAt: new Date().toISOString(),
     };
 
+    firebaseService.syncUserProfile(newProfile);
     set({
       token: `token_${Date.now()}`,
       profile: newProfile,
@@ -177,10 +179,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signIn: (username: string, email?: string) => {
     const trimmed = username.trim() || 'Player';
-    set((state) => ({
-      token: `token_${Date.now()}`,
-      isAuthenticated: true,
-      profile: state.profile
+    set((state) => {
+      const updatedProfile: UserProfile = state.profile
         ? { ...state.profile, username: trimmed }
         : {
             id: `usr_${Date.now()}`,
@@ -209,28 +209,38 @@ export const useAuthStore = create<AuthState>((set) => ({
             leagueTier: 'Silver',
             leaguePoints: 1200,
             createdAt: new Date().toISOString(),
-          },
-    }));
+          };
+      firebaseService.syncUserProfile(updatedProfile);
+      return {
+        token: `token_${Date.now()}`,
+        isAuthenticated: true,
+        profile: updatedProfile,
+      };
+    });
   },
 
   setProfileName: (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    set((state) => ({
-      profile: state.profile
-        ? {
-            ...state.profile,
-            username: trimmed,
-            avatarUrl: `https://api.dicebear.com/7.x/bottts/png?seed=${trimmed}`,
-          }
-        : null,
-    }));
+    set((state) => {
+      if (!state.profile) return state;
+      const updated: UserProfile = {
+        ...state.profile,
+        username: trimmed,
+        avatarUrl: `https://api.dicebear.com/7.x/bottts/png?seed=${trimmed}`,
+      };
+      firebaseService.syncUserProfile(updated);
+      return { profile: updated };
+    });
   },
 
   updateProfile: (updates) => {
-    set((state) => ({
-      profile: state.profile ? { ...state.profile, ...updates } : null,
-    }));
+    set((state) => {
+      if (!state.profile) return state;
+      const updated: UserProfile = { ...state.profile, ...updates };
+      firebaseService.syncUserProfile(updated);
+      return { profile: updated };
+    });
   },
 
   recordMatchResult: (item) => {
@@ -241,6 +251,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     };
 
     set((state) => {
+      firebaseService.recordMatch({
+        matchId: newRecord.id,
+        userId: state.profile?.userId || state.profile?.id || 'usr_player',
+        opponentName: item.opponentName,
+        mode: item.mode,
+        outcome: item.outcome,
+        coinsDelta: item.coinsDelta,
+        tokensCaptured: item.tokensCaptured,
+        timestamp: new Date().toISOString(),
+      });
+
       const currentStats = state.profile?.stats || {
         matchesPlayed: 0,
         matchesWon: 0,
