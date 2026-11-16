@@ -24,17 +24,19 @@
           gameState.players[i].hasKilledOpponent = false;
         }
       } else if (gameState.isTeamMode) {
-        gameState.players[0].name = 'Govind (You)';
+        const playerName = localStorage.getItem('royal_ludo_username') || 'Uzair';
+        gameState.players[0].name = `${playerName} (You)`;
         gameState.players[0].isBot = false;
-        gameState.players[1].name = 'Shivali (Opponent)';
+        gameState.players[1].name = 'Maya (Opponent)';
         gameState.players[1].isBot = true;
-        gameState.players[2].name = 'Sachin K. (Teammate)';
+        gameState.players[2].name = 'Companion (Teammate)';
         gameState.players[2].isBot = false;
-        gameState.players[3].name = 'Thiago (Opponent)';
+        gameState.players[3].name = 'Sam (Opponent)';
         gameState.players[3].isBot = true;
         for (let i = 0; i < 4; i++) gameState.players[i].hasKilledOpponent = false;
       } else {
-        gameState.players[0].name = 'Govind (You)';
+        const playerName = localStorage.getItem('royal_ludo_username') || 'Uzair';
+        gameState.players[0].name = `${playerName} (You)`;
         gameState.players[0].isBot = false;
         gameState.players[0].hasKilledOpponent = false;
         for (let i = 1; i < 4; i++) {
@@ -1254,8 +1256,8 @@
       width: 100%;
     }
 
-    /* GOVIND (YOU) HUD POD */
-    .ls-govind-hud {
+    /* PLAYER (YOU) HUD POD */
+    .ls-player-hud {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -1328,7 +1330,7 @@
       transition: stroke-dashoffset 0.8s linear, stroke 0.3s;
     }
 
-    .ls-govind-avatar-circle {
+    .ls-player-avatar-circle {
       width: 42px;
       height: 42px;
       border-radius: 21px;
@@ -1340,7 +1342,7 @@
       font-size: 24px;
     }
 
-    .ls-govind-name-text {
+    .ls-player-name-text {
       font-weight: 800;
       font-size: 11px;
       color: #FFF;
@@ -1994,7 +1996,7 @@
       <div class="profile-card" onclick="openProfileModal()">
         <div class="profile-avatar">👨‍💼</div>
         <div>
-          <div class="profile-name" id="userName">Govind</div>
+          <div class="profile-name" id="userName">Uzair</div>
           <div class="profile-level">
             <span id="userFlag">🇮🇳</span>
             <span>Level 9</span>
@@ -2232,7 +2234,7 @@
         <svg class="ludo-star-svg" id="ludoSvg" viewBox="0 0 600 600"></svg>
       </div>
 
-      <!-- 4. BOTTOM AREA: OPPONENT 4 + GOVIND HUD & MASTER DICE STATION -->
+      <!-- 4. BOTTOM AREA: OPPONENT 4 + PLAYER HUD & MASTER DICE STATION -->
       <div class="ls-in-game-bottom-area">
         <!-- Bottom-Right Opponent (Blue / Thiago Rodrigues) -->
         <div class="ls-bottom-opp-row">
@@ -2246,10 +2248,10 @@
           </div>
         </div>
 
-        <!-- Active Player Console: Govind & The Iconic Ludo Star Dice Station -->
+        <!-- Active Player Console: Player HUD & The Iconic Ludo Star Dice Station -->
         <div class="ls-active-console-row">
-          <!-- Govind Pod -->
-          <div class="ls-govind-hud" id="hud-slot-0">
+          <!-- Player Pod -->
+          <div class="ls-player-hud" id="hud-slot-0">
             <!-- Speech Bubble -->
             <div class="ls-speech-bubble-pop" id="bubble-0">👑</div>
 
@@ -2259,11 +2261,11 @@
                 <circle class="ls-timer-circle-bg" cx="26" cy="26" r="23" />
                 <circle class="ls-timer-circle-fg" id="timerRingCircle" cx="26" cy="26" r="23" />
               </svg>
-              <div class="ls-govind-avatar-circle">😎</div>
+              <div class="ls-player-avatar-circle">😎</div>
             </div>
 
             <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-              <div class="ls-govind-name-text" id="hudPlayerName">Uzair (You)</div>
+              <div class="ls-player-name-text" id="hudPlayerName">Uzair (You)</div>
               <div class="voice-mic-pill" onclick="toggleVoiceMic()" title="Voice Chat Status">
                 <span style="font-size: 10px;">🎙️</span>
                 <div class="voice-bars"><span class="vbar"></span><span class="vbar"></span><span class="vbar"></span></div>
@@ -2373,7 +2375,7 @@
           <!-- SLOT 1: YOU -->
           <div class="teamup-slot filled">
             <div style="font-size: 34px;">👨‍💼</div>
-            <div style="position: absolute; bottom: -20px; font-size: 11px; font-weight: 800; color: #FFF;">Govind</div>
+            <div style="position: absolute; bottom: -20px; font-size: 11px; font-weight: 800; color: #FFF;" id="teamSlot0Name">You</div>
           </div>
           <!-- SLOT 2: INVITE PARTNER -->
           <div class="teamup-slot" id="partnerSlot" onclick="invitePartner()">
@@ -2819,7 +2821,7 @@
   <div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModals()">
     <div class="league-modal-box" style="padding: 18px; text-align: center;">
       <div style="width: 58px; height: 58px; border-radius: 50%; background: #FFF; border: 3px solid #FFDF00; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; font-size: 32px;">👨‍💼</div>
-      <div style="font-family: 'Fredoka', cursive; font-size: 20px; font-weight: 800; color: #FFF;" id="profileModalName">Govind</div>
+      <div style="font-family: 'Fredoka', cursive; font-size: 20px; font-weight: 800; color: #FFF;" id="profileModalName">Uzair</div>
       <div style="font-size: 12px; color: #FFDF00; margin-bottom: 14px;">🇮🇳 Level 9 • Bronze Division</div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px;">
@@ -3225,7 +3227,7 @@
     // ==========================================================
     let gameState = {
       players: [
-        { id: 'p0', seat: 0, color: 'RED', isBot: false, name: 'Govind', hasKilledOpponent: false },
+        { id: 'p0', seat: 0, color: 'RED', isBot: false, name: 'Uzair', hasKilledOpponent: false },
         { id: 'p1', seat: 1, color: 'GREEN', isBot: true, name: 'Shivali M.', hasKilledOpponent: false },
         { id: 'p2', seat: 2, color: 'YELLOW', isBot: true, name: 'Sachin K.', hasKilledOpponent: false },
         { id: 'p3', seat: 3, color: 'BLUE', isBot: true, name: 'Thiago R.', hasKilledOpponent: false }
@@ -4220,11 +4222,11 @@
       const avatarBox = document.querySelector('.profile-avatar');
       if (avatarBox) avatarBox.textContent = userProfile.avatar;
 
-      // In-game HUD (Govind -> Real Name)
+      // In-game HUD (Player -> Real Name)
       const hudName = document.getElementById('hudPlayerName');
       if (hudName) hudName.textContent = userProfile.name + ' (You)';
 
-      const hudAvatar = document.querySelector('.ls-govind-avatar-circle');
+      const hudAvatar = document.querySelector('.ls-player-avatar-circle');
       if (hudAvatar) hudAvatar.textContent = userProfile.avatar;
 
       // Profile Modal
@@ -4463,8 +4465,8 @@
           <div style="font-weight:900; width:18px;">29</div>
           <div style="width:26px; height:26px; border-radius:50%; background:#FFF; display:flex; align-items:center; justify-content:center; font-size:12px;">👨‍💼</div>
           <div>
-            <div style="font-weight:900;">Govind (You)</div>
-            <div style="font-size:10px;">🇮🇳 SKILLED - II</div>
+            <div style="font-weight:900;">${userProfile.name} (You)</div>
+            <div style="font-size:10px;">${userProfile.flag} SKILLED - II</div>
           </div>
         </div>
         <div style="font-weight:900;">67.5 K 🪙</div>
@@ -4658,7 +4660,7 @@
     }
 
     function copyReferralLink() {
-      navigator.clipboard?.writeText?.('https://royalludo.app/invite?ref=govind');
+      navigator.clipboard?.writeText?.('https://royalludo.app/invite?ref=user');
       showNotificationToast('📋 Referral Link Copied! Share with friends to earn 5,000 Coins!');
     }
 

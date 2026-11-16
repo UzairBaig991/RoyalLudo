@@ -136,6 +136,19 @@ export default function LiveGameScreen() {
   const isMyTurn = currentTurnSeat === 0;
   const canRollDice = isMyTurn && gameState?.turnPhase === 'ROLL_DICE' && !isRolling;
 
+  // Turn Change Sound Cue (Alerts player when it is their turn)
+  const prevTurnSeatRef = useRef<number>(currentTurnSeat);
+  useEffect(() => {
+    if (prevTurnSeatRef.current !== currentTurnSeat) {
+      if (currentTurnSeat === 0) {
+        sfxEngine.playRollSix();
+      } else {
+        sfxEngine.playTokenStep();
+      }
+      prevTurnSeatRef.current = currentTurnSeat;
+    }
+  }, [currentTurnSeat]);
+
   // Exit Prompt Handler
   const handlePromptExit = () => {
     Alert.alert(
@@ -369,9 +382,10 @@ export default function LiveGameScreen() {
   ) => {
     const isThisTurn = currentTurnSeat === seatIndex;
     const isMe = seatIndex === 0;
+    const displayName = isMe ? (profile?.username || player.username || 'You') : player.username;
 
     return (
-      <View style={styles.playerCardContainer}>
+      <View style={[styles.playerCardContainer, { opacity: isThisTurn ? 1 : 0.42 }]}>
         {/* BOUNCING TURN INDICATOR ARROW (Ludo Star Style) */}
         {isThisTurn && (
           <Animated.View
@@ -401,13 +415,13 @@ export default function LiveGameScreen() {
           <View style={styles.playerCardLeft}>
             <View style={[styles.playerDot, { backgroundColor: colorHex }]}>
               <Text style={styles.playerDotInitial}>
-                {player.username.charAt(0).toUpperCase()}
+                {displayName.charAt(0).toUpperCase()}
               </Text>
             </View>
             <View style={styles.playerMeta}>
               <View style={styles.nameBadgeRow}>
                 <Text style={styles.playerName} numberOfLines={1}>
-                  {player.username}
+                  {displayName}
                 </Text>
                 {badgeLabel && (
                   <NovaBadge
@@ -452,7 +466,7 @@ export default function LiveGameScreen() {
                 />
                 {isMe && canRollDice && !isRolling && (
                   <View style={styles.tapPillOverlay}>
-                    <Text style={styles.tapPillText}>TAP</Text>
+                    <Text style={styles.tapPillText}>TAP TO ROLL 🎲</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -506,6 +520,67 @@ export default function LiveGameScreen() {
             <Ionicons name="exit-outline" size={15} color="#FFFFFF" />
             <Text style={styles.exitBtnText}>Exit</Text>
           </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 1.5. GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER */}
+      <View
+        style={[
+          styles.turnAnnouncementBanner,
+          {
+            backgroundColor:
+              currentTurnSeat === 0
+                ? 'rgba(255, 107, 107, 0.18)'
+                : currentTurnSeat === 1
+                ? 'rgba(46, 213, 115, 0.18)'
+                : currentTurnSeat === 2
+                ? 'rgba(255, 215, 0, 0.18)'
+                : 'rgba(56, 103, 214, 0.18)',
+            borderColor:
+              currentTurnSeat === 0
+                ? NOVA_COLORS.coral
+                : currentTurnSeat === 1
+                ? NOVA_COLORS.mint
+                : currentTurnSeat === 2
+                ? NOVA_COLORS.gold
+                : NOVA_COLORS.blue,
+          },
+        ]}
+      >
+        <View style={styles.turnBannerInner}>
+          <View
+            style={[
+              styles.turnBannerPulsingDot,
+              {
+                backgroundColor:
+                  currentTurnSeat === 0
+                    ? NOVA_COLORS.coral
+                    : currentTurnSeat === 1
+                    ? NOVA_COLORS.mint
+                    : currentTurnSeat === 2
+                    ? NOVA_COLORS.gold
+                    : NOVA_COLORS.blue,
+              },
+            ]}
+          />
+          <Text style={styles.turnBannerMainText}>
+            {currentTurnSeat === 0
+              ? canRollDice
+                ? '🔴 YOUR TURN TO ROLL!'
+                : '🔴 YOUR TURN · MOVE TOKEN!'
+              : currentTurnSeat === 1
+              ? "🟢 GREEN PLAYER'S TURN"
+              : currentTurnSeat === 2
+              ? isTwoPlayerMode
+                ? "🟡 COMPANION'S TURN (YELLOW)"
+                : "🟡 YELLOW PLAYER'S TURN"
+              : "🔵 BLUE PLAYER'S TURN"}
+          </Text>
+          {isMyTurn && canRollDice && (
+            <View style={styles.turnBannerActionPill}>
+              <Text style={styles.turnBannerActionPillText}>TAP DICE 🎲</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -1611,6 +1686,41 @@ const styles = StyleSheet.create({
     color: NOVA_COLORS.gold,
     fontSize: 12,
     fontWeight: '800',
+  },
+  turnAnnouncementBanner: {
+    marginVertical: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  turnBannerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  turnBannerPulsingDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+  },
+  turnBannerMainText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  turnBannerActionPill: {
+    backgroundColor: NOVA_COLORS.gold,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  turnBannerActionPillText: {
+    color: '#0d101e',
+    fontSize: 9,
+    fontWeight: '900',
   },
   celebrationBanner: {
     backgroundColor: 'rgba(255, 215, 0, 0.22)',

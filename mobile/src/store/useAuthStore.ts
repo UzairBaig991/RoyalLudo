@@ -18,6 +18,9 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   loginAsGuest: (preferredName?: string) => void;
+  signUp: (username: string, email?: string) => void;
+  signIn: (username: string, email?: string) => void;
+  setProfileName: (name: string) => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
   recordMatchResult: (item: Omit<MatchHistoryItem, 'id' | 'date'>) => void;
   logout: () => void;
@@ -131,6 +134,97 @@ export const useAuthStore = create<AuthState>((set) => ({
       profile: newProfile,
       isAuthenticated: true,
     });
+  },
+
+  signUp: (username: string, email?: string) => {
+    const trimmed = username.trim() || 'Player';
+    const id = `usr_${Date.now()}`;
+    const newProfile: UserProfile = {
+      id,
+      userId: id,
+      username: trimmed,
+      avatarUrl: `https://api.dicebear.com/7.x/bottts/png?seed=${trimmed}`,
+      avatarFrame: 'frame_royal_gold',
+      level: 1,
+      xp: 0,
+      xpForNextLevel: 1000,
+      stats: {
+        matchesPlayed: 0,
+        matchesWon: 0,
+        winStreak: 0,
+        highestWinStreak: 0,
+        tokensCaptured: 0,
+        tokensFinished: 0,
+        winPercentage: 0,
+      },
+      equipped: {
+        diceSkin: 'dice_classic_gold',
+        boardSkin: 'board_royal_navy',
+        tokenSkin: 'token_crystal',
+        victoryEffect: 'effect_gold_confetti',
+      },
+      leagueTier: 'Bronze',
+      leaguePoints: 0,
+      createdAt: new Date().toISOString(),
+    };
+
+    set({
+      token: `token_${Date.now()}`,
+      profile: newProfile,
+      isAuthenticated: true,
+    });
+  },
+
+  signIn: (username: string, email?: string) => {
+    const trimmed = username.trim() || 'Player';
+    set((state) => ({
+      token: `token_${Date.now()}`,
+      isAuthenticated: true,
+      profile: state.profile
+        ? { ...state.profile, username: trimmed }
+        : {
+            id: `usr_${Date.now()}`,
+            userId: `usr_${Date.now()}`,
+            username: trimmed,
+            avatarUrl: `https://api.dicebear.com/7.x/bottts/png?seed=${trimmed}`,
+            avatarFrame: 'frame_royal_gold',
+            level: 5,
+            xp: 1200,
+            xpForNextLevel: 2000,
+            stats: {
+              matchesPlayed: 14,
+              matchesWon: 9,
+              winStreak: 2,
+              highestWinStreak: 4,
+              tokensCaptured: 32,
+              tokensFinished: 28,
+              winPercentage: 64.2,
+            },
+            equipped: {
+              diceSkin: 'dice_classic_gold',
+              boardSkin: 'board_royal_navy',
+              tokenSkin: 'token_crystal',
+              victoryEffect: 'effect_gold_confetti',
+            },
+            leagueTier: 'Silver',
+            leaguePoints: 1200,
+            createdAt: new Date().toISOString(),
+          },
+    }));
+  },
+
+  setProfileName: (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    set((state) => ({
+      profile: state.profile
+        ? {
+            ...state.profile,
+            username: trimmed,
+            avatarUrl: `https://api.dicebear.com/7.x/bottts/png?seed=${trimmed}`,
+          }
+        : null,
+    }));
   },
 
   updateProfile: (updates) => {

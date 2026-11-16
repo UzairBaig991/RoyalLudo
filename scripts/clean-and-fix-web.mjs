@@ -85,7 +85,7 @@ const extraHelpers = `
     }
 
     function copyReferralLink() {
-      navigator.clipboard?.writeText?.('https://royalludo.app/invite?ref=govind');
+      navigator.clipboard?.writeText?.('https://royalludo.app/invite?ref=user');
       showNotificationToast('📋 Referral Link Copied! Share with friends to earn 5,000 Coins!');
     }
 

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { NOVA_COLORS } from '../../src/theme/colors';
@@ -11,7 +11,9 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function PlayerProfileScreen() {
   const router = useRouter();
-  const { profile, matchHistory } = useAuthStore();
+  const { profile, matchHistory, setProfileName } = useAuthStore();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [nameInput, setNameInput] = useState(profile?.username || 'Player');
 
   const stats = profile?.stats || {
     matchesPlayed: 248,
@@ -21,6 +23,13 @@ export default function PlayerProfileScreen() {
     tokensFinished: 76,
     winStreak: 4,
     highestWinStreak: 6,
+  };
+
+  const handleSaveName = () => {
+    if (nameInput.trim()) {
+      setProfileName(nameInput.trim());
+    }
+    setShowEditModal(false);
   };
 
   return (
@@ -42,7 +51,19 @@ export default function PlayerProfileScreen() {
           <View style={styles.avatarCircle}>
             <View style={styles.avatarDot} />
           </View>
-          <Text style={styles.name}>{profile?.username || 'Alex Nova'}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{profile?.username || 'Player'}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setNameInput(profile?.username || '');
+                setShowEditModal(true);
+              }}
+              style={styles.editPencilBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="pencil" size={14} color={NOVA_COLORS.accentGold} />
+            </TouchableOpacity>
+          </View>
           <Text style={styles.playerMeta}>ID: 849 225  ·  Joined November 2026</Text>
 
           <View style={styles.badgesRow}>
@@ -170,11 +191,54 @@ export default function PlayerProfileScreen() {
 
       <View style={styles.footer}>
         <NovaButton
-          title="Edit profile"
-          variant="dark"
+          title="Edit Profile Details"
+          variant="primary"
           onPress={() => router.push('/(auth)/setup' as any)}
+          style={{ marginBottom: 10 }}
+        />
+        <NovaButton
+          title="Switch Account / Sign In"
+          variant="dark"
+          onPress={() => router.push('/(auth)/login' as any)}
         />
       </View>
+
+      {/* Instant Name Edit Modal */}
+      <Modal visible={showEditModal} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Player Profile Name</Text>
+            <Text style={styles.modalSubtitle}>
+              This name will be displayed at the Ludo table and leaderboards.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              value={nameInput}
+              onChangeText={setNameInput}
+              placeholder="Enter your name (e.g. Uzair)"
+              placeholderTextColor={NOVA_COLORS.textMuted}
+              maxLength={20}
+              autoFocus
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                onPress={() => setShowEditModal(false)}
+                style={styles.modalCancelBtn}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSaveName}
+                style={styles.modalSaveBtn}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalSaveText}>Save Name</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -211,11 +275,26 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#ffffff',
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
   name: {
     color: NOVA_COLORS.textPrimary,
     fontSize: 22,
     fontWeight: '800',
-    marginBottom: 4,
+  },
+  editPencilBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#191e33',
+    borderWidth: 1,
+    borderColor: '#30254e',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   playerMeta: {
     color: NOVA_COLORS.textSecondary,
@@ -376,5 +455,71 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 20,
     marginTop: 10,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalBox: {
+    width: '100%',
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: '#30254e',
+  },
+  modalTitle: {
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 16,
+  },
+  modalInput: {
+    backgroundColor: '#0d101e',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: NOVA_COLORS.accentGold,
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 18,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  modalCancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#191e33',
+  },
+  modalCancelText: {
+    color: NOVA_COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  modalSaveBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: NOVA_COLORS.accentGold,
+  },
+  modalSaveText: {
+    color: '#0d101e',
+    fontSize: 13,
+    fontWeight: '900',
   },
 });

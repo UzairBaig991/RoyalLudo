@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { NOVA_COLORS } from '../../src/theme/colors';
@@ -10,7 +10,18 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { loginAsGuest } = useAuthStore();
+  const { signIn, loginAsGuest } = useAuthStore();
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleCustomSignIn = () => {
+    if (!usernameOrEmail.trim()) {
+      Alert.alert('Sign In', 'Please enter your username or email address.');
+      return;
+    }
+    signIn(usernameOrEmail.trim());
+    router.replace('/(tabs)');
+  };
 
   const handleApple = () => {
     loginAsGuest('ApplePlayer');
@@ -28,7 +39,7 @@ export default function SignInScreen() {
   };
 
   const handleGuest = () => {
-    loginAsGuest('Alex Nova');
+    loginAsGuest('Player');
     router.push('/(auth)/setup' as any);
   };
 
@@ -39,57 +50,95 @@ export default function SignInScreen() {
       showsVerticalScrollIndicator={false}
     >
       <NovaHeader
-        title="Welcome to the table"
-        subtitle=""
+        title="Sign In to Royal Ludo"
+        subtitle="Access your profile, rank, and rewards"
         showBack={true}
         onBack={() => router.back()}
       />
 
       <View style={styles.centerBlock}>
         <View style={styles.dieWrapper}>
-          <NovaDie value={5} size={70} theme="nova" />
+          <NovaDie value={6} size={64} theme="nova" />
         </View>
 
-        <Text style={styles.heading}>Great games start{'\n'}with good company.</Text>
+        <Text style={styles.heading}>Welcome Back!</Text>
         <Text style={styles.subtext}>
-          Save your progress, find your friends and{'\n'}make every roll count.
+          Sign in to keep your coins, statistics, and unlocked dice skins.
         </Text>
+      </View>
+
+      {/* Direct Sign-In Credentials Form */}
+      <View style={styles.formSection}>
+        <Text style={styles.fieldLabel}>PLAYER USERNAME OR EMAIL</Text>
+        <View style={styles.inputWrap}>
+          <Ionicons name="person-outline" size={18} color={NOVA_COLORS.textMuted} style={styles.inputIcon} />
+          <TextInput
+            style={styles.textInput}
+            placeholder="e.g. Uzair or player@ludo.com"
+            placeholderTextColor={NOVA_COLORS.textMuted}
+            value={usernameOrEmail}
+            onChangeText={setUsernameOrEmail}
+            autoCapitalize="none"
+          />
+        </View>
+
+        <Text style={[styles.fieldLabel, { marginTop: 14 }]}>PASSWORD</Text>
+        <View style={styles.inputWrap}>
+          <Ionicons name="lock-closed-outline" size={18} color={NOVA_COLORS.textMuted} style={styles.inputIcon} />
+          <TextInput
+            style={styles.textInput}
+            placeholder="Enter your password"
+            placeholderTextColor={NOVA_COLORS.textMuted}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+
+        <NovaButton
+          title="Sign In with Account"
+          variant="primary"
+          onPress={handleCustomSignIn}
+          style={styles.signInBtn}
+        />
+
+        <TouchableOpacity
+          onPress={() => router.push('/(auth)/register' as any)}
+          style={styles.createAccountLink}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.createAccountText}>
+            New here? <Text style={styles.createAccountHighlight}>Create an Account</Text>
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.dividerRow}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.orText}>or continue with</Text>
+        <View style={styles.dividerLine} />
       </View>
 
       <View style={styles.actions}>
         <NovaButton
-          title="Continue with Apple"
-          variant="white"
-          onPress={handleApple}
-          icon={<Ionicons name="logo-apple" size={20} color={NOVA_COLORS.textDark} />}
-          style={styles.btnSpacing}
-        />
-
-        <NovaButton
           title="Continue with Google"
           variant="dark"
           onPress={handleGoogle}
-          icon={<Ionicons name="logo-google" size={20} color={NOVA_COLORS.textPrimary} />}
+          icon={<Ionicons name="logo-google" size={18} color={NOVA_COLORS.textPrimary} />}
           style={styles.btnSpacing}
         />
 
         <NovaButton
-          title="Continue with Facebook"
-          variant="facebook"
-          onPress={handleFacebook}
-          icon={<Ionicons name="logo-facebook" size={20} color="#ffffff" />}
+          title="Continue with Apple"
+          variant="white"
+          onPress={handleApple}
+          icon={<Ionicons name="logo-apple" size={18} color={NOVA_COLORS.textDark} />}
           style={styles.btnSpacing}
         />
 
-        <Text style={styles.orText}>or</Text>
-
         <TouchableOpacity onPress={handleGuest} activeOpacity={0.7} style={styles.guestLink}>
-          <Text style={styles.guestText}>Play as a guest</Text>
+          <Text style={styles.guestText}>⚡ Play as a guest</Text>
         </TouchableOpacity>
-
-        <Text style={styles.termsText}>
-          By continuing, you agree to our Terms of Service{'\n'}and Privacy Policy.
-        </Text>
       </View>
     </ScrollView>
   );
@@ -99,57 +148,110 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: NOVA_COLORS.bg,
-    justifyContent: 'space-between',
-    paddingBottom: 28,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
   },
   centerBlock: {
-    paddingHorizontal: 24,
     alignItems: 'center',
-    marginVertical: 16,
+    marginVertical: 14,
   },
   dieWrapper: {
-    marginBottom: 24,
+    marginBottom: 12,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: '800',
     color: NOVA_COLORS.textPrimary,
+    fontSize: 22,
+    fontWeight: '800',
     textAlign: 'center',
-    lineHeight: 36,
   },
   subtext: {
     color: NOVA_COLORS.textSecondary,
-    fontSize: 14,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: 'center',
-    marginTop: 12,
-    lineHeight: 20,
+    marginTop: 6,
+    maxWidth: 290,
   },
-  actions: {
-    paddingHorizontal: 24,
-    width: '100%',
+  formSection: {
+    backgroundColor: NOVA_COLORS.surfaceCard,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#222943',
+    marginVertical: 12,
+  },
+  fieldLabel: {
+    color: NOVA_COLORS.accentGold,
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  inputWrap: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#0d101e',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#30254e',
+    paddingHorizontal: 12,
   },
-  btnSpacing: {
-    marginBottom: 12,
+  inputIcon: {
+    marginRight: 8,
   },
-  orText: {
+  textInput: {
+    flex: 1,
+    height: 44,
+    color: NOVA_COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  signInBtn: {
+    marginTop: 16,
+  },
+  createAccountLink: {
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  createAccountText: {
     color: NOVA_COLORS.textSecondary,
     fontSize: 13,
-    marginVertical: 8,
+  },
+  createAccountHighlight: {
+    color: NOVA_COLORS.accentGold,
+    fontWeight: '800',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+    gap: 8,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#222943',
+  },
+  orText: {
+    color: NOVA_COLORS.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  actions: {
+    gap: 8,
+  },
+  btnSpacing: {
+    marginBottom: 4,
   },
   guestLink: {
+    alignItems: 'center',
     paddingVertical: 10,
-    marginBottom: 16,
+    marginTop: 4,
   },
   guestText: {
     color: NOVA_COLORS.accentPurple,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
-  },
-  termsText: {
-    color: NOVA_COLORS.textMuted,
-    fontSize: 11,
-    textAlign: 'center',
-    lineHeight: 16,
   },
 });
