@@ -4,6 +4,7 @@ import { RoomService } from '../services/roomService';
 import { SocialService } from '../services/socialService';
 import { DataStore } from '../services/store';
 import { DICE_CATALOG, BOARD_SKINS, LEAGUE_TIERS } from '../../../shared/src/constants/economy';
+import type { UserProfile } from '../../../shared/src/types';
 
 export interface ApiRequest {
   headers: Record<string, string | string[] | undefined>;
@@ -48,6 +49,10 @@ class SimpleRouter {
       return true;
     }
     return false;
+  }
+
+  public handle(req: ApiRequest, res: ApiResponse, pathname: string, method: string): boolean {
+    return this.dispatch(pathname, method, req, res);
   }
 }
 
@@ -143,7 +148,7 @@ apiRouter.post('/shop/purchase', (req, res) => {
     const userId = extractUserId(req);
     const { itemId } = req.body;
     const result = EconomyService.purchaseItem(userId, itemId);
-    res.json({ success: true, ...result });
+    res.json(result);
   } catch (err: any) {
     res.status(400).json({ success: false, error: err.message });
   }
@@ -225,7 +230,7 @@ apiRouter.post('/rooms/join', (req, res) => {
 
 // ================= LEADERBOARD =================
 apiRouter.get('/leaderboards', (_req, res) => {
-  const allProfiles = Array.from(DataStore.profiles.values());
+  const allProfiles: UserProfile[] = Array.from(DataStore.profiles.values());
   const sorted = allProfiles.sort((a, b) => b.leaguePoints - a.leaguePoints).slice(0, 50);
   res.json({
     success: true,

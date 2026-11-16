@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ROYAL_COLORS, COLOR_MAP } from '../../theme/colors';
-import type { PlayerColor } from '../../../shared/src/types';
+import type { PlayerColor } from '@royal-ludo/shared';
 
 interface DiceViewProps {
   value: number | null;
@@ -21,7 +21,7 @@ export const DiceView: React.FC<DiceViewProps> = ({
   size = 54,
 }) => {
   const [displayValue, setDisplayValue] = useState<number>(value || 6);
-  const colorScheme = COLOR_MAP[activeColor];
+  const colorScheme = COLOR_MAP[activeColor as keyof typeof COLOR_MAP] || COLOR_MAP.RED;
 
   // Animate rapid dice face cycling while rolling
   useEffect(() => {

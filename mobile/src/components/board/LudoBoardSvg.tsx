@@ -2,24 +2,31 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import Svg, { Rect, Circle, Polygon, Path, G } from 'react-native-svg';
 import { ROYAL_COLORS, COLOR_MAP } from '../../theme/colors';
-import { LudoBoard } from '../../../shared/src/engine/LudoBoard';
-import type { GameState, Player, Token, ValidMove } from '../../../shared/src/types';
+import { LudoBoard } from '@royal-ludo/shared';
+import type { GameState, Player, Token, ValidMove } from '@royal-ludo/shared';
 
 interface LudoBoardSvgProps {
-  boardSize: number;
-  gameState: GameState;
-  validMoves: ValidMove[];
-  onSelectToken: (seatIndex: number, tokenId: number) => void;
+  boardSize?: number;
+  size?: number;
+  gameState?: GameState;
+  validMoves?: ValidMove[];
+  onSelectToken?: (seatIndex: number, tokenId: number) => void;
+  onTilePress?: (gridX: number, gridY: number) => void;
+  onTokenPress?: (seatIndex: number, tokenId: number) => void;
 }
 
 export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
   boardSize,
+  size,
   gameState,
-  validMoves,
+  validMoves = [],
   onSelectToken,
+  onTilePress,
+  onTokenPress,
 }) => {
-  const tileSize = boardSize / 15;
-  const currentTurnSeat = gameState.currentTurnSeat;
+  const actualSize = size || boardSize || 340;
+  const tileSize = actualSize / 15;
+  const currentTurnSeat = gameState?.currentTurnSeat ?? 0;
 
   // Star SVG Path centered at (cx, cy)
   const renderStar = (cx: number, cy: number, r: number, color = ROYAL_COLORS.gold) => {
@@ -198,6 +205,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
 
   // Render all active player tokens
   const renderTokens = () => {
+    if (!gameState) return null;
     const tokenElements: React.ReactNode[] = [];
 
     // Group tokens by cell coordinate to display stacks cleanly
@@ -226,7 +234,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
 
       items.forEach((item, idx) => {
         const { player, token, isValid } = item;
-        const color = COLOR_MAP[player.color];
+        const color = COLOR_MAP[player.color as keyof typeof COLOR_MAP] || COLOR_MAP.RED;
 
         // Slight offset if stacked on same tile
         const offset = items.length > 1 ? (idx - (items.length - 1) / 2) * 5 : 0;
@@ -237,7 +245,10 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
             key={`token_${player.color}_${token.id}`}
             activeOpacity={0.8}
             disabled={!isValid}
-            onPress={() => onSelectToken(player.seatIndex, token.id)}
+            onPress={() => {
+              if (onTokenPress) onTokenPress(player.seatIndex, token.id);
+              if (onSelectToken) onSelectToken(player.seatIndex, token.id);
+            }}
             style={[
               styles.tokenContainer,
               {

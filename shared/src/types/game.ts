@@ -81,7 +81,7 @@ export interface ValidMove {
 }
 
 export interface GameEvent {
-  type: 'DICE_ROLLED' | 'TOKEN_MOVED' | 'TOKEN_CAPTURED' | 'TOKEN_FINISHED' | 'EXTRA_TURN' | 'TURN_PASSED' | 'PLAYER_WON';
+  type: 'DICE_ROLLED' | 'TOKEN_MOVED' | 'TOKEN_CAPTURED' | 'KILL_ACHIEVED' | 'TOKEN_FINISHED' | 'EXTRA_TURN' | 'TURN_PASSED' | 'PLAYER_WON';
   seatIndex: number;
   payload: any;
   timestamp: number;

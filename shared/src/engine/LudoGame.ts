@@ -400,7 +400,7 @@ export class LudoGame {
           rolledValue: rollResult.diceValue,
           movedTokenId: null,
           extraTurn: false,
-          gameOver: this.state.turnPhase === 'GAME_OVER',
+          gameOver: (this.state.turnPhase as any) === 'GAME_OVER',
         };
       }
 

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { DICE_CATALOG, BOARD_SKINS, INITIAL_WALLET } from '../../../shared/src/constants/economy';
-import type { ShopItem } from '../../../shared/src/types';
+import { DICE_CATALOG, BOARD_SKINS, INITIAL_WALLET } from '@royal-ludo/shared';
+import type { ShopItem } from '@royal-ludo/shared';
 
 interface EconomyState {
   gold: number;
@@ -12,6 +12,10 @@ interface EconomyState {
   addGems: (amount: number) => void;
   spendGold: (amount: number) => boolean;
   spendGems: (amount: number) => boolean;
+  debitGold: (amount: number) => boolean;
+  debitGems: (amount: number) => boolean;
+  creditGold: (amount: number) => void;
+  creditGems: (amount: number) => void;
   purchaseItem: (item: ShopItem) => boolean;
 }
 
@@ -24,6 +28,8 @@ export const useEconomyStore = create<EconomyState>((set, get) => ({
 
   addGold: (amount) => set((s) => ({ gold: s.gold + amount })),
   addGems: (amount) => set((s) => ({ gems: s.gems + amount })),
+  creditGold: (amount) => set((s) => ({ gold: s.gold + amount })),
+  creditGems: (amount) => set((s) => ({ gems: s.gems + amount })),
 
   spendGold: (amount) => {
     if (get().gold < amount) return false;
@@ -36,6 +42,9 @@ export const useEconomyStore = create<EconomyState>((set, get) => ({
     set((s) => ({ gems: s.gems - amount }));
     return true;
   },
+
+  debitGold: (amount) => get().spendGold(amount),
+  debitGems: (amount) => get().spendGems(amount),
 
   purchaseItem: (item) => {
     const { gold, gems, ownedItems } = get();

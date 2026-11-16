@@ -36,6 +36,12 @@ export async function resolve(specifier, context, nextResolve) {
     };
   }
 
+  // Intercept @royal-ludo/shared to point directly to source/index.ts
+  if (specifier === '@royal-ludo/shared') {
+    const sharedSource = pathResolve(process.cwd(), 'shared/src/index.ts');
+    return nextResolve(pathToFileURL(sharedSource).href, context);
+  }
+
   if (parentURL && (specifier.startsWith('./') || specifier.startsWith('../'))) {
     const parentPath = fileURLToPath(parentURL);
     const parentDir = dirname(parentPath);
@@ -43,6 +49,11 @@ export async function resolve(specifier, context, nextResolve) {
 
     if (existsSync(candidatePath)) {
       return nextResolve(pathToFileURL(candidatePath).href, context);
+    }
+
+    const indexCandidate = pathResolve(parentDir, specifier, 'index.ts');
+    if (existsSync(indexCandidate)) {
+      return nextResolve(pathToFileURL(indexCandidate).href, context);
     }
   }
 
