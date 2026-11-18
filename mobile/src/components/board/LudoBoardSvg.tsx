@@ -4,6 +4,7 @@ import Svg, { Rect, Circle, Polygon, Path, G } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { ROYAL_COLORS, COLOR_MAP } from '../../theme/colors';
 import { LudoBoard } from '../../../../shared/src/engine/LudoBoard';
+import { useCustomizationStore } from '../../store/useCustomizationStore';
 import type { GameState, Player, Token, ValidMove } from '../../../../shared/src/types';
 
 interface LudoBoardSvgProps {
@@ -30,6 +31,11 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
   const actualSize = size || boardSize || 340;
   const tileSize = actualSize / 15;
   const currentTurnSeat = gameState?.currentTurnSeat ?? 0;
+  const { boards } = useCustomizationStore();
+  const equippedBoard = boards.find((b) => b.equipped) || boards[0];
+  const boardBgColor = equippedBoard?.boardBg || ROYAL_COLORS.primaryBg;
+  const boardCellBg = equippedBoard?.cellBg || ROYAL_COLORS.cardBg;
+  const boardBorderColor = equippedBoard?.borderColor || ROYAL_COLORS.borderGold;
 
   // Star SVG Path centered at (cx, cy)
   const renderStar = (cx: number, cy: number, r: number, color = ROYAL_COLORS.gold) => {
@@ -164,7 +170,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
         const y = r * tileSize;
 
         // Determine cell background color
-        let cellBg = ROYAL_COLORS.primaryBg;
+        let cellBg = boardBgColor;
         let isSafeStar = false;
         let starColor = ROYAL_COLORS.gold;
         let arrowDirection: 'UP' | 'RIGHT' | 'DOWN' | 'LEFT' | null = null;
@@ -198,7 +204,17 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
         // Star Cells (8 steps from starts)
         else if ((r === 8 && c === 2) || (r === 2 && c === 6) || (r === 6 && c === 12) || (r === 12 && c === 8)) {
           isSafeStar = true;
-          cellBg = ROYAL_COLORS.cardBg;
+          cellBg = boardCellBg;
+        }
+        // Arrow Shortcut Catapult Cells (indices 4, 17, 30, 43)
+        else if (r === 9 && c === 6) {
+          arrowDirection = 'LEFT';
+        } else if (r === 6 && c === 5) {
+          arrowDirection = 'UP';
+        } else if (r === 5 && c === 8) {
+          arrowDirection = 'RIGHT';
+        } else if (r === 8 && c === 9) {
+          arrowDirection = 'DOWN';
         }
 
         cells.push(
@@ -214,6 +230,8 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
             />
             {isStartCell && arrowDirection ? (
               renderArrow(x + tileSize / 2, y + tileSize / 2, arrowDirection, '#ffffff')
+            ) : !isStartCell && arrowDirection ? (
+              renderArrow(x + tileSize / 2, y + tileSize / 2, arrowDirection, '#E67E22')
             ) : isSafeStar ? (
               renderStar(x + tileSize / 2, y + tileSize / 2, tileSize * 0.35, starColor)
             ) : null}
@@ -497,10 +515,10 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
   };
 
   return (
-    <View style={[styles.container, { width: boardSize, height: boardSize }]}>
-      <Svg width={boardSize} height={boardSize}>
+    <View style={[styles.container, { width: actualSize, height: actualSize, borderColor: boardBorderColor, backgroundColor: boardBgColor }]}>
+      <Svg width={actualSize} height={actualSize}>
         {/* Background Base */}
-        <Rect x={0} y={0} width={boardSize} height={boardSize} fill={ROYAL_COLORS.primaryBg} />
+        <Rect x={0} y={0} width={actualSize} height={actualSize} fill={boardBgColor} />
 
         {/* 4 Quadrant Yards */}
         {renderYard(0, 0, 'GREEN')}

@@ -9,10 +9,11 @@ import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
 
 const PACKS = [
-  { id: 'p1', name: 'Pocketful', coins: 5000, price: '$0.99' },
-  { id: 'p2', name: 'Good company', coins: 25000, price: '$3.99' },
-  { id: 'p3', name: 'Game night', coins: 75000, price: '$8.99', isBestValue: true },
-  { id: 'p4', name: 'The big table', coins: 200000, price: '$19.99' },
+  { id: 'p1', name: 'Pocketful', coins: 5000, price: 'Rs. 99' },
+  { id: 'p2', name: 'Good company', coins: 25000, price: 'Rs. 349' },
+  { id: 'p3', name: 'Game night', coins: 75000, price: 'Rs. 799', isBestValue: true },
+  { id: 'p4', name: 'The big table', coins: 200000, price: 'Rs. 1,799' },
+  { id: 'p5', name: 'Royal Treasury', coins: 1000000, price: 'Rs. 4,499', isBestValue: true },
 ];
 
 export default function CoinPacksScreen() {
@@ -21,7 +22,10 @@ export default function CoinPacksScreen() {
 
   const handleBuy = (pack: typeof PACKS[0]) => {
     addGold(pack.coins);
-    Alert.alert('Coins Purchased! ✨', `+${pack.coins.toLocaleString()} coins added to your balance.`);
+    Alert.alert(
+      'Coins Purchased! ✨',
+      `+${pack.coins.toLocaleString()} coins (${pack.price}) added to your balance.`
+    );
   };
 
   return (

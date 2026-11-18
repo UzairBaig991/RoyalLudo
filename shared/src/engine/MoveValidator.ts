@@ -46,6 +46,17 @@ export class MoveValidator {
         continue;
       }
 
+      // Arrow Mode Shortcut Catapult (+7 steps when landing on an arrow tile)
+      if (rules.allowShortcuts && targetStep >= 0 && targetStep <= PathCalculator.PERIMETER_MAX_STEP) {
+        const initialPerimeterIndex = PathCalculator.stepToPerimeterIndex(player.color, targetStep);
+        if (initialPerimeterIndex !== null && LudoBoard.isArrowCell(initialPerimeterIndex)) {
+          const boostedStep = targetStep + LudoBoard.getArrowBoostSteps();
+          if (boostedStep <= PathCalculator.FINISH_STEP) {
+            targetStep = boostedStep;
+          }
+        }
+      }
+
       let capturesToken: ValidMove['capturesToken'] = null;
 
       if (targetStep <= PathCalculator.PERIMETER_MAX_STEP) {

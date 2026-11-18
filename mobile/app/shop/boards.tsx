@@ -10,20 +10,27 @@ import { useEconomyStore } from '../../src/store/useEconomyStore';
 
 export default function BoardThemesScreen() {
   const router = useRouter();
-  const { boards, equipBoard } = useCustomizationStore();
-  const { gems, debitGems } = useEconomyStore();
+  const { boards, equipBoard, unlockBoard } = useCustomizationStore();
+  const { gems, gold, debitGems, debitGold } = useEconomyStore();
 
   const handleSelectBoard = (item: typeof boards[0]) => {
     if (item.unlocked) {
       equipBoard(item.id);
-    } else if (item.priceGems) {
-      if (gems < item.priceGems) {
-        Alert.alert('Need More Gems 💎', `You need ${item.priceGems} gems to unlock this board.`);
-        return;
-      }
+    } else if (item.priceGems && gems >= item.priceGems) {
       debitGems(item.priceGems);
+      unlockBoard(item.id);
       equipBoard(item.id);
       Alert.alert('Board Unlocked! 🎨', `Unlocked and equipped ${item.name}!`);
+    } else if (item.priceCoins && gold >= item.priceCoins) {
+      debitGold(item.priceCoins);
+      unlockBoard(item.id);
+      equipBoard(item.id);
+      Alert.alert('Board Unlocked! 🎨', `Unlocked and equipped ${item.name} with ${item.priceCoins.toLocaleString()} coins!`);
+    } else if (item.priceGems) {
+      Alert.alert(
+        'Need More Gems or Coins 💎',
+        `You need ${item.priceGems} gems or ${(item.priceCoins || 3000).toLocaleString()} coins to unlock this board.`
+      );
     } else {
       Alert.alert('Season Pass Reward', 'Unlock this board from Season Pass tier rewards!');
     }

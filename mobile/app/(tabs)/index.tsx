@@ -9,12 +9,15 @@ import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
 import { useSocialStore } from '../../src/store/useSocialStore';
+import { useCustomizationStore } from '../../src/store/useCustomizationStore';
 
 export default function HomeLobbyScreen() {
   const router = useRouter();
   const { profile } = useAuthStore();
   const { gold, gems } = useEconomyStore();
   const { inbox } = useSocialStore();
+  const { dice } = useCustomizationStore();
+  const equippedDie = dice.find((d) => d.equipped) || dice[0];
 
   const unreadCount = inbox.filter((i) => !i.claimed).length;
 
@@ -106,9 +109,16 @@ export default function HomeLobbyScreen() {
           />
         </View>
 
-        <View style={styles.heroDieWrap}>
-          <NovaDie value={5} size={66} theme="nova" />
-        </View>
+        <TouchableOpacity
+          style={styles.heroDieWrap}
+          onPress={() => router.push('/shop/dice' as any)}
+          activeOpacity={0.8}
+        >
+          <NovaDie value={5} size={66} theme={equippedDie.previewTheme} />
+          <Text style={{ color: NOVA_COLORS.accentGold, fontSize: 10, fontWeight: '800', textAlign: 'center', marginTop: 4 }}>
+            🎲 {equippedDie.name}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* 4. Section: Your kind of game */}
@@ -162,11 +172,11 @@ export default function HomeLobbyScreen() {
       <View style={styles.extraRow}>
         <TouchableOpacity
           style={styles.pillButton}
-          onPress={() => router.push('/modes' as any)}
+          onPress={() => router.push('/shop/dice' as any)}
           activeOpacity={0.8}
         >
-          <Ionicons name="grid-outline" size={16} color={NOVA_COLORS.accentPurple} />
-          <Text style={styles.pillButtonText}>All 5 Modes</Text>
+          <Ionicons name="cube-outline" size={16} color={NOVA_COLORS.accentPurple} />
+          <Text style={styles.pillButtonText}>Dice Skins</Text>
         </TouchableOpacity>
 
         <TouchableOpacity

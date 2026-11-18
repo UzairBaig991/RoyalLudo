@@ -19,7 +19,7 @@ export class BotAI {
       case 'easy':
         return this.selectEasyMove(validMoves);
       case 'medium':
-        return this.selectMediumMove(validMoves);
+        return this.selectMediumMove(validMoves, player);
       case 'hard':
       default:
         return this.selectHardMove(validMoves, player, allPlayers, rules);
@@ -31,7 +31,7 @@ export class BotAI {
     return validMoves[randomIndex];
   }
 
-  private static selectMediumMove(validMoves: ValidMove[]): ValidMove {
+  private static selectMediumMove(validMoves: ValidMove[], player: Player): ValidMove {
     const finishMove = validMoves.find((m) => m.isFinish);
     if (finishMove) return finishMove;
 
@@ -40,7 +40,7 @@ export class BotAI {
 
     const safeMove = validMoves.find((m) => {
       if (m.toStep > PathCalculator.PERIMETER_MAX_STEP) return false;
-      const destIndex = PathCalculator.stepToPerimeterIndex('RED', m.toStep);
+      const destIndex = PathCalculator.stepToPerimeterIndex(player.color, m.toStep);
       return destIndex !== null && LudoBoard.isSafeCell(destIndex);
     });
     if (safeMove) return safeMove;

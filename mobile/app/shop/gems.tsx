@@ -9,10 +9,11 @@ import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
 
 const GEM_PACKS = [
-  { id: 'g1', name: 'A little shine', gems: 50, price: '$0.99' },
-  { id: 'g2', name: 'Bright ideas', gems: 250, price: '$3.99' },
-  { id: 'g3', name: 'Pure magic', gems: 700, price: '$8.99' },
-  { id: 'g4', name: 'Supernova', gems: 2000, price: '$19.99' },
+  { id: 'g1', name: 'A little shine', gems: 50, price: 'Rs. 99' },
+  { id: 'g2', name: 'Bright ideas', gems: 250, price: 'Rs. 349' },
+  { id: 'g3', name: 'Pure magic', gems: 700, price: 'Rs. 799' },
+  { id: 'g4', name: 'Supernova', gems: 2000, price: 'Rs. 1,799' },
+  { id: 'g5', name: 'Cosmic Vault', gems: 5000, price: 'Rs. 3,999' },
 ];
 
 export default function GemPacksScreen() {
@@ -21,7 +22,7 @@ export default function GemPacksScreen() {
 
   const handleBuy = (pack: typeof GEM_PACKS[0]) => {
     creditGems(pack.gems);
-    Alert.alert('Gems Acquired! 💎', `+${pack.gems} gems added to your balance.`);
+    Alert.alert('Gems Acquired! 💎', `+${pack.gems} gems (${pack.price}) added to your balance.`);
   };
 
   return (

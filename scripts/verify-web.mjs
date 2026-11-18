@@ -7,7 +7,9 @@ const onclickRegex = /onclick="([a-zA-Z0-9_]+)\s*\(/g;
 const fnCalls = [];
 let match;
 while ((match = onclickRegex.exec(content)) !== null) {
-  fnCalls.push(match[1]);
+  if (match[1] !== 'if') {
+    fnCalls.push(match[1]);
+  }
 }
 
 // Extract all function funcName(
@@ -20,14 +22,22 @@ while ((match = defRegex.exec(content)) !== null) {
 const missing = [...new Set(fnCalls)].filter(f => !definedFns.has(f));
 console.log('Missing functions called in onclicks:', missing);
 
-// Check syntax of script block
-const scriptStart = content.indexOf('<script>');
-const scriptEnd = content.lastIndexOf('</script>');
-const scriptBody = content.slice(scriptStart + 8, scriptEnd);
+// Check syntax of all inline script blocks
+const scriptRegex = /<script>([\s\S]*?)<\/script>/g;
+let blockIdx = 0;
+let allValid = true;
+while ((match = scriptRegex.exec(content)) !== null) {
+  blockIdx++;
+  try {
+    new Function(match[1]);
+  } catch (e) {
+    allValid = false;
+    console.error(`Script block #${blockIdx} syntax error:`, e.message);
+  }
+}
 
-try {
-  new Function(scriptBody);
-  console.log('Script syntax: PASS (no syntax errors)');
-} catch (e) {
-  console.error('Script syntax error:', e.message);
+if (allValid && missing.length === 0) {
+  console.log(`Script syntax: PASS (${blockIdx} inline script blocks verified, 0 missing onclick handlers)`);
+} else {
+  process.exit(1);
 }

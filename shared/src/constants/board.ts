@@ -78,6 +78,12 @@ export const PERIMETER_COORDINATES: GridCoord[] = [
 export const SAFE_PERIMETER_INDICES = [0, 8, 13, 21, 26, 34, 39, 47];
 
 /**
+ * 4 Arrow Shortcut Cells on the perimeter track & boost distance
+ */
+export const ARROW_SHORTCUT_INDICES = [4, 17, 30, 43];
+export const ARROW_BOOST_STEPS = 7;
+
+/**
  * Starting perimeter index for each color
  */
 export const COLOR_START_INDEX: Record<PlayerColor, number> = {

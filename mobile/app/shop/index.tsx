@@ -8,32 +8,35 @@ import { NovaBadge } from '../../src/components/nova/NovaBadge';
 import { NovaCard } from '../../src/components/nova/NovaCard';
 import { NovaDie } from '../../src/components/nova/NovaDie';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
+import { useCustomizationStore } from '../../src/store/useCustomizationStore';
 
 export default function ShopHubScreen() {
   const router = useRouter();
   const { gold, gems } = useEconomyStore();
+  const { dice } = useCustomizationStore();
+  const equippedDie = dice.find((d) => d.equipped) || dice[0];
 
   const categories = [
     {
       id: 'coins',
-      title: 'Coins',
-      desc: 'For your next game',
+      title: 'Coins (Rs.)',
+      desc: 'Packs from Rs. 99',
       icon: 'sparkles',
       color: NOVA_COLORS.accentGold,
       route: '/shop/coins',
     },
     {
       id: 'gems',
-      title: 'Gems',
-      desc: 'A little extra sparkle',
+      title: 'Gems (Rs.)',
+      desc: 'Packs from Rs. 99',
       icon: 'diamond',
       color: NOVA_COLORS.accentMint,
       route: '/shop/gems',
     },
     {
       id: 'dice',
-      title: 'Dice',
-      desc: 'Make every roll yours',
+      title: 'Dice Skins',
+      desc: '12 custom 3D skins',
       icon: 'cube',
       color: NOVA_COLORS.accentPurple,
       route: '/shop/dice',
@@ -98,7 +101,7 @@ export default function ShopHubScreen() {
           </View>
 
           <View style={styles.featuredDieWrap}>
-            <NovaDie value={5} size={64} theme="nova" />
+            <NovaDie value={5} size={64} theme={equippedDie.previewTheme} />
           </View>
         </TouchableOpacity>
 

@@ -7,6 +7,7 @@ import { useCustomizationStore } from '../src/store/useCustomizationStore';
 import { useMissionsStore } from '../src/store/useMissionsStore';
 import { useSettingsStore } from '../src/store/useSettingsStore';
 import { LudoBoard } from '../../shared/src/engine/LudoBoard';
+import { CURRENCY_CONFIG, COIN_PACKS_RUPEES, GEM_PACKS_RUPEES } from '../../shared/src/constants/economy';
 
 let passed = 0;
 let failed = 0;
@@ -82,12 +83,26 @@ function runMobileTests() {
   // TEST 5: Customization & Skins Store
   console.log('\nTest Suite 5: Customization & Skins Store');
   const custom = useCustomizationStore.getState();
-  assert(custom.dice.length >= 4, 'Dice catalog loaded');
+  assert(custom.dice.length >= 12, '12 Dice skins loaded in catalog');
   custom.equipDie('d_classic');
   assert(useCustomizationStore.getState().dice.find((d) => d.id === 'd_classic')?.equipped === true, 'Classic die equipped');
+  custom.unlockDie('d_ruby');
+  custom.equipDie('d_ruby');
+  assert(useCustomizationStore.getState().getEquippedDie().id === 'd_ruby', 'Ruby Emperor die unlocked and equipped');
+  assert(useCustomizationStore.getState().getEquippedDie().previewTheme === 'ruby', 'Ruby Emperor theme is ruby');
 
   custom.equipBoard('b_classic');
   assert(useCustomizationStore.getState().boards.find((b) => b.id === 'b_classic')?.equipped === true, 'Classic board equipped');
+  custom.unlockBoard('b_emerald');
+  custom.equipBoard('b_emerald');
+  assert(useCustomizationStore.getState().getEquippedBoard().id === 'b_emerald', 'Royal Jade Palace board unlocked and equipped');
+
+  // TEST 5.5: Rupee Currency Configuration
+  console.log('\nTest Suite 5.5: Rupee Currency & Store Packs');
+  assert(CURRENCY_CONFIG.symbol === 'Rs.', 'Currency symbol is Rupees (Rs.)');
+  assert(CURRENCY_CONFIG.name === 'Rupees', 'Currency name is Rupees');
+  assert(COIN_PACKS_RUPEES.every((p) => p.priceDisplay.startsWith('Rs.')), 'All coin packs priced in Rupees (Rs.)');
+  assert(GEM_PACKS_RUPEES.every((p) => p.priceDisplay.startsWith('Rs.')), 'All gem packs priced in Rupees (Rs.)');
 
   // TEST 6: Missions & Rewards Store
   console.log('\nTest Suite 6: Missions & Rewards Store');

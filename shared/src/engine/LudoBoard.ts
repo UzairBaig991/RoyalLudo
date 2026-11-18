@@ -1,4 +1,6 @@
 import {
+  ARROW_BOOST_STEPS,
+  ARROW_SHORTCUT_INDICES,
   COLOR_BASE_SLOTS,
   COLOR_FINISH_COORDINATES,
   COLOR_HOME_ENTRY_INDEX,
@@ -16,6 +18,20 @@ export class LudoBoard {
    */
   public static isSafeCell(perimeterIndex: number): boolean {
     return SAFE_PERIMETER_INDICES.includes(perimeterIndex);
+  }
+
+  /**
+   * Check if a given perimeter index is one of the 4 arrow shortcut cells
+   */
+  public static isArrowCell(perimeterIndex: number): boolean {
+    return ARROW_SHORTCUT_INDICES.includes(perimeterIndex);
+  }
+
+  /**
+   * Return the number of bonus steps granted by an arrow shortcut cell
+   */
+  public static getArrowBoostSteps(): number {
+    return ARROW_BOOST_STEPS;
   }
 
   /**

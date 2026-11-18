@@ -1,9 +1,33 @@
 import type { DailyReward, ShopItem } from '../types/economy';
 
+export const CURRENCY_CONFIG = {
+  symbol: 'Rs.',
+  unicodeSign: '₹',
+  code: 'PKR',
+  name: 'Rupees',
+  format: (amount: number) => `Rs. ${amount.toLocaleString()}`,
+} as const;
+
 export const INITIAL_WALLET = {
   gold: 5000,
   gems: 50,
 };
+
+export const COIN_PACKS_RUPEES = [
+  { id: 'p1', name: 'Pocketful', coins: 5000, priceRupees: 99, priceDisplay: 'Rs. 99' },
+  { id: 'p2', name: 'Good company', coins: 25000, priceRupees: 349, priceDisplay: 'Rs. 349' },
+  { id: 'p3', name: 'Game night', coins: 75000, priceRupees: 799, priceDisplay: 'Rs. 799', isBestValue: true },
+  { id: 'p4', name: 'The big table', coins: 200000, priceRupees: 1799, priceDisplay: 'Rs. 1,799' },
+  { id: 'p5', name: 'Royal Treasury', coins: 1000000, priceRupees: 4499, priceDisplay: 'Rs. 4,499', isMegaValue: true },
+] as const;
+
+export const GEM_PACKS_RUPEES = [
+  { id: 'g1', name: 'A little shine', gems: 50, priceRupees: 99, priceDisplay: 'Rs. 99' },
+  { id: 'g2', name: 'Bright ideas', gems: 250, priceRupees: 349, priceDisplay: 'Rs. 349' },
+  { id: 'g3', name: 'Pure magic', gems: 700, priceRupees: 799, priceDisplay: 'Rs. 799', isBestValue: true },
+  { id: 'g4', name: 'Supernova', gems: 2000, priceRupees: 1799, priceDisplay: 'Rs. 1,799' },
+  { id: 'g5', name: 'Cosmic Vault', gems: 5000, priceRupees: 3999, priceDisplay: 'Rs. 3,999' },
+] as const;
 
 export const DICE_CATALOG: ShopItem[] = [
   {
@@ -67,6 +91,26 @@ export const DICE_CATALOG: ShopItem[] = [
     cost: 2500,
     currency: 'gold',
     previewAsset: 'dice_cyber',
+  },
+  {
+    id: 'dice_dragon_flame',
+    name: 'Dragon Flame',
+    description: 'Volcanic dragon scale die with molten ember pips.',
+    type: 'dice',
+    rarity: 'legendary',
+    cost: 150,
+    currency: 'gems',
+    previewAsset: 'dice_dragon',
+  },
+  {
+    id: 'dice_galaxy_void',
+    name: 'Galaxy Void',
+    description: 'Deep cosmos nebula with shimmering starlight pips.',
+    type: 'dice',
+    rarity: 'epic',
+    cost: 7500,
+    currency: 'gold',
+    previewAsset: 'dice_galaxy',
   },
 ];
 

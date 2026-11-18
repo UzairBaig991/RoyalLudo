@@ -193,12 +193,14 @@ export class GameSocketHandler {
         if (botRes.movedTokenId !== null) {
           setTimeout(() => {
             const updatedState = game.getState();
-            const token = player.tokens.find((t) => t.id === botRes.movedTokenId);
+            const updatedPlayer = updatedState.players.find((p) => p.seatIndex === currentSeat);
+            const token = updatedPlayer?.tokens.find((t) => t.id === botRes.movedTokenId);
+            const oldToken = player.tokens.find((t) => t.id === botRes.movedTokenId);
             io.to(roomId).emit('game:token_moved', {
               seatIndex: currentSeat,
               tokenId: botRes.movedTokenId!,
-              fromStep: token?.position.step || 0,
-              toStep: token?.position.step || 0,
+              fromStep: oldToken?.position.step ?? 0,
+              toStep: token?.position.step ?? 0,
               extraTurn: botRes.extraTurn,
               finished: token?.position.state === 'FINISHED',
             });
@@ -216,10 +218,8 @@ export class GameSocketHandler {
               turnTimer: updatedState.rules.turnTimerSeconds,
             });
 
-            // If bot gets another turn, recurse
-            if (botRes.extraTurn) {
-              this.triggerBotTurnIfNeeded(io, roomId, game);
-            }
+            // Continue if bot earned an extra turn OR if the next seat is also a bot
+            this.triggerBotTurnIfNeeded(io, roomId, game);
           }, 600);
         } else {
           // Bot rolled and had no legal moves
@@ -228,6 +228,7 @@ export class GameSocketHandler {
             currentSeat: updatedState.currentTurnSeat,
             turnTimer: updatedState.rules.turnTimerSeconds,
           });
+          this.triggerBotTurnIfNeeded(io, roomId, game);
         }
       } catch (e) {
         console.error('Error during bot turn:', e);

@@ -100,13 +100,13 @@ export default function SeasonPassScreen() {
 
       <View style={styles.footer}>
         <NovaButton
-          title={unlocked ? 'Premium Active ✓' : 'Unlock premium  ·  $4.99'}
+          title={unlocked ? 'Premium Active ✓' : 'Unlock premium  ·  Rs. 499'}
           variant="gold"
           onPress={handleUnlock}
           disabled={unlocked}
         />
         <Text style={styles.subtext}>
-          Optional purchase  ·  Rewards are virtual items
+          Optional purchase in Rupees (Rs.)  ·  Rewards are virtual items
         </Text>
       </View>
     </ScrollView>

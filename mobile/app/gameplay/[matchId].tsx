@@ -24,6 +24,7 @@ import { useGameStore } from '../../src/store/useGameStore';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
 import { useSettingsStore } from '../../src/store/useSettingsStore';
+import { useCustomizationStore } from '../../src/store/useCustomizationStore';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 // Scaled so the entire screen fits 100% on one page without scrolling
@@ -39,8 +40,10 @@ export default function LiveGameScreen() {
   }>();
 
   const { profile } = useAuthStore();
-  const { gold, gems, addGold, spendGems } = useEconomyStore();
+  const { gold, gems, addGold, spendGems, spendGold } = useEconomyStore();
   const { soundEffects, gameMusic, allowVoiceChat, toggleSetting } = useSettingsStore();
+  const { dice, equipDie, unlockDie } = useCustomizationStore();
+  const equippedDie = dice.find((d) => d.equipped) || dice[0];
 
   const {
     gameState,
@@ -58,7 +61,9 @@ export default function LiveGameScreen() {
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
+  const [showDiceSkinModal, setShowDiceSkinModal] = useState<boolean>(false);
   const [voiceOn, setVoiceOn] = useState<boolean>(false);
+  const [tacticalHint, setTacticalHint] = useState<string | null>(null);
 
   // Auto-Roll Toggle & In-game Celebration Banners
   const [autoRollEnabled, setAutoRollEnabled] = useState<boolean>(false);
@@ -231,6 +236,73 @@ export default function LiveGameScreen() {
     } else {
       Alert.alert('Booster', res.message);
     }
+  };
+
+  const handleTacticalHint = () => {
+    sfxEngine.playTokenStep();
+    if (!isMyTurn) {
+      setTacticalHint('🧠 AI Advisor: Wait for your turn, then roll or pick the highest-value capture/safe tile!');
+      setTimeout(() => setTacticalHint(null), 3200);
+      return;
+    }
+    if (canRollDice) {
+      setTacticalHint('🧠 AI Advisor: Roll the dice! Tip: Use "Six 2◇" booster if opponent is vulnerable.');
+      setTimeout(() => setTacticalHint(null), 3200);
+      return;
+    }
+    if (gameState?.turnPhase === 'SELECT_TOKEN' && gameState.validMoves.length > 0) {
+      const bestMove = [...gameState.validMoves].sort((a, b) => {
+        const scoreA =
+          (a.isFinish ? 10000 : 0) +
+          (a.capturesToken ? 5000 : 0) +
+          (a.isEntry ? 2500 : 0) +
+          a.toStep * 20;
+        const scoreB =
+          (b.isFinish ? 10000 : 0) +
+          (b.capturesToken ? 5000 : 0) +
+          (b.isEntry ? 2500 : 0) +
+          b.toStep * 20;
+        return scoreB - scoreA;
+      })[0];
+      const reason = bestMove.isFinish
+        ? 'reaches HOME triangle (+Extra Turn)!'
+        : bestMove.capturesToken
+        ? 'CAPTURES opponent token (+Extra Turn)!'
+        : bestMove.isEntry
+        ? 'deploys a new token from base!'
+        : `advances to step ${bestMove.toStep} safely!`;
+      setTacticalHint(`🧠 AI Hint: Move Token #${bestMove.tokenId + 1} — ${reason}`);
+      setTimeout(() => setTacticalHint(null), 3800);
+    }
+  };
+
+  const handleSelectDiceSkinInGame = (skin: typeof dice[0]) => {
+    if (skin.unlocked) {
+      sfxEngine.playTokenStep();
+      equipDie(skin.id);
+      triggerReaction('🎲');
+      return;
+    }
+    if (skin.priceGems && gems >= skin.priceGems) {
+      spendGems(skin.priceGems);
+      unlockDie(skin.id);
+      equipDie(skin.id);
+      sfxEngine.playPowerUp();
+      triggerReaction('✨');
+      return;
+    }
+    if (skin.priceCoins && gold >= skin.priceCoins) {
+      spendGold(skin.priceCoins);
+      unlockDie(skin.id);
+      equipDie(skin.id);
+      sfxEngine.playPowerUp();
+      triggerReaction('✨');
+      return;
+    }
+    Alert.alert(
+      'Unlock Dice Skin 🎲',
+      `Need ${skin.priceGems || 30} gems or ${(skin.priceCoins || 3000).toLocaleString()} coins to unlock ${skin.name}.`
+    );
   };
 
   // Handle Turn Countdown Timer with low-time warning sounds
@@ -486,7 +558,7 @@ export default function LiveGameScreen() {
                   rolling={isRolling}
                   disabled={!isMe || !canRollDice}
                   onPress={isMe ? handleRoll : undefined}
-                  theme="nova"
+                  theme={isMe ? equippedDie.previewTheme : 'nova'}
                 />
                 {isMe && canRollDice && !isRolling && (
                   <View style={styles.tapPillOverlay}>
@@ -681,6 +753,12 @@ export default function LiveGameScreen() {
         </View>
       )}
 
+      {tacticalHint && (
+        <View style={styles.celebrationBanner}>
+          <Text style={styles.celebrationBannerText}>{tacticalHint}</Text>
+        </View>
+      )}
+
       {/* ACTIVE SPEECH BUBBLE */}
       {activeSpeech && (
         <View style={styles.speechBubble}>
@@ -716,6 +794,24 @@ export default function LiveGameScreen() {
           >
             <Text style={styles.boosterEmoji}>🛡️</Text>
             <Text style={styles.boosterText}>Shield 1◇</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.boosterBtn, { borderColor: NOVA_COLORS.accentGold }]}
+            onPress={() => setShowDiceSkinModal(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.boosterEmoji}>🎲</Text>
+            <Text style={[styles.boosterText, { color: NOVA_COLORS.accentGold }]}>Skin</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.boosterBtn, { borderColor: NOVA_COLORS.accentMint }]}
+            onPress={handleTacticalHint}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.boosterEmoji}>🧠</Text>
+            <Text style={[styles.boosterText, { color: NOVA_COLORS.accentMint }]}>Hint</Text>
           </TouchableOpacity>
         </View>
 
@@ -979,6 +1075,16 @@ export default function LiveGameScreen() {
               style={styles.menuBtn}
             />
 
+            <NovaButton
+              title={`🎲 Change Dice Skin (${equippedDie.name})`}
+              variant="outline"
+              onPress={() => {
+                setShowMenuModal(false);
+                setShowDiceSkinModal(true);
+              }}
+              style={styles.menuBtn}
+            />
+
             {/* Sound effects toggle */}
             <View style={[styles.settingRow, { marginTop: 12 }]}>
               <Text style={styles.settingLabel}>Sound effects</Text>
@@ -1114,6 +1220,82 @@ export default function LiveGameScreen() {
               title="Got It! Back to Match"
               variant="primary"
               onPress={() => setShowRulesModal(false)}
+              style={styles.ruleCloseBtn}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* ======================================================= */}
+      {/* IN-GAME DICE SKIN CUSTOMIZER MODAL                      */}
+      {/* ======================================================= */}
+      <Modal visible={showDiceSkinModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.rulesCard}>
+            <View style={styles.sheetHeader}>
+              <View>
+                <Text style={styles.sheetTitle}>🎲 Change Dice Skin</Text>
+                <Text style={styles.sheetSubtitle}>
+                  Equipped: {equippedDie.name} ({equippedDie.rarity})
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowDiceSkinModal(false)}
+                style={styles.sheetCloseBtn}
+              >
+                <Ionicons name="close" size={22} color={NOVA_COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 340, marginVertical: 10 }} showsVerticalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                {dice.map((item, idx) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    onPress={() => handleSelectDiceSkinInGame(item)}
+                    activeOpacity={0.8}
+                    style={{
+                      width: '48%',
+                      backgroundColor: item.equipped ? '#1d233d' : '#13182b',
+                      borderRadius: 14,
+                      padding: 12,
+                      marginBottom: 10,
+                      alignItems: 'center',
+                      borderWidth: 1.5,
+                      borderColor: item.equipped ? NOVA_COLORS.accentGold : '#222943',
+                    }}
+                  >
+                    <NovaDie value={(idx % 6) + 1} size={42} theme={item.previewTheme} />
+                    <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '800', marginTop: 6 }}>
+                      {item.name}
+                    </Text>
+                    <Text
+                      style={{
+                        color: item.equipped
+                          ? NOVA_COLORS.accentMint
+                          : item.unlocked
+                          ? NOVA_COLORS.accentPurple
+                          : NOVA_COLORS.accentGold,
+                        fontSize: 11,
+                        fontWeight: '700',
+                        marginTop: 2,
+                      }}
+                    >
+                      {item.equipped
+                        ? '✓ Equipped'
+                        : item.unlocked
+                        ? 'Tap to Equip'
+                        : `◇ ${item.priceGems} / ◈ ${item.priceCoins}`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <NovaButton
+              title="Done · Back to Match"
+              variant="primary"
+              onPress={() => setShowDiceSkinModal(false)}
               style={styles.ruleCloseBtn}
             />
           </View>
