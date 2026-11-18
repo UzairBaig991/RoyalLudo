@@ -2596,6 +2596,9 @@
         <svg class="ludo-star-svg" id="ludoSvg" viewBox="0 0 600 600"></svg>
       </div>
 
+      <!-- 3.5. 1-CLICK QUICK-MOVE ASSIST BAR -->
+      <div id="webQuickMoveBar" style="display: none; gap: 6px; justify-content: center; flex-wrap: wrap; padding: 2px 8px; z-index: 25;"></div>
+
       <!-- 4. BOTTOM AREA: OPPONENT 4 + PLAYER HUD & MASTER DICE STATION -->
       <div class="ls-in-game-bottom-area">
         <!-- Bottom-Right Opponent (Blue / Thiago Rodrigues) -->
@@ -2642,6 +2645,7 @@
               <button class="ls-mini-action-pill" onclick="toggleChatTray()">CHAT</button>
               <button class="ls-mini-action-pill" onclick="openDiceSkinModal()" style="background: #4A148C; border-color: #EA80FC; color: #FFDF00;" title="Change 3D Dice Skin">🎲 SKIN</button>
               <button class="ls-mini-action-pill" onclick="triggerAiMoveHint()" style="background: #0B3B24; border-color: #2ECC71; color: #82E0AA;" title="Smart AI Tactical Move Hint">🧠 HINT</button>
+              <button class="ls-mini-action-pill" id="gameSpeedBtn" onclick="toggleGameSpeed()" style="background: #1B263B; border-color: #38BDF8; color: #38BDF8;" title="Toggle 1x / 2x Game Speed">⚡ 1X</button>
               <button class="ls-mini-action-pill" id="autoPlayBtn" onclick="toggleAutoPlay()" style="background: #370A36; border-color: #A66606;">🤖 AUTO</button>
               <button class="ls-mini-action-pill" onclick="activateMagicSixBooster()" style="background: #1B4F72; border-color: #00E5FF; color: #00E5FF;" title="Guarantee a 6 on your turn (2 Gems)">🎯 6 (2💎)</button>
               <button class="ls-mini-action-pill" onclick="activateShieldBooster()" style="background: #0E6251; border-color: #2ECC71; color: #2ECC71;" title="Shield leading pawn from capture (1 Gem)">🛡️ (1💎)</button>
@@ -4664,6 +4668,7 @@
       });
 
       if (typeof updateTokenCountersHUD === 'function') updateTokenCountersHUD();
+      if (typeof renderWebQuickMoveBar === 'function') renderWebQuickMoveBar();
     }
 
     // ==========================================================
@@ -6715,6 +6720,58 @@
         if (o.color === color || o.step < 0 || o.step > 50 || o.isShielded) return false;
         if (gameState.isTeamMode && ((color === 'RED' && o.color === 'YELLOW') || (color === 'YELLOW' && o.color === 'RED'))) return false;
         return (COLOR_START_INDEX[o.color] + o.step) % 52 === abs;
+      });
+    }
+
+    function toggleGameSpeed() {
+      gameState.gameSpeed = gameState.gameSpeed === 2 ? 1 : 2;
+      const btn = document.getElementById('gameSpeedBtn');
+      if (btn) {
+        btn.textContent = gameState.gameSpeed === 2 ? '⚡ 2X' : '⚡ 1X';
+        btn.style.background = gameState.gameSpeed === 2 ? '#0284C7' : '#1B263B';
+        btn.style.color = gameState.gameSpeed === 2 ? '#FFF' : '#38BDF8';
+      }
+      showNotificationToast('⚡ Game Speed set to ' + (gameState.gameSpeed === 2 ? '2X TURBO 🚀' : '1X NORMAL'));
+    }
+
+    function renderWebQuickMoveBar() {
+      const bar = document.getElementById('webQuickMoveBar');
+      if (!bar) return;
+      const activeColor = COLORS[gameState.currentTurnSeat];
+      const activePlayer = gameState.players[gameState.currentTurnSeat];
+      const isHumanTurn = activePlayer ? !activePlayer.isBot : gameState.currentTurnSeat === 0;
+      const movable = getMovableTokens(activeColor, gameState.currentRoll);
+
+      if (!isHumanTurn || gameState.phase !== 'SELECT_TOKEN' || movable.length === 0) {
+        bar.style.display = 'none';
+        bar.innerHTML = '';
+        return;
+      }
+
+      bar.style.display = 'flex';
+      bar.innerHTML = '';
+      movable.forEach(t => {
+        const nextStep = calculateTargetStep(t, gameState.currentRoll || 0);
+        const willCapture = willMoveCaptureOpponent(t.color, nextStep);
+        const isFinish = nextStep === 56;
+        const isDeploy = t.step < 0;
+
+        const btn = document.createElement('button');
+        btn.className = 'ls-mini-action-pill';
+        btn.style.fontSize = '10px';
+        btn.style.padding = '4px 10px';
+        btn.style.borderColor = willCapture ? '#FF4757' : isFinish ? '#FFDF00' : '#2ECC71';
+        btn.style.background = willCapture ? 'rgba(255,71,87,0.28)' : isFinish ? 'rgba(255,223,0,0.25)' : 'rgba(46,204,113,0.24)';
+        btn.style.color = '#FFF';
+        btn.textContent = isFinish
+          ? `👑 Finish #${t.id + 1}`
+          : willCapture
+          ? `⚔️ Capture with #${t.id + 1}`
+          : isDeploy
+          ? `🚀 Deploy Pawn #${t.id + 1}`
+          : `♟️ Move Pawn #${t.id + 1} (→${nextStep})`;
+        btn.onclick = () => onTokenClick(t.color, t.id);
+        bar.appendChild(btn);
       });
     }
 

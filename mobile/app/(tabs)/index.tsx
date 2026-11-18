@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,14 +10,67 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { useEconomyStore } from '../../src/store/useEconomyStore';
 import { useSocialStore } from '../../src/store/useSocialStore';
 import { useCustomizationStore } from '../../src/store/useCustomizationStore';
+import { useGameStore } from '../../src/store/useGameStore';
+import { soundEffects as sfxEngine } from '../../src/utils/soundEffects';
 
 export default function HomeLobbyScreen() {
   const router = useRouter();
   const { profile } = useAuthStore();
   const { gold, gems } = useEconomyStore();
   const { inbox } = useSocialStore();
-  const { dice } = useCustomizationStore();
+  const { dice, equipDie } = useCustomizationStore();
+  const { startNewGame } = useGameStore();
   const equippedDie = dice.find((d) => d.equipped) || dice[0];
+
+  const [homeDieValue, setHomeDieValue] = useState<number>(6);
+  const [homeDieRolling, setHomeDieRolling] = useState<boolean>(false);
+
+  const handleTestRollHomeDie = () => {
+    if (homeDieRolling) return;
+    sfxEngine.playDiceRoll();
+    setHomeDieRolling(true);
+    setTimeout(() => {
+      const nextVal = Math.floor(Math.random() * 6) + 1;
+      setHomeDieValue(nextVal);
+      setHomeDieRolling(false);
+    }, 380);
+  };
+
+  const handleCycleDiceSkin = () => {
+    sfxEngine.playTokenStep();
+    const unlockedSkins = dice.filter((d) => d.unlocked);
+    const curIdx = unlockedSkins.findIndex((d) => d.id === equippedDie.id);
+    const nextSkin = unlockedSkins[(curIdx + 1) % unlockedSkins.length] || unlockedSkins[0];
+    if (nextSkin) {
+      equipDie(nextSkin.id);
+    }
+  };
+
+  const handleInstantMatch = (playerCount: 2 | 4) => {
+    sfxEngine.playTokenStep();
+    const myName = profile?.username || 'You';
+    startNewGame({
+      mode: 'classic',
+      playerCount,
+      randomizeTurn: true,
+      players:
+        playerCount === 2
+          ? [
+              { id: profile?.id || 'usr_me', username: myName, isBot: false },
+              { id: 'usr_companion', username: 'Companion (Yellow)', isBot: true },
+            ]
+          : [
+              { id: profile?.id || 'usr_me', username: myName, isBot: false },
+              { id: 'b1', username: 'Maya', isBot: true },
+              { id: 'b2', username: 'Zara', isBot: true },
+              { id: 'b3', username: 'Sam', isBot: true },
+            ],
+    });
+    router.push({
+      pathname: '/gameplay/[matchId]',
+      params: { matchId: `instant_${Date.now()}`, mode: 'classic', players: playerCount.toString() },
+    } as any);
+  };
 
   const unreadCount = inbox.filter((i) => !i.claimed).length;
 
@@ -109,15 +162,59 @@ export default function HomeLobbyScreen() {
           />
         </View>
 
+        <View style={[styles.heroDieWrap, { alignItems: 'center' }]}>
+          <NovaDie
+            value={homeDieValue}
+            size={66}
+            rolling={homeDieRolling}
+            onPress={handleTestRollHomeDie}
+            theme={equippedDie.previewTheme}
+          />
+          <TouchableOpacity
+            onPress={handleCycleDiceSkin}
+            activeOpacity={0.75}
+            style={{
+              backgroundColor: 'rgba(255, 211, 123, 0.16)',
+              borderWidth: 1,
+              borderColor: NOVA_COLORS.accentGold,
+              borderRadius: 8,
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              marginTop: 6,
+            }}
+          >
+            <Text style={{ color: NOVA_COLORS.accentGold, fontSize: 10, fontWeight: '800', textAlign: 'center' }}>
+              🔄 {equippedDie.name}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 3.5. Instant 1-Tap Quick Start Strip */}
+      <Text style={styles.sectionTitle}>⚡ Instant 1-Tap Play</Text>
+      <View style={styles.modeCardsRow}>
         <TouchableOpacity
-          style={styles.heroDieWrap}
-          onPress={() => router.push('/shop/dice' as any)}
+          style={[styles.modeCard, { borderWidth: 1.5, borderColor: NOVA_COLORS.accentGold }]}
+          onPress={() => handleInstantMatch(2)}
           activeOpacity={0.8}
         >
-          <NovaDie value={5} size={66} theme={equippedDie.previewTheme} />
-          <Text style={{ color: NOVA_COLORS.accentGold, fontSize: 10, fontWeight: '800', textAlign: 'center', marginTop: 4 }}>
-            🎲 {equippedDie.name}
-          </Text>
+          <View style={[styles.modeIconCircle, { backgroundColor: 'rgba(255, 211, 123, 0.16)' }]}>
+            <Ionicons name="flash" size={22} color={NOVA_COLORS.accentGold} />
+          </View>
+          <Text style={styles.modeTitle}>1v1 Quick Duel</Text>
+          <Text style={styles.modeSubtitle}>Instant start · Random turn toss</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.modeCard, { borderWidth: 1.5, borderColor: NOVA_COLORS.accentMint }]}
+          onPress={() => handleInstantMatch(4)}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.modeIconCircle, { backgroundColor: 'rgba(131, 230, 192, 0.16)' }]}>
+            <Ionicons name="trophy" size={22} color={NOVA_COLORS.accentMint} />
+          </View>
+          <Text style={styles.modeTitle}>4P Royal Table</Text>
+          <Text style={styles.modeSubtitle}>4 players · Full classic board</Text>
         </TouchableOpacity>
       </View>
 

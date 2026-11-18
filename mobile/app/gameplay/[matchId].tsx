@@ -51,10 +51,12 @@ export default function LiveGameScreen() {
     isRolling,
     lastDiceRoll,
     firstTurnAnnouncement,
+    gameSpeed,
     rollDice,
     selectAndMoveToken,
     usePowerUp,
     triggerBotTurn,
+    toggleGameSpeed,
     startNewGame,
     resetGame,
   } = useGameStore();
@@ -776,6 +778,48 @@ export default function LiveGameScreen() {
         </View>
       )}
 
+      {/* 4.2. 1-TAP QUICK-MOVE ASSIST BAR (Shows when human player has valid moves to choose from) */}
+      {isMyTurn && gameState.turnPhase === 'SELECT_TOKEN' && gameState.validMoves.length > 0 && (
+        <View style={{ marginVertical: 2 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
+            {gameState.validMoves.map((m) => {
+              const label = m.isFinish
+                ? `👑 Finish Token #${m.tokenId + 1}`
+                : m.capturesToken
+                ? `⚔️ Capture with #${m.tokenId + 1}`
+                : m.isEntry
+                ? `🚀 Deploy Token #${m.tokenId + 1}`
+                : `♟️ Move Token #${m.tokenId + 1} (→${m.toStep})`;
+              return (
+                <TouchableOpacity
+                  key={`qm_${m.tokenId}`}
+                  onPress={() => handleSelectToken(currentTurnSeat, m.tokenId)}
+                  activeOpacity={0.8}
+                  style={{
+                    backgroundColor: m.capturesToken
+                      ? 'rgba(255, 71, 87, 0.28)'
+                      : m.isFinish
+                      ? 'rgba(255, 211, 123, 0.28)'
+                      : 'rgba(131, 230, 192, 0.22)',
+                    borderWidth: 1.5,
+                    borderColor: m.capturesToken
+                      ? '#ff4757'
+                      : m.isFinish
+                      ? NOVA_COLORS.accentGold
+                      : NOVA_COLORS.accentMint,
+                    borderRadius: 10,
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>{label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
       {/* 4.5. BOOSTERS & QUICK REACTIONS BAR */}
       <View style={styles.boostersAndReactionsRow}>
         <View style={styles.boostersGroup}>
@@ -916,6 +960,19 @@ export default function LiveGameScreen() {
         </View>
 
         <View style={styles.actionRightControls}>
+          <TouchableOpacity
+            style={[styles.autoRollToggle, gameSpeed === 2 && styles.autoRollToggleActive]}
+            onPress={() => {
+              sfxEngine.playTokenStep();
+              toggleGameSpeed();
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.autoRollText, gameSpeed === 2 && styles.autoRollTextActive]}>
+              {gameSpeed === 2 ? '2x 🚀' : '1x'}
+            </Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.autoRollToggle, autoRollEnabled && styles.autoRollToggleActive]}
             onPress={() => {

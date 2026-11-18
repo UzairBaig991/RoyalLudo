@@ -372,6 +372,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
         <TouchableOpacity
           key={`dest_tap_${move.tokenId}_${index}`}
           activeOpacity={0.6}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           onPress={() => {
             if (onSelectToken) {
               onSelectToken(currentTurnSeat, move.tokenId);
@@ -441,6 +442,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
             key={`token_${player.color}_${token.id}`}
             activeOpacity={0.8}
             disabled={!isValid}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={() => {
               if (onSelectToken) {
                 onSelectToken(player.seatIndex, token.id);

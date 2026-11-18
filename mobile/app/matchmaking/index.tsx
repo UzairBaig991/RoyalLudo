@@ -24,8 +24,32 @@ export default function MatchmakingScreen() {
   const players = (params.players as string) || '4';
   const isTwoPlayer = players === '2';
 
-  const [seconds, setSeconds] = useState(isTwoPlayer ? 4 : 8);
+  const [seconds, setSeconds] = useState(isTwoPlayer ? 3 : 4);
   const [playersFound, setPlayersFound] = useState(isTwoPlayer ? 1 : 3);
+
+  const launchMatchNow = () => {
+    const myName = profile?.username || 'You';
+    startNewGame({
+      mode: (mode === 'quick' ? 'quick' : 'classic') as any,
+      playerCount: isTwoPlayer ? 2 : 4,
+      randomizeTurn: true,
+      players: isTwoPlayer
+        ? [
+            { id: profile?.id || 'usr_me', username: myName, isBot: false },
+            { id: 'usr_companion', username: 'Companion (Yellow)', isBot: true },
+          ]
+        : [
+            { id: profile?.id || 'usr_me', username: myName, isBot: false },
+            { id: 'b1', username: 'Maya', isBot: true },
+            { id: 'b2', username: 'Zara', isBot: true },
+            { id: 'b3', username: 'Sam', isBot: true },
+          ],
+    });
+    router.replace({
+      pathname: '/gameplay/[matchId]',
+      params: { matchId: `match_${Date.now()}`, mode, prize, players },
+    } as any);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,30 +57,9 @@ export default function MatchmakingScreen() {
         if (prev <= 1) {
           clearInterval(timer);
           setPlayersFound(isTwoPlayer ? 2 : 4);
-          // Initialize fresh game & navigate to live game
           setTimeout(() => {
-            const myName = profile?.username || 'You';
-            startNewGame({
-              mode: (mode === 'quick' ? 'quick' : 'classic') as any,
-              playerCount: isTwoPlayer ? 2 : 4,
-              randomizeTurn: true,
-              players: isTwoPlayer
-                ? [
-                    { id: profile?.id || 'usr_me', username: myName, isBot: false },
-                    { id: 'usr_companion', username: 'Companion (Yellow)', isBot: true },
-                  ]
-                : [
-                    { id: profile?.id || 'usr_me', username: myName, isBot: false },
-                    { id: 'b1', username: 'Maya', isBot: true },
-                    { id: 'b2', username: 'Zara', isBot: true },
-                    { id: 'b3', username: 'Sam', isBot: true },
-                  ],
-            });
-            router.replace({
-              pathname: '/gameplay/[matchId]',
-              params: { matchId: `match_${Date.now()}`, mode, prize, players },
-            } as any);
-          }, 800);
+            launchMatchNow();
+          }, 400);
           return 0;
         }
         return prev - 1;
@@ -159,6 +162,12 @@ export default function MatchmakingScreen() {
       </View>
 
       <View style={styles.footer}>
+        <NovaButton
+          title="⚡ Start Match Immediately"
+          variant="primary"
+          onPress={launchMatchNow}
+          style={{ marginBottom: 10 }}
+        />
         <NovaButton
           title="Cancel search"
           variant="dark"

@@ -13,6 +13,7 @@ interface GameStoreState {
   vibrationEnabled: boolean;
   botDifficulty: 'easy' | 'medium' | 'hard';
   firstTurnAnnouncement: string | null;
+  gameSpeed: 1 | 2;
 
   // Actions
   startNewGame: (config: {
@@ -35,6 +36,7 @@ interface GameStoreState {
   syncOnlineState: (serverState: GameState) => void;
   toggleSound: () => void;
   toggleVibration: () => void;
+  toggleGameSpeed: () => void;
   resetGame: () => void;
 }
 
@@ -48,6 +50,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   vibrationEnabled: true,
   botDifficulty: 'medium',
   firstTurnAnnouncement: null,
+  gameSpeed: 1,
 
   startNewGame: ({ mode, playerCount, players, rules, botDifficulty, randomizeTurn, startingSeat }) => {
     const fullRules = RuleSetFactory.getRules(mode, playerCount, rules);
@@ -170,6 +173,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     if (!currentPlayer || !currentPlayer.isBot) return;
 
     // Simulate bot dice roll animation + move
+    const speedFactor = get().gameSpeed === 2 ? 0.5 : 1;
     setTimeout(() => {
       const { game: activeGame } = get();
       if (!activeGame) return;
@@ -196,11 +200,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
             // Next player's turn
             setTimeout(() => {
               get().triggerBotTurn();
-            }, 450);
+            }, Math.round(450 * speedFactor));
           }
         }
-      }, 420);
-    }, 550);
+      }, Math.round(420 * speedFactor));
+    }, Math.round(550 * speedFactor));
   },
 
   syncOnlineState: (serverState) => {
@@ -212,5 +216,6 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
 
   toggleSound: () => set((s) => ({ soundEnabled: !s.soundEnabled })),
   toggleVibration: () => set((s) => ({ vibrationEnabled: !s.vibrationEnabled })),
+  toggleGameSpeed: () => set((s) => ({ gameSpeed: s.gameSpeed === 1 ? 2 : 1 })),
   resetGame: () => set({ game: null, gameState: null, isRolling: false }),
 }));
