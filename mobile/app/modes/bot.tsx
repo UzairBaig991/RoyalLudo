@@ -48,6 +48,7 @@ export default function PlayComputerScreen() {
       mode: 'classic',
       playerCount,
       botDifficulty: engineDiff,
+      randomizeTurn: true,
       players:
         playerCount === 2
           ? [

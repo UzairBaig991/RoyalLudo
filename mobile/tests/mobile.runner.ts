@@ -192,6 +192,28 @@ function runMobileTests() {
   gameStore.resetGame();
   assert(useGameStore.getState().gameState === null, 'Game reset safely exits match to lobby');
 
+  // TEST 12: Random First Turn Coin Toss & Starting Seat Selection
+  console.log('\nTest Suite 12: Random First Turn Coin Toss & Starting Seat Selection');
+  const observedStartingSeats = new Set<number>();
+  for (let i = 0; i < 20; i++) {
+    gameStore.startNewGame({
+      mode: 'classic',
+      playerCount: 4,
+      randomizeTurn: true,
+      players: [
+        { id: 'p0', username: 'Uzair', isBot: false },
+        { id: 'p1', username: 'Maya', isBot: false },
+        { id: 'p2', username: 'Zara', isBot: false },
+        { id: 'p3', username: 'Sam', isBot: false },
+      ],
+    });
+    const seat = useGameStore.getState().gameState?.currentTurnSeat ?? 0;
+    observedStartingSeats.add(seat);
+  }
+  assert(observedStartingSeats.size > 1, 'Random turn toss distributes starting turns across multiple seats (not always Seat 0)');
+  assert(useGameStore.getState().firstTurnAnnouncement !== null, 'First turn coin toss announcement generated');
+  gameStore.resetGame();
+
   console.log('\n====================================================');
   console.log(`MOBILE TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);
   console.log('====================================================');

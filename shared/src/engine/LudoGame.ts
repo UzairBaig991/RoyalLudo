@@ -102,6 +102,23 @@ export class LudoGame {
     return JSON.parse(JSON.stringify(this.state));
   }
 
+  public randomizeStartingTurn(): number {
+    const seats = this.state.activePlayerSeats;
+    const rngVal = this.customRng ? this.customRng() : Math.random();
+    const randomIndex = Math.floor(rngVal * seats.length);
+    const chosenSeat = seats[randomIndex] ?? seats[0];
+    this.state.currentTurnSeat = chosenSeat;
+    this.state.turnStartTime = Date.now();
+    return chosenSeat;
+  }
+
+  public setStartingSeat(seatIndex: number): void {
+    if (this.state.activePlayerSeats.includes(seatIndex)) {
+      this.state.currentTurnSeat = seatIndex;
+      this.state.turnStartTime = Date.now();
+    }
+  }
+
   public getCurrentPlayer(): Player {
     const player = this.state.players.find((p) => p.seatIndex === this.state.currentTurnSeat);
     if (!player) throw new Error(`Active player not found for seat ${this.state.currentTurnSeat}`);

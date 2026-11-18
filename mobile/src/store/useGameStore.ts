@@ -12,6 +12,7 @@ interface GameStoreState {
   soundEnabled: boolean;
   vibrationEnabled: boolean;
   botDifficulty: 'easy' | 'medium' | 'hard';
+  firstTurnAnnouncement: string | null;
 
   // Actions
   startNewGame: (config: {
@@ -20,6 +21,8 @@ interface GameStoreState {
     players: GameInitPlayer[];
     rules?: Partial<GameRules>;
     botDifficulty?: 'easy' | 'medium' | 'hard';
+    randomizeTurn?: boolean;
+    startingSeat?: number;
   }) => void;
   rollDice: (seatIndex: number, injectedRoll?: number) => void;
   selectAndMoveToken: (seatIndex: number, tokenId: number) => void;
@@ -44,18 +47,41 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   soundEnabled: true,
   vibrationEnabled: true,
   botDifficulty: 'medium',
+  firstTurnAnnouncement: null,
 
-  startNewGame: ({ mode, playerCount, players, rules, botDifficulty }) => {
+  startNewGame: ({ mode, playerCount, players, rules, botDifficulty, randomizeTurn, startingSeat }) => {
     const fullRules = RuleSetFactory.getRules(mode, playerCount, rules);
     const game = new LudoGame(`match_${Date.now()}`, players, fullRules);
+
+    if (typeof startingSeat === 'number') {
+      game.setStartingSeat(startingSeat);
+    } else if (randomizeTurn) {
+      game.randomizeStartingTurn();
+    }
+
+    const initialState = game.getState();
+    const firstPlayer = initialState.players.find((p) => p.seatIndex === initialState.currentTurnSeat);
+    const announcement = firstPlayer
+      ? firstPlayer.seatIndex === 0
+        ? `🎲 Coin Toss: ${firstPlayer.username} (Red) rolls first!`
+        : `🎲 Coin Toss: ${firstPlayer.username} (${firstPlayer.color}) rolls first!`
+      : null;
+
     set({
       game,
-      gameState: game.getState(),
+      gameState: initialState,
       isRolling: false,
       selectedTokenId: null,
       lastDiceRoll: null,
       botDifficulty: botDifficulty || 'medium',
+      firstTurnAnnouncement: announcement,
     });
+
+    if (firstPlayer && firstPlayer.isBot) {
+      setTimeout(() => {
+        get().triggerBotTurn();
+      }, 650);
+    }
   },
 
   rollDice: (seatIndex, injectedRoll) => {
@@ -126,6 +152,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         setTimeout(() => {
           get().selectAndMoveToken(seatIndex, res.validMoves![0].tokenId);
         }, 350);
+      } else if (type === 'REROLL' && res.validMoves && res.validMoves.length === 0) {
+        get().triggerBotTurn();
       }
     }
     return res;
@@ -141,29 +169,38 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
     const currentPlayer = state.players.find((p) => p.seatIndex === state.currentTurnSeat);
     if (!currentPlayer || !currentPlayer.isBot) return;
 
-    // Simulate 700ms bot reaction time
+    // Simulate bot dice roll animation + move
     setTimeout(() => {
       const { game: activeGame } = get();
       if (!activeGame) return;
 
-      const botRes = activeGame.playBotTurn(get().botDifficulty || 'medium');
-      if (botRes) {
-        set({
-          lastDiceRoll: botRes.rolledValue,
-          gameState: activeGame.getState(),
-        });
+      set({ isRolling: true });
 
-        if (botRes.extraTurn && !botRes.gameOver) {
-          // Bot rolls again
-          get().triggerBotTurn();
-        } else {
-          // Next player's turn
-          setTimeout(() => {
+      setTimeout(() => {
+        const { game: currentActiveGame } = get();
+        if (!currentActiveGame) return;
+
+        const botRes = currentActiveGame.playBotTurn(get().botDifficulty || 'medium');
+        set({ isRolling: false });
+
+        if (botRes) {
+          set({
+            lastDiceRoll: botRes.rolledValue,
+            gameState: currentActiveGame.getState(),
+          });
+
+          if (botRes.extraTurn && !botRes.gameOver) {
+            // Bot rolls again
             get().triggerBotTurn();
-          }, 400);
+          } else {
+            // Next player's turn
+            setTimeout(() => {
+              get().triggerBotTurn();
+            }, 450);
+          }
         }
-      }
-    }, 700);
+      }, 420);
+    }, 550);
   },
 
   syncOnlineState: (serverState) => {

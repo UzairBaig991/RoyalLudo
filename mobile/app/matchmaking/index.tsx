@@ -39,6 +39,7 @@ export default function MatchmakingScreen() {
             startNewGame({
               mode: (mode === 'quick' ? 'quick' : 'classic') as any,
               playerCount: isTwoPlayer ? 2 : 4,
+              randomizeTurn: true,
               players: isTwoPlayer
                 ? [
                     { id: profile?.id || 'usr_me', username: myName, isBot: false },

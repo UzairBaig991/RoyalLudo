@@ -63,6 +63,7 @@ export default function PassAndPlayScreen() {
     startNewGame({
       mode: 'classic',
       playerCount: pCount,
+      randomizeTurn: true,
       players: initPlayers,
     });
 

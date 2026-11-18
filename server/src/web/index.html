@@ -75,7 +75,13 @@
         t.step = -1;
         t.isShielded = false;
       });
-      gameState.currentTurnSeat = 0;
+      const validSeats = count === 2 ? [0, 2] : count === 3 ? [0, 1, 2] : [0, 1, 2, 3];
+      const randomStartSeat =
+        options.forceSeat !== undefined
+          ? options.forceSeat
+          : validSeats[Math.floor(Math.random() * validSeats.length)];
+
+      gameState.currentTurnSeat = randomStartSeat;
       gameState.phase = 'ROLL_DICE';
       gameState.currentRoll = null;
       gameState.consecutiveSixes = 0;
@@ -104,6 +110,31 @@
       updateTurnHUD();
       if (typeof updateTokenCountersHUD === 'function') updateTokenCountersHUD();
       if (typeof incrementMissionProgress === 'function') incrementMissionProgress('matchesPlayed', 1);
+
+      const starter = gameState.players[randomStartSeat];
+      const starterColor = COLORS[randomStartSeat];
+      if (starter) {
+        setTimeout(() => {
+          if (typeof showComboAnnouncer === 'function') {
+            showComboAnnouncer(
+              randomStartSeat === 0
+                ? '🎲 COIN TOSS: YOU ROLL FIRST!'
+                : `🎲 COIN TOSS: ${starter.name.toUpperCase()} FIRST!`
+            );
+          }
+          if (typeof showSpeechBubble === 'function') {
+            showSpeechBubble(randomStartSeat, 'I roll first! 🎲');
+          }
+        }, 250);
+
+        if (starter.isBot) {
+          setTimeout(() => {
+            if (gameState.currentTurnSeat === randomStartSeat && gameState.phase === 'ROLL_DICE') {
+              rollDice();
+            }
+          }, 1150);
+        }
+      }
     }
 
     // Pass 'n Play starter
@@ -4934,6 +4965,8 @@
     function updateTurnHUD() {
       const seat = gameState.currentTurnSeat;
       const isMyTurn = seat === 0;
+      const activePlayerObj = gameState.players[seat];
+      const isHumanTurn = activePlayerObj ? !activePlayerObj.isBot : isMyTurn;
       const colors = ['#E74C4C', '#2ECC71', '#F1C40F', '#3498DB'];
       const colorNames = ['RED', 'GREEN', 'YELLOW', 'BLUE'];
       const activeColor = colors[seat];
@@ -4968,15 +5001,16 @@
         const dots = ['🔴', '🟢', '🟡', '🔵'];
         if (bannerDot) bannerDot.textContent = dots[seat];
 
-        if (isMyTurn) {
+        if (isHumanTurn) {
+          const turnTitlePrefix = isMyTurn ? 'YOUR TURN' : `${colorNames[seat]} TURN (${activePlayerObj?.name || 'Player'})`;
           if (gameState.phase === 'ROLL_DICE') {
-            bannerText.textContent = 'YOUR TURN TO ROLL!';
+            bannerText.textContent = `${turnTitlePrefix} TO ROLL!`;
             if (bannerPill) {
               bannerPill.style.display = 'inline-block';
               bannerPill.textContent = 'TAP DICE 🎲';
             }
           } else if (gameState.phase === 'SELECT_TOKEN') {
-            bannerText.textContent = 'YOUR TURN · SELECT TOKEN!';
+            bannerText.textContent = `${turnTitlePrefix} · SELECT TOKEN!`;
             if (bannerPill) {
               bannerPill.style.display = 'inline-block';
               bannerPill.textContent = 'MOVE ♟️';
@@ -4985,18 +5019,21 @@
         } else {
           const playerName = gameState.players[seat]?.name || colorNames[seat];
           bannerText.textContent = `${colorNames[seat]} TURN (${playerName})`;
-          if (bannerPill) bannerPill.style.display = 'none';
+          if (bannerPill) {
+            bannerPill.style.display = 'inline-block';
+            bannerPill.textContent = '🤖 ROLLING...';
+          }
         }
       }
 
       // Bouncing Arrow
       const arrow = document.getElementById('turnArrow');
-      if (arrow) arrow.style.display = (isMyTurn && gameState.phase === 'ROLL_DICE') ? 'block' : 'none';
+      if (arrow) arrow.style.display = (isHumanTurn && gameState.phase === 'ROLL_DICE') ? 'block' : 'none';
 
       // 3D Dice Station Glow
       const diceArena = document.getElementById('diceBtn');
       if (diceArena) {
-        if (isMyTurn && gameState.phase === 'ROLL_DICE') {
+        if (isHumanTurn && gameState.phase === 'ROLL_DICE') {
           diceArena.classList.add('turn-ready');
         } else {
           diceArena.classList.remove('turn-ready');
@@ -6484,11 +6521,11 @@
 
         if (turnTimeLeft <= 0) {
           stopTurnTimer();
-          // Auto roll or pass turn if time expires
-          if (gameState.phase === 'ROLL_DICE' && gameState.currentTurnSeat === 0) {
+          // Auto roll or pass turn if time expires on any seat
+          const activeColor = COLORS[gameState.currentTurnSeat];
+          if (gameState.phase === 'ROLL_DICE') {
             rollDice();
-          } else if (gameState.phase === 'SELECT_TOKEN' && gameState.currentTurnSeat === 0) {
-            const activeColor = COLORS[0];
+          } else if (gameState.phase === 'SELECT_TOKEN') {
             const movable = getMovableTokens(activeColor, gameState.currentRoll);
             if (movable.length > 0) {
               onTokenClick(activeColor, movable[0].id);

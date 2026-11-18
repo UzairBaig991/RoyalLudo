@@ -50,6 +50,7 @@ export default function LiveGameScreen() {
     gameState,
     isRolling,
     lastDiceRoll,
+    firstTurnAnnouncement,
     rollDice,
     selectAndMoveToken,
     usePowerUp,
@@ -125,6 +126,7 @@ export default function LiveGameScreen() {
       startNewGame({
         mode: (routeMode as any) || 'classic',
         playerCount: pCount,
+        randomizeTurn: true,
         players: isTwo
           ? [
               { id: profile?.id || 'usr_me', username: myName, isBot: false },
@@ -144,6 +146,15 @@ export default function LiveGameScreen() {
   const activeSeatPlayer = gameState?.players.find((p) => p.seatIndex === currentTurnSeat);
   const isMyTurn = activeSeatPlayer ? !activeSeatPlayer.isBot : currentTurnSeat === 0;
   const canRollDice = isMyTurn && gameState?.turnPhase === 'ROLL_DICE' && !isRolling;
+
+  // Show Coin Toss / First Turn Announcement on match start
+  useEffect(() => {
+    if (firstTurnAnnouncement) {
+      setTacticalHint(firstTurnAnnouncement);
+      const t = setTimeout(() => setTacticalHint(null), 3200);
+      return () => clearTimeout(t);
+    }
+  }, [firstTurnAnnouncement]);
 
   // Turn Change Sound Cue (Alerts player when it is their turn)
   const prevTurnSeatRef = useRef<number>(currentTurnSeat);
@@ -188,6 +199,7 @@ export default function LiveGameScreen() {
     startNewGame({
       mode: (routeMode as any) || 'classic',
       playerCount: pCount,
+      randomizeTurn: true,
       players: isTwo
         ? [
             { id: profile?.id || 'usr_me', username: myName, isBot: false },
@@ -324,6 +336,8 @@ export default function LiveGameScreen() {
             } else if (gameState?.turnPhase === 'SELECT_TOKEN' && gameState.validMoves.length > 0) {
               handleSelectToken(currentTurnSeat, gameState.validMoves[0].tokenId);
             }
+          } else {
+            triggerBotTurn();
           }
           return 12;
         }
