@@ -6,16 +6,18 @@ import { NOVA_COLORS } from '../../src/theme/colors';
 import { NovaHeader } from '../../src/components/nova/NovaHeader';
 import { NovaBadge } from '../../src/components/nova/NovaBadge';
 import { NovaButton } from '../../src/components/nova/NovaButton';
+import { useGameStore } from '../../src/store/useGameStore';
 
 export default function PassAndPlayScreen() {
   const router = useRouter();
+  const { startNewGame } = useGameStore();
   const [playerCount, setPlayerCount] = useState<2 | 3 | 4>(4);
 
   const [players, setPlayers] = useState([
-    { id: 0, name: 'Alex', label: 'Player 1', color: NOVA_COLORS.coral },
-    { id: 1, name: 'Maya', label: 'Player 2', color: NOVA_COLORS.mint },
-    { id: 2, name: 'Sam', label: 'Player 3', color: NOVA_COLORS.blue },
-    { id: 3, name: 'Zara', label: 'Player 4', color: NOVA_COLORS.gold },
+    { id: 0, name: 'Uzair', label: 'Player 1', color: NOVA_COLORS.coral, isBot: false },
+    { id: 1, name: 'Maya', label: 'Player 2', color: NOVA_COLORS.mint, isBot: false },
+    { id: 2, name: 'Sam', label: 'Player 3', color: NOVA_COLORS.blue, isBot: false },
+    { id: 3, name: 'Zara', label: 'Player 4', color: NOVA_COLORS.gold, isBot: false },
   ]);
 
   const handleNameChange = (index: number, text: string) => {
@@ -24,18 +26,49 @@ export default function PassAndPlayScreen() {
     setPlayers(updated);
   };
 
+  const toggleSeatBot = (index: number) => {
+    if (index === 0) return; // Player 1 is always human
+    const updated = [...players];
+    updated[index].isBot = !updated[index].isBot;
+    setPlayers(updated);
+  };
+
   const activePlayers =
     playerCount === 2
       ? [
-          { id: 0, seatIndex: 0, name: players[0].name, label: 'Player 1 (Red · Bottom-Left)', color: NOVA_COLORS.coral },
-          { id: 2, seatIndex: 2, name: players[1].name, label: 'Player 2 (Yellow · Diagonal Companion)', color: NOVA_COLORS.gold },
+          { id: 0, seatIndex: 0, name: players[0].name, label: 'Player 1 (Red · Bottom-Left)', color: NOVA_COLORS.coral, isBot: false },
+          { id: 2, seatIndex: 2, name: players[1].name, label: 'Player 2 (Yellow · Diagonal Companion)', color: NOVA_COLORS.gold, isBot: players[1].isBot },
         ]
       : players.slice(0, playerCount).map((p, idx) => ({ ...p, seatIndex: idx }));
 
   const handleStart = () => {
+    const pCount: 2 | 4 = playerCount === 2 ? 2 : 4;
+    const initPlayers =
+      playerCount === 2
+        ? [
+            { id: 'p0', username: players[0].name || 'Player 1', isBot: false },
+            { id: 'p2', username: players[1].name || 'Player 2', isBot: players[1].isBot },
+          ]
+        : [
+            { id: 'p0', username: players[0].name || 'Player 1', isBot: false },
+            { id: 'p1', username: players[1].name || 'Player 2', isBot: players[1].isBot },
+            { id: 'p2', username: players[2].name || 'Player 3', isBot: players[2].isBot },
+            {
+              id: 'p3',
+              username: playerCount === 3 ? 'AI Companion' : players[3].name || 'Player 4',
+              isBot: playerCount === 3 ? true : players[3].isBot,
+            },
+          ];
+
+    startNewGame({
+      mode: 'classic',
+      playerCount: pCount,
+      players: initPlayers,
+    });
+
     router.push({
       pathname: '/gameplay/[matchId]',
-      params: { matchId: 'local_pass_play', mode: 'pass_and_play', players: playerCount.toString() },
+      params: { matchId: `local_pass_play_${Date.now()}`, mode: 'pass_and_play', players: pCount.toString() },
     } as any);
   };
 
@@ -102,9 +135,18 @@ export default function PassAndPlayScreen() {
                 />
                 <Text style={styles.playerLabel}>{p.label}</Text>
               </View>
-              <View style={styles.checkBadge}>
-                <Ionicons name="checkmark" size={16} color="#0d101e" />
-              </View>
+              <TouchableOpacity
+                style={[
+                  styles.checkBadge,
+                  p.isBot && { backgroundColor: NOVA_COLORS.accentGold },
+                ]}
+                onPress={() => toggleSeatBot(idx)}
+                activeOpacity={0.75}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '900', color: '#0d101e' }}>
+                  {p.isBot ? '🤖' : '👤'}
+                </Text>
+              </TouchableOpacity>
             </View>
           ))}
         </View>

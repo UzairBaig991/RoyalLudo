@@ -11,6 +11,7 @@ interface GameStoreState {
   lastDiceRoll: number | null;
   soundEnabled: boolean;
   vibrationEnabled: boolean;
+  botDifficulty: 'easy' | 'medium' | 'hard';
 
   // Actions
   startNewGame: (config: {
@@ -18,6 +19,7 @@ interface GameStoreState {
     playerCount: 2 | 4;
     players: GameInitPlayer[];
     rules?: Partial<GameRules>;
+    botDifficulty?: 'easy' | 'medium' | 'hard';
   }) => void;
   rollDice: (seatIndex: number, injectedRoll?: number) => void;
   selectAndMoveToken: (seatIndex: number, tokenId: number) => void;
@@ -41,8 +43,9 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   lastDiceRoll: null,
   soundEnabled: true,
   vibrationEnabled: true,
+  botDifficulty: 'medium',
 
-  startNewGame: ({ mode, playerCount, players, rules }) => {
+  startNewGame: ({ mode, playerCount, players, rules, botDifficulty }) => {
     const fullRules = RuleSetFactory.getRules(mode, playerCount, rules);
     const game = new LudoGame(`match_${Date.now()}`, players, fullRules);
     set({
@@ -51,6 +54,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       isRolling: false,
       selectedTokenId: null,
       lastDiceRoll: null,
+      botDifficulty: botDifficulty || 'medium',
     });
   },
 
@@ -142,7 +146,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       const { game: activeGame } = get();
       if (!activeGame) return;
 
-      const botRes = activeGame.playBotTurn('medium');
+      const botRes = activeGame.playBotTurn(get().botDifficulty || 'medium');
       if (botRes) {
         set({
           lastDiceRoll: botRes.rolledValue,

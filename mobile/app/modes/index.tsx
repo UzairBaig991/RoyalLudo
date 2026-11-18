@@ -5,9 +5,12 @@ import { NOVA_COLORS } from '../../src/theme/colors';
 import { NovaHeader } from '../../src/components/nova/NovaHeader';
 import { NovaBadge } from '../../src/components/nova/NovaBadge';
 import { NovaDie } from '../../src/components/nova/NovaDie';
+import { useCustomizationStore } from '../../src/store/useCustomizationStore';
 
 export default function ChooseModeScreen() {
   const router = useRouter();
+  const { dice } = useCustomizationStore();
+  const equippedDie = dice.find((d) => d.equipped) || dice[0];
 
   const modes = [
     {
@@ -79,7 +82,7 @@ export default function ChooseModeScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.dieWrap}>
-              <NovaDie value={mode.dieValue} size={48} theme="nova" />
+              <NovaDie value={mode.dieValue} size={48} theme={equippedDie.previewTheme} />
             </View>
 
             <View style={styles.info}>

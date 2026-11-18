@@ -31,3 +31,5 @@ yarn-error.log*
 Thumbs.db
 *.swp
 *.swo
+scratch/
+mobile/dist_web_test/

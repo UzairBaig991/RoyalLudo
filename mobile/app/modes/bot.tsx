@@ -6,6 +6,9 @@ import { NOVA_COLORS } from '../../src/theme/colors';
 import { NovaHeader } from '../../src/components/nova/NovaHeader';
 import { NovaDie } from '../../src/components/nova/NovaDie';
 import { NovaButton } from '../../src/components/nova/NovaButton';
+import { useCustomizationStore } from '../../src/store/useCustomizationStore';
+import { useGameStore } from '../../src/store/useGameStore';
+import { useAuthStore } from '../../src/store/useAuthStore';
 
 const DIFFICULTIES = [
   {
@@ -32,12 +35,36 @@ export default function PlayComputerScreen() {
   const router = useRouter();
   const [selectedDiff, setSelectedDiff] = useState('balanced');
   const [playerCount, setPlayerCount] = useState<2 | 4>(2);
+  const { dice } = useCustomizationStore();
+  const equippedDie = dice.find((d) => d.equipped) || dice[0];
+  const { startNewGame } = useGameStore();
+  const { profile } = useAuthStore();
 
   const handlePlayBot = () => {
+    const engineDiff =
+      selectedDiff === 'easy' ? 'easy' : selectedDiff === 'expert' ? 'hard' : 'medium';
+    const myName = profile?.username || 'You';
+    startNewGame({
+      mode: 'classic',
+      playerCount,
+      botDifficulty: engineDiff,
+      players:
+        playerCount === 2
+          ? [
+              { id: profile?.id || 'usr_me', username: myName, isBot: false },
+              { id: 'usr_bot_1', username: `Nova Bot (${selectedDiff.toUpperCase()})`, isBot: true },
+            ]
+          : [
+              { id: profile?.id || 'usr_me', username: myName, isBot: false },
+              { id: 'b1', username: 'Maya (AI)', isBot: true },
+              { id: 'b2', username: 'Zara (AI)', isBot: true },
+              { id: 'b3', username: 'Sam (AI)', isBot: true },
+            ],
+    });
     router.push({
       pathname: '/gameplay/[matchId]',
       params: {
-        matchId: `bot_${selectedDiff}`,
+        matchId: `bot_${selectedDiff}_${Date.now()}`,
         mode: 'bot',
         difficulty: selectedDiff,
         players: playerCount.toString(),
@@ -60,7 +87,7 @@ export default function PlayComputerScreen() {
 
       <View style={styles.content}>
         <View style={styles.dieWrap}>
-          <NovaDie value={6} size={64} theme="nova" />
+          <NovaDie value={6} size={64} theme={equippedDie.previewTheme} />
         </View>
 
         <Text style={styles.heading}>Meet Nova Bot</Text>

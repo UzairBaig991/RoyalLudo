@@ -42,8 +42,9 @@ export default function LiveGameScreen() {
   const { profile } = useAuthStore();
   const { gold, gems, addGold, spendGems, spendGold } = useEconomyStore();
   const { soundEffects, gameMusic, allowVoiceChat, toggleSetting } = useSettingsStore();
-  const { dice, equipDie, unlockDie } = useCustomizationStore();
+  const { dice, boards, equipDie, unlockDie, equipBoard, unlockBoard } = useCustomizationStore();
   const equippedDie = dice.find((d) => d.equipped) || dice[0];
+  const equippedBoard = boards.find((b) => b.equipped) || boards[0];
 
   const {
     gameState,
@@ -62,6 +63,8 @@ export default function LiveGameScreen() {
   const [showMenuModal, setShowMenuModal] = useState<boolean>(false);
   const [showRulesModal, setShowRulesModal] = useState<boolean>(false);
   const [showDiceSkinModal, setShowDiceSkinModal] = useState<boolean>(false);
+  const [showBoardSkinModal, setShowBoardSkinModal] = useState<boolean>(false);
+  const [showGiftModal, setShowGiftModal] = useState<boolean>(false);
   const [voiceOn, setVoiceOn] = useState<boolean>(false);
   const [tacticalHint, setTacticalHint] = useState<string | null>(null);
 
@@ -138,7 +141,8 @@ export default function LiveGameScreen() {
   }, [gameState, routePlayers]);
 
   const currentTurnSeat = gameState?.currentTurnSeat ?? 0;
-  const isMyTurn = currentTurnSeat === 0;
+  const activeSeatPlayer = gameState?.players.find((p) => p.seatIndex === currentTurnSeat);
+  const isMyTurn = activeSeatPlayer ? !activeSeatPlayer.isBot : currentTurnSeat === 0;
   const canRollDice = isMyTurn && gameState?.turnPhase === 'ROLL_DICE' && !isRolling;
 
   // Turn Change Sound Cue (Alerts player when it is their turn)
@@ -230,7 +234,7 @@ export default function LiveGameScreen() {
     if (!spent) return;
 
     sfxEngine.playPowerUp();
-    const res = usePowerUp(0, type);
+    const res = usePowerUp(currentTurnSeat, type);
     if (res.success) {
       triggerReaction(type === 'MAGIC_SIX' ? '🎯' : type === 'SHIELD' ? '🛡️' : '⚡');
     } else {
@@ -318,7 +322,7 @@ export default function LiveGameScreen() {
             if (canRollDice) {
               handleRoll();
             } else if (gameState?.turnPhase === 'SELECT_TOKEN' && gameState.validMoves.length > 0) {
-              handleSelectToken(0, gameState.validMoves[0].tokenId);
+              handleSelectToken(currentTurnSeat, gameState.validMoves[0].tokenId);
             }
           }
           return 12;
@@ -378,7 +382,7 @@ export default function LiveGameScreen() {
   const handleRoll = () => {
     if (canRollDice) {
       sfxEngine.playDiceRoll();
-      rollDice(0);
+      rollDice(currentTurnSeat);
     }
   };
 
@@ -478,6 +482,8 @@ export default function LiveGameScreen() {
   ) => {
     const isThisTurn = currentTurnSeat === seatIndex;
     const isMe = seatIndex === 0;
+    const fullPlayer = gameState.players.find((p) => p.seatIndex === seatIndex);
+    const isHumanSeat = fullPlayer ? !fullPlayer.isBot : isMe;
     const displayName = isMe ? (profile?.username || player.username || 'You') : player.username;
 
     return (
@@ -495,7 +501,7 @@ export default function LiveGameScreen() {
             <View style={[styles.turnArrowBadge, { backgroundColor: colorHex }]}>
               <Ionicons name="caret-down" size={12} color="#0d101e" />
               <Text style={styles.turnArrowText}>
-                {isMe ? (canRollDice ? 'ROLL! 👇' : 'YOUR TURN') : `${colorName} 👇`}
+                {isHumanSeat ? (canRollDice ? 'ROLL! 👇' : 'YOUR TURN') : `${colorName} 👇`}
               </Text>
             </View>
           </Animated.View>
@@ -530,7 +536,7 @@ export default function LiveGameScreen() {
                 {isThisTurn
                   ? isRolling
                     ? 'Rolling…'
-                    : isMe
+                    : isHumanSeat
                     ? canRollDice
                       ? 'Tap dice'
                       : 'Move token'
@@ -544,23 +550,23 @@ export default function LiveGameScreen() {
           <View style={styles.playerDicePod}>
             {isThisTurn ? (
               <TouchableOpacity
-                activeOpacity={isMe && canRollDice ? 0.75 : 1}
-                disabled={!isMe || !canRollDice}
-                onPress={isMe ? handleRoll : undefined}
+                activeOpacity={isHumanSeat && canRollDice ? 0.75 : 1}
+                disabled={!isHumanSeat || !canRollDice}
+                onPress={isHumanSeat ? handleRoll : undefined}
                 style={[
                   styles.activeDieWrap,
-                  isMe && canRollDice && styles.activeDieWrapClickable,
+                  isHumanSeat && canRollDice && styles.activeDieWrapClickable,
                 ]}
               >
                 <NovaDie
                   value={lastDiceRoll || 6}
                   size={42}
                   rolling={isRolling}
-                  disabled={!isMe || !canRollDice}
-                  onPress={isMe ? handleRoll : undefined}
-                  theme={isMe ? equippedDie.previewTheme : 'nova'}
+                  disabled={!isHumanSeat || !canRollDice}
+                  onPress={isHumanSeat ? handleRoll : undefined}
+                  theme={isHumanSeat ? equippedDie.previewTheme : 'nova'}
                 />
-                {isMe && canRollDice && !isRolling && (
+                {isHumanSeat && canRollDice && !isRolling && (
                   <View style={styles.tapPillOverlay}>
                     <Text style={styles.tapPillText}>TAP TO ROLL 🎲</Text>
                   </View>
@@ -707,16 +713,6 @@ export default function LiveGameScreen() {
           validMoves={gameState.validMoves}
           onSelectToken={(seatIndex, tokenId) => {
             handleSelectToken(seatIndex, tokenId);
-          }}
-          onTilePress={(gridX, gridY) => {
-            if (isMyTurn && gameState.validMoves.length > 0) {
-              handleSelectToken(0, gameState.validMoves[0].tokenId);
-            }
-          }}
-          onTokenPress={(seatIndex, tokenId) => {
-            if (seatIndex === 0 && isMyTurn) {
-              handleSelectToken(0, tokenId);
-            }
           }}
         />
       </View>
@@ -937,7 +933,7 @@ export default function LiveGameScreen() {
         </View>
       </View>
 
-      {/* 6. BOTTOM BAR (Chat & Voice) */}
+      {/* 6. BOTTOM BAR (Chat, Gifts & Voice) */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={styles.chatBtn}
@@ -946,6 +942,15 @@ export default function LiveGameScreen() {
         >
           <Ionicons name="chatbubble-outline" size={20} color={NOVA_COLORS.accentPurple} />
           <Text style={styles.chatBtnText}>Chat</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.chatBtn}
+          onPress={() => setShowGiftModal(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="gift-outline" size={20} color={NOVA_COLORS.accentGold} />
+          <Text style={[styles.chatBtnText, { color: NOVA_COLORS.accentGold }]}>Throw Gift</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -1081,6 +1086,16 @@ export default function LiveGameScreen() {
               onPress={() => {
                 setShowMenuModal(false);
                 setShowDiceSkinModal(true);
+              }}
+              style={styles.menuBtn}
+            />
+
+            <NovaButton
+              title={`🎨 Change Board Theme (${equippedBoard.name})`}
+              variant="outline"
+              onPress={() => {
+                setShowMenuModal(false);
+                setShowBoardSkinModal(true);
               }}
               style={styles.menuBtn}
             />
@@ -1296,6 +1311,170 @@ export default function LiveGameScreen() {
               title="Done · Back to Match"
               variant="primary"
               onPress={() => setShowDiceSkinModal(false)}
+              style={styles.ruleCloseBtn}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* ======================================================= */}
+      {/* IN-GAME BOARD THEME CUSTOMIZER MODAL                    */}
+      {/* ======================================================= */}
+      <Modal visible={showBoardSkinModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.rulesCard}>
+            <View style={styles.sheetHeader}>
+              <View>
+                <Text style={styles.sheetTitle}>🎨 Change Board Theme</Text>
+                <Text style={styles.sheetSubtitle}>
+                  Equipped: {equippedBoard.name}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowBoardSkinModal(false)}
+                style={styles.sheetCloseBtn}
+              >
+                <Ionicons name="close" size={22} color={NOVA_COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 320, marginVertical: 10 }} showsVerticalScrollIndicator={false}>
+              {boards.map((b) => (
+                <TouchableOpacity
+                  key={b.id}
+                  onPress={() => {
+                    if (b.unlocked) {
+                      sfxEngine.playTokenStep();
+                      equipBoard(b.id);
+                    } else if (b.priceGems && gems >= b.priceGems) {
+                      spendGems(b.priceGems);
+                      unlockBoard(b.id);
+                      equipBoard(b.id);
+                      sfxEngine.playPowerUp();
+                    } else if (b.priceCoins && gold >= b.priceCoins) {
+                      spendGold(b.priceCoins);
+                      unlockBoard(b.id);
+                      equipBoard(b.id);
+                      sfxEngine.playPowerUp();
+                    } else {
+                      Alert.alert('Unlock Board', `Need ${b.priceGems || 30} gems or ${b.priceCoins || 3000} coins.`);
+                    }
+                  }}
+                  activeOpacity={0.8}
+                  style={{
+                    backgroundColor: b.equipped ? '#1d233d' : '#13182b',
+                    borderRadius: 14,
+                    padding: 14,
+                    marginBottom: 10,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    borderWidth: 1.5,
+                    borderColor: b.equipped ? NOVA_COLORS.accentGold : '#222943',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        backgroundColor: b.boardBg || '#101827',
+                        borderWidth: 2,
+                        borderColor: b.borderColor || NOVA_COLORS.accentGold,
+                      }}
+                    />
+                    <View>
+                      <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '800' }}>{b.name}</Text>
+                      {b.description && (
+                        <Text style={{ color: NOVA_COLORS.textSecondary, fontSize: 11 }}>{b.description}</Text>
+                      )}
+                    </View>
+                  </View>
+                  <Text
+                    style={{
+                      color: b.equipped ? NOVA_COLORS.accentMint : NOVA_COLORS.accentGold,
+                      fontSize: 11,
+                      fontWeight: '800',
+                    }}
+                  >
+                    {b.equipped ? '✓ Equipped' : b.unlocked ? 'Equip' : `◇ ${b.priceGems}`}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <NovaButton
+              title="Done · Back to Match"
+              variant="primary"
+              onPress={() => setShowBoardSkinModal(false)}
+              style={styles.ruleCloseBtn}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* ======================================================= */}
+      {/* INTERACTIVE OPPONENT GIFT LAUNCHER MODAL                */}
+      {/* ======================================================= */}
+      <Modal visible={showGiftModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.rulesCard}>
+            <View style={styles.sheetHeader}>
+              <View>
+                <Text style={styles.sheetTitle}>🎁 Throw Interactive Gift</Text>
+                <Text style={styles.sheetSubtitle}>Send a fun animated reaction across the board!</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowGiftModal(false)}
+                style={styles.sheetCloseBtn}
+              >
+                <Ionicons name="close" size={22} color={NOVA_COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginVertical: 10 }}>
+              {[
+                { emoji: '🍅', label: 'Tomato Splat', reply: 'Hey! Ketchup in my eye! 🍅' },
+                { emoji: '🥊', label: 'Boxing Glove', reply: 'Ouch! That packed a punch! 🥊' },
+                { emoji: '💣', label: 'Royal Bomb', reply: 'Boom! Watch out! 💣' },
+                { emoji: '☕', label: 'Hot Chai / Coffee', reply: 'Thanks for the chai! ☕🔥' },
+                { emoji: '🌹', label: 'Royal Rose', reply: 'Aww, thank you! 💖🌹' },
+                { emoji: '👑', label: 'Golden Crown', reply: 'All hail the Ludo King! 👑' },
+              ].map((g) => (
+                <TouchableOpacity
+                  key={g.emoji}
+                  onPress={() => {
+                    setShowGiftModal(false);
+                    triggerReaction(g.emoji);
+                    const oppName = isTwoPlayerMode ? p2.username : p1.username;
+                    setActiveSpeech({ sender: oppName.toUpperCase(), text: g.reply });
+                    setTimeout(() => setActiveSpeech(null), 3200);
+                  }}
+                  activeOpacity={0.8}
+                  style={{
+                    width: '31%',
+                    backgroundColor: '#13182b',
+                    borderRadius: 14,
+                    padding: 12,
+                    marginBottom: 10,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: '#30254e',
+                  }}
+                >
+                  <Text style={{ fontSize: 28 }}>{g.emoji}</Text>
+                  <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '800', marginTop: 6, textAlign: 'center' }}>
+                    {g.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <NovaButton
+              title="Close"
+              variant="dark"
+              onPress={() => setShowGiftModal(false)}
               style={styles.ruleCloseBtn}
             />
           </View>

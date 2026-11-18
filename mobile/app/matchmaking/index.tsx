@@ -7,11 +7,16 @@ import { NovaBadge } from '../../src/components/nova/NovaBadge';
 import { NovaDie } from '../../src/components/nova/NovaDie';
 import { NovaButton } from '../../src/components/nova/NovaButton';
 import { useAuthStore } from '../../src/store/useAuthStore';
+import { useCustomizationStore } from '../../src/store/useCustomizationStore';
+import { useGameStore } from '../../src/store/useGameStore';
 
 export default function MatchmakingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { profile } = useAuthStore();
+  const { dice } = useCustomizationStore();
+  const equippedDie = dice.find((d) => d.equipped) || dice[0];
+  const { startNewGame } = useGameStore();
 
   const mode = (params.mode as string) || 'classic';
   const prize = (params.prize as string) || '2,000';
@@ -28,8 +33,24 @@ export default function MatchmakingScreen() {
         if (prev <= 1) {
           clearInterval(timer);
           setPlayersFound(isTwoPlayer ? 2 : 4);
-          // Navigate to live game
+          // Initialize fresh game & navigate to live game
           setTimeout(() => {
+            const myName = profile?.username || 'You';
+            startNewGame({
+              mode: (mode === 'quick' ? 'quick' : 'classic') as any,
+              playerCount: isTwoPlayer ? 2 : 4,
+              players: isTwoPlayer
+                ? [
+                    { id: profile?.id || 'usr_me', username: myName, isBot: false },
+                    { id: 'usr_companion', username: 'Companion (Yellow)', isBot: true },
+                  ]
+                : [
+                    { id: profile?.id || 'usr_me', username: myName, isBot: false },
+                    { id: 'b1', username: 'Maya', isBot: true },
+                    { id: 'b2', username: 'Zara', isBot: true },
+                    { id: 'b3', username: 'Sam', isBot: true },
+                  ],
+            });
             router.replace({
               pathname: '/gameplay/[matchId]',
               params: { matchId: `match_${Date.now()}`, mode, prize, players },
@@ -88,7 +109,7 @@ export default function MatchmakingScreen() {
             ) : (
               <>
                 <View style={[styles.avatarCircle, styles.searchingCircle]}>
-                  <NovaDie value={2} size={36} rolling={true} theme="nova" />
+                  <NovaDie value={2} size={36} rolling={true} theme={equippedDie.previewTheme} />
                 </View>
                 <Text style={styles.slotName}>Companion</Text>
                 <Text style={styles.slotStatus}>Finding…</Text>
@@ -120,7 +141,7 @@ export default function MatchmakingScreen() {
                 ) : (
                   <>
                     <View style={[styles.avatarCircle, styles.searchingCircle]}>
-                      <NovaDie value={4} size={36} rolling={true} theme="nova" />
+                      <NovaDie value={4} size={36} rolling={true} theme={equippedDie.previewTheme} />
                     </View>
                     <Text style={styles.slotName}>Sam</Text>
                     <Text style={styles.slotStatus}>Finding…</Text>

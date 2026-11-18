@@ -373,9 +373,13 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
           key={`dest_tap_${move.tokenId}_${index}`}
           activeOpacity={0.6}
           onPress={() => {
-            if (onTokenPress) onTokenPress(currentTurnSeat, move.tokenId);
-            if (onSelectToken) onSelectToken(currentTurnSeat, move.tokenId);
-            if (onTilePress) onTilePress(destCoord!.col, destCoord!.row);
+            if (onSelectToken) {
+              onSelectToken(currentTurnSeat, move.tokenId);
+            } else if (onTokenPress) {
+              onTokenPress(currentTurnSeat, move.tokenId);
+            } else if (onTilePress) {
+              onTilePress(destCoord!.col, destCoord!.row);
+            }
           }}
           style={{
             position: 'absolute',
@@ -438,8 +442,11 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
             activeOpacity={0.8}
             disabled={!isValid}
             onPress={() => {
-              if (onTokenPress) onTokenPress(player.seatIndex, token.id);
-              if (onSelectToken) onSelectToken(player.seatIndex, token.id);
+              if (onSelectToken) {
+                onSelectToken(player.seatIndex, token.id);
+              } else if (onTokenPress) {
+                onTokenPress(player.seatIndex, token.id);
+              }
             }}
             style={[
               styles.tokenContainer,
