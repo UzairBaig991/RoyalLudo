@@ -45,51 +45,38 @@ async function findFreePort(startPort = 8081) {
 const extraArgs = process.argv.slice(2);
 const hasPortArg = extraArgs.some((a) => a === '--port' || a === '-p' || a.startsWith('--port='));
 const isTunnel = extraArgs.includes('--tunnel');
+const forceOnline = extraArgs.includes('--online');
+const filteredArgs = extraArgs.filter((a) => a !== '--online');
 const port = hasPortArg ? 8081 : await findFreePort(8081);
 const expoUrl = `exp://${physicalIp}:${port}`;
 
 console.log('====================================================');
 console.log('👑 ROYAL LUDO - EXPO MOBILE CLIENT LAUNCHER');
-console.log(`📱 Active Mobile Wi-Fi IP: ${physicalIp}`);
+console.log(`📱 Active Mobile Wi-Fi / Hotspot IP: ${physicalIp}`);
 if (!isTunnel) {
   console.log(`🌐 Expo Go URL: ${expoUrl}`);
 } else {
   console.log('🌐 Tunnel mode enabled — wait for Expo to print the exp.direct QR code below.');
 }
-console.log('📲 How to play on your mobile phone:');
-console.log('   1. Connect your phone to the same Wi-Fi network.');
-console.log('   2. Open the Expo Go app on your phone.');
-console.log(`   3. Scan the QR code below OR enter: ${expoUrl}`);
-console.log('   4. Press "w" in this terminal anytime to test in Chrome/Edge.');
-console.log('   5. Press "a" to run on a connected Android phone/emulator.');
-console.log('   ℹ️ Metro Bundler is an active server that remains running while you play!');
+console.log('⏳ Booting Metro Bundler (fast offline startup — no hanging on api.expo.dev)...');
 console.log('====================================================\n');
 
-// 3. Print scannable QR code immediately (guaranteed even if Expo runs non-interactively)
-if (!isTunnel) {
-  try {
-    const qrcode = require(path.resolve('mobile/node_modules/qrcode-terminal'));
-    console.log(`📷 Scan this QR code in Expo Go (${expoUrl}):\n`);
-    qrcode.generate(expoUrl, { small: true });
-    console.log('');
-  } catch {
-    // Fallback to Expo's built-in QR code output
-  }
-}
-
-// 4. Set environment variables for Expo Metro packager
+// 3. Set environment variables for Expo Metro packager
 const env = {
   ...process.env,
   REACT_NATIVE_PACKAGER_HOSTNAME: physicalIp,
   EXPO_PUBLIC_SOCKET_URL: `http://${physicalIp}:4000`,
 };
 
-// 5. Forward any command-line arguments (e.g. --tunnel, --clear, etc.)
+// 4. Build Expo start arguments (--offline prevents Metro from hanging on Expo API validation)
 const expoArgs = ['expo', 'start', '--go'];
+if (!isTunnel && !forceOnline && !filteredArgs.includes('--offline')) {
+  expoArgs.push('--offline');
+}
 if (!hasPortArg) {
   expoArgs.push('--port', String(port));
 }
-expoArgs.push(...extraArgs);
+expoArgs.push(...filteredArgs);
 
 const mobileDir = path.resolve('mobile');
 const cmd = process.platform === 'win32' ? 'cmd.exe' : 'npx';
@@ -102,6 +89,33 @@ const child = spawn(cmd, args, {
   env,
   stdio: 'inherit',
 });
+
+// 5. Wait until Metro is genuinely listening before showing the scannable QR code!
+if (!isTunnel) {
+  const waitForMetro = async () => {
+    for (let attempt = 0; attempt < 40; attempt++) {
+      try {
+        const res = await fetch(`http://127.0.0.1:${port}/status`);
+        const text = await res.text();
+        if (text.includes('packager-status:running')) {
+          console.log('\n====================================================');
+          console.log(`✅ METRO BUNDLER IS LIVE! Scan this QR code in Expo Go:`);
+          console.log(`🌐 URL: ${expoUrl}`);
+          console.log('====================================================\n');
+          try {
+            const qrcode = require(path.resolve('mobile/node_modules/qrcode-terminal'));
+            qrcode.generate(expoUrl, { small: true });
+            console.log('\n📲 Open Expo Go → Scan QR code (or Enter URL manually above).');
+            console.log('   Press "w" for Web, "a" for Android USB.\n');
+          } catch {}
+          return;
+        }
+      } catch {}
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  };
+  waitForMetro();
+}
 
 child.on('exit', (code) => {
   process.exit(code || 0);
