@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>LUDO STAR - Official Royal Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1096,14 +1096,16 @@
       left: 0 !important;
       right: 0 !important;
       bottom: 0 !important;
-      width: 100vw !important;
+      width: 100% !important;
+      max-width: 100vw !important;
       height: 100vh !important;
-      max-height: 100vh !important;
+      height: 100dvh !important;
+      max-height: 100dvh !important;
       overflow: hidden !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
-      padding: 6px 12px 10px 12px !important;
+      padding: max(4px, env(safe-area-inset-top)) 8px max(8px, env(safe-area-inset-bottom)) 8px !important;
       background: radial-gradient(circle at center, #420A3F 0%, #220322 55%, #120112 100%) !important;
       z-index: 200 !important;
       box-sizing: border-box !important;
@@ -1431,6 +1433,8 @@
       align-items: flex-end;
       justify-content: space-between;
       width: 100%;
+      gap: 8px;
+      min-width: 0;
     }
 
     /* PLAYER (YOU) HUD POD */
@@ -1439,6 +1443,13 @@
       flex-direction: column;
       align-items: flex-start;
       position: relative;
+      flex: 1;
+      min-width: 0;
+      max-width: calc(100% - 134px);
+      padding: 4px 6px;
+      border-radius: 16px;
+      border: 2px solid transparent;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
     }
 
     .ls-speech-bubble-pop {
@@ -1530,23 +1541,198 @@
       display: flex;
       gap: 4px;
       margin-top: 4px;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+
+    .ls-action-buttons-under::-webkit-scrollbar {
+      display: none;
     }
 
     .ls-mini-action-pill {
       background: #521350;
       border: 1px solid #752273;
       border-radius: 10px;
-      padding: 3px 8px;
+      padding: 4px 8px;
       font-family: 'Fredoka', cursive;
       font-size: 9px;
       font-weight: 800;
       color: #FFF;
       cursor: pointer;
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .ls-mini-action-pill:active {
       transform: scale(0.95);
+    }
+
+    /* ========================================================
+       RESPONSIVE LAYOUT: MOBILE PHONES + DESKTOP SCREENS
+       ======================================================== */
+    /* Compact Mobile Phones (<= 430px width) */
+    @media (max-width: 430px) {
+      .ls-in-game-header {
+        padding: 2px 0 3px 0;
+      }
+      .ls-icon-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+      }
+      .ls-info-pill {
+        padding: 4px 9px;
+        font-size: 10px;
+      }
+      .ls-win-pill {
+        padding: 3px 8px;
+      }
+      .ls-win-text {
+        font-size: 11px;
+      }
+      .ls-turn-announcement-banner {
+        padding: 3px 8px;
+        margin: 1px auto 2px auto;
+        gap: 5px;
+      }
+      .ls-turn-banner-text {
+        font-size: 11px;
+      }
+      .ls-opponents-hud-row {
+        gap: 6px;
+      }
+      .ls-player-pod {
+        flex: 1;
+        min-width: 0;
+        max-width: 49.5%;
+        padding: 3px 6px 3px 4px;
+        gap: 4px;
+        border-radius: 16px;
+      }
+      .ls-avatar-ring {
+        width: 30px;
+        height: 30px;
+        font-size: 16px;
+      }
+      .ls-player-pod-meta {
+        margin-left: 3px;
+        min-width: 0;
+        flex: 1;
+      }
+      .ls-player-pod-name {
+        font-size: 10px;
+      }
+      .ls-player-pod-tokens {
+        font-size: 9px;
+      }
+      .ls-player-dice-dock.opp-dock {
+        width: 42px;
+        height: 42px;
+        border-radius: 11px;
+      }
+      .dice-3d-arena.in-opp-dock {
+        transform: scale(0.56);
+      }
+      .ls-mini-gift-btn {
+        display: none;
+      }
+      .ls-board-stage {
+        width: min(94vw, 44dvh, 370px);
+        height: min(94vw, 44dvh, 370px);
+        border-width: 2.5px;
+        border-radius: 14px;
+      }
+      .ls-bottom-opp-row .ls-player-pod {
+        flex: 0 1 auto;
+        max-width: 62%;
+      }
+      .ls-avatar-with-timer {
+        width: 44px;
+        height: 44px;
+      }
+      .ls-timer-svg {
+        width: 44px;
+        height: 44px;
+      }
+      .ls-player-avatar-circle {
+        width: 36px;
+        height: 36px;
+        font-size: 20px;
+      }
+      .ls-player-dice-dock.main-dock {
+        width: 66px;
+        height: 66px;
+      }
+      .ls-player-hud {
+        max-width: calc(100% - 122px);
+      }
+      .ls-lucky-reroll-badge-btn {
+        width: 42px;
+        height: 50px;
+      }
+    }
+
+    /* Short Mobile Viewports (e.g. small Android / iPhone SE <= 700px height) */
+    @media (max-height: 700px) {
+      .ls-board-stage {
+        width: min(88vw, 40dvh, 330px);
+        height: min(88vw, 40dvh, 330px);
+      }
+      .ls-turn-announcement-banner {
+        padding: 2px 8px;
+        margin: 1px auto;
+      }
+      .ls-speech-bubble-pop {
+        display: none;
+      }
+    }
+
+    /* Spacious Desktop & Tablet Layout (>= 768px width) */
+    @media (min-width: 768px) {
+      .app-shell,
+      .bottom-nav {
+        max-width: 580px;
+      }
+      .ls-in-game-header,
+      .ls-turn-announcement-banner,
+      .ls-opponents-hud-row,
+      .ls-in-game-bottom-area {
+        max-width: 600px;
+      }
+      .ls-board-stage {
+        width: min(56vh, 520px);
+        height: min(56vh, 520px);
+        border-width: 4px;
+      }
+      .ls-player-pod {
+        padding: 6px 12px 6px 8px;
+        gap: 8px;
+      }
+      .ls-player-pod-name {
+        font-size: 13px;
+      }
+      .ls-player-hud {
+        max-width: calc(100% - 150px);
+      }
+      .ls-action-buttons-under {
+        flex-wrap: wrap;
+        overflow-x: visible;
+      }
+      .ls-mini-action-pill {
+        font-size: 10px;
+        padding: 4px 10px;
+      }
+      .ls-mini-action-pill:hover {
+        filter: brightness(1.18);
+        transform: translateY(-1px);
+      }
     }
 
     /* AUTHENTIC LUDO STAR BOUNCING TURN ARROW (Directly Above Dice) */
@@ -2719,14 +2905,14 @@
               <div id="homeKillStatusPill" style="font-size: 8px; font-weight: 900; background: #C0392B; color: #FFF; padding: 1px 5px; border-radius: 6px;">🔒 KILL NEEDED</div>
             </div>
 
-            <!-- Action Buttons: EMOJI, CHAT, AUTO-PLAY, DICE SKIN, AI HINT & POWER-UP BOOSTERS -->
+            <!-- Action Buttons: DICE SKIN, AI HINT, SPEED, AUTO, EMOJI, CHAT & BOOSTERS (Swipeable on Mobile, Wrapped on Desktop) -->
             <div class="ls-action-buttons-under">
-              <button class="ls-mini-action-pill" onclick="toggleEmojiTray()">EMOJI</button>
-              <button class="ls-mini-action-pill" onclick="toggleChatTray()">CHAT</button>
               <button class="ls-mini-action-pill" onclick="openDiceSkinModal()" style="background: #4A148C; border-color: #EA80FC; color: #FFDF00;" title="Change 3D Dice Skin">🎲 SKIN</button>
               <button class="ls-mini-action-pill" onclick="triggerAiMoveHint()" style="background: #0B3B24; border-color: #2ECC71; color: #82E0AA;" title="Smart AI Tactical Move Hint">🧠 HINT</button>
               <button class="ls-mini-action-pill" id="gameSpeedBtn" onclick="toggleGameSpeed()" style="background: #1B263B; border-color: #38BDF8; color: #38BDF8;" title="Toggle 1x / 2x Game Speed">⚡ 1X</button>
               <button class="ls-mini-action-pill" id="autoPlayBtn" onclick="toggleAutoPlay()" style="background: #370A36; border-color: #A66606;">🤖 AUTO</button>
+              <button class="ls-mini-action-pill" onclick="toggleEmojiTray()">EMOJI</button>
+              <button class="ls-mini-action-pill" onclick="toggleChatTray()">CHAT</button>
               <button class="ls-mini-action-pill" onclick="activateMagicSixBooster()" style="background: #1B4F72; border-color: #00E5FF; color: #00E5FF;" title="Guarantee a 6 on your turn (2 Gems)">🎯 6 (2💎)</button>
               <button class="ls-mini-action-pill" onclick="activateShieldBooster()" style="background: #0E6251; border-color: #2ECC71; color: #2ECC71;" title="Shield leading pawn from capture (1 Gem)">🛡️ (1💎)</button>
               <button class="ls-mini-action-pill" onclick="doubleMatchBet()" style="background: #7D4E00; border-color: #FFDF00; color: #FFDF00;">💰 2X</button>
@@ -5106,7 +5292,8 @@
       }
 
       const isOpp = seat !== 0;
-      const targetScale = isOpp ? 0.66 : 1;
+      const oppScale = window.innerWidth <= 430 ? 0.56 : 0.66;
+      const targetScale = isOpp ? oppScale : 1;
 
       // Already docked in this player's profile section
       if (diceArena.parentElement === targetDock) {
