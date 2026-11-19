@@ -158,10 +158,70 @@ export default function LiveGameScreen() {
     }
   }, [firstTurnAnnouncement]);
 
-  // Turn Change Sound Cue (Alerts player when it is their turn)
+  // Animated Directional Dice Flight & Dock Arrival (Ludo Star Style)
+  const diceFlyX = useRef(new Animated.Value(0)).current;
+  const diceFlyY = useRef(new Animated.Value(0)).current;
+  const diceFlyScale = useRef(new Animated.Value(1)).current;
+  const dockPulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dockPulseAnim, {
+          toValue: 1.07,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dockPulseAnim, {
+          toValue: 1,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulseLoop.start();
+    return () => pulseLoop.stop();
+  }, []);
+
+  // Turn Change Sound Cue + Animated Dice Glide Between Player Profiles
   const prevTurnSeatRef = useRef<number>(currentTurnSeat);
   useEffect(() => {
     if (prevTurnSeatRef.current !== currentTurnSeat) {
+      const seatCorners: Record<number, { x: number; y: number }> = {
+        0: { x: -1, y: 1 },  // Red (Bottom-Left)
+        1: { x: -1, y: -1 }, // Green (Top-Left)
+        2: { x: 1, y: -1 },  // Yellow (Top-Right)
+        3: { x: 1, y: 1 },   // Blue (Bottom-Right)
+      };
+      const from = seatCorners[prevTurnSeatRef.current] || seatCorners[0];
+      const to = seatCorners[currentTurnSeat] || seatCorners[0];
+
+      // Start offset toward the previous player's profile and glide with spring into the new active profile
+      diceFlyX.setValue((from.x - to.x) * 76);
+      diceFlyY.setValue((from.y - to.y) * 96);
+      diceFlyScale.setValue(1.26);
+
+      Animated.parallel([
+        Animated.spring(diceFlyX, {
+          toValue: 0,
+          friction: 7,
+          tension: 65,
+          useNativeDriver: true,
+        }),
+        Animated.spring(diceFlyY, {
+          toValue: 0,
+          friction: 7,
+          tension: 65,
+          useNativeDriver: true,
+        }),
+        Animated.spring(diceFlyScale, {
+          toValue: 1,
+          friction: 6,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
       if (currentTurnSeat === 0) {
         sfxEngine.playRollSix();
       } else {
@@ -555,49 +615,79 @@ export default function LiveGameScreen() {
             </View>
           </View>
 
-          {/* DYNAMIC MOVING DICE POD (Moves to the active player!) */}
+          {/* DYNAMIC MOVING DICE POD (Flies & Docks into the active player's profile!) */}
           <View style={styles.playerDicePod}>
             {isThisTurn ? (
-              <TouchableOpacity
-                activeOpacity={isHumanSeat && canRollDice ? 0.75 : 1}
-                disabled={!isHumanSeat || !canRollDice}
-                onPress={isHumanSeat ? handleRoll : undefined}
-                style={[
-                  styles.activeDieWrap,
-                  isHumanSeat && canRollDice && styles.activeDieWrapClickable,
-                ]}
+              <Animated.View
+                style={{
+                  transform: [
+                    { translateX: diceFlyX },
+                    { translateY: diceFlyY },
+                    { scale: diceFlyScale },
+                  ],
+                  zIndex: 40,
+                }}
               >
-                {/* AUTHENTIC LUDO STAR BOUNCING ARROW: Directly on Upper Side of Dice, ONLY on Your Roll Turn */}
-                {isHumanSeat && canRollDice && !isRolling && (
-                  <Animated.View
-                    pointerEvents="none"
-                    style={[
-                      styles.diceTopArrowWrap,
-                      {
-                        transform: [{ translateY: arrowBounceAnim }],
-                      },
-                    ]}
-                  >
-                    <View style={styles.diceTopArrowCircle}>
-                      <Ionicons name="arrow-down" size={16} color="#FFFFFF" />
-                    </View>
-                  </Animated.View>
-                )}
-
-                <NovaDie
-                  value={lastDiceRoll || 6}
-                  size={42}
-                  rolling={isRolling}
+                <TouchableOpacity
+                  activeOpacity={isHumanSeat && canRollDice ? 0.75 : 1}
                   disabled={!isHumanSeat || !canRollDice}
                   onPress={isHumanSeat ? handleRoll : undefined}
-                  theme={isHumanSeat ? equippedDie.previewTheme : 'nova'}
-                />
-                {isHumanSeat && canRollDice && !isRolling && (
-                  <View style={styles.tapPillOverlay}>
-                    <Text style={styles.tapPillText}>TAP TO ROLL 🎲</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+                  style={[
+                    styles.activeDieWrap,
+                    {
+                      borderWidth: 2,
+                      borderColor: colorHex,
+                      borderRadius: 14,
+                      backgroundColor: 'rgba(13, 18, 36, 0.85)',
+                      shadowColor: colorHex,
+                      shadowOffset: { width: 0, height: 0 },
+                      shadowOpacity: 0.75,
+                      shadowRadius: 10,
+                      elevation: 8,
+                    },
+                    isHumanSeat && canRollDice && styles.activeDieWrapClickable,
+                  ]}
+                >
+                  {/* AUTHENTIC LUDO STAR BOUNCING ARROW: Directly on Upper Side of Dice, ONLY on Your Roll Turn */}
+                  {isHumanSeat && canRollDice && !isRolling && (
+                    <Animated.View
+                      pointerEvents="none"
+                      style={[
+                        styles.diceTopArrowWrap,
+                        {
+                          transform: [{ translateY: arrowBounceAnim }],
+                        },
+                      ]}
+                    >
+                      <View style={styles.diceTopArrowCircle}>
+                        <Ionicons name="arrow-down" size={16} color="#FFFFFF" />
+                      </View>
+                    </Animated.View>
+                  )}
+
+                  <Animated.View
+                    style={
+                      isHumanSeat && canRollDice && !isRolling
+                        ? { transform: [{ scale: dockPulseAnim }] }
+                        : undefined
+                    }
+                  >
+                    <NovaDie
+                      value={lastDiceRoll || 6}
+                      size={42}
+                      rolling={isRolling}
+                      disabled={!isHumanSeat || !canRollDice}
+                      onPress={isHumanSeat ? handleRoll : undefined}
+                      theme={isHumanSeat ? equippedDie.previewTheme : 'nova'}
+                    />
+                  </Animated.View>
+                  {isHumanSeat && canRollDice && !isRolling && (
+                    <View style={styles.tapPillOverlay}>
+                      <Text style={styles.tapPillText}>TAP TO ROLL 🎲</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
             ) : (
               <View style={styles.inactiveDiceSlot}>
                 <Ionicons name="dice-outline" size={18} color="rgba(255,255,255,0.2)" />

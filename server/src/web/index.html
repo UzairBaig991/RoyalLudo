@@ -1263,17 +1263,81 @@
       background: rgba(35, 4, 34, 0.9);
       border: 2px solid #521350;
       border-radius: 20px;
-      padding: 3px 10px 3px 4px;
+      padding: 4px 8px 4px 5px;
       position: relative;
-      transition: all 0.3s ease;
-      max-width: 48%;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease, opacity 0.25s ease;
+      max-width: 49%;
+      gap: 6px;
     }
 
     .ls-player-pod.active-turn {
       border-color: #27AE70;
-      background: rgba(50, 10, 50, 0.95);
-      box-shadow: 0 0 14px rgba(39, 174, 112, 0.6);
+      background: rgba(54, 12, 54, 0.96);
+      box-shadow: 0 0 18px rgba(39, 174, 112, 0.65);
       transform: scale(1.03);
+      z-index: 20;
+    }
+
+    /* LUDO STAR MOVING DICE DOCK INSIDE EVERY PLAYER PROFILE */
+    .ls-player-dice-dock {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: rgba(15, 2, 16, 0.55);
+      border: 2px solid rgba(255, 255, 255, 0.14);
+      transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
+      flex-shrink: 0;
+    }
+
+    .ls-player-dice-dock.opp-dock {
+      width: 50px;
+      height: 50px;
+      border-radius: 13px;
+    }
+
+    .ls-player-dice-dock.main-dock {
+      width: 74px;
+      height: 74px;
+      border-radius: 18px;
+    }
+
+    .ls-player-dice-dock.active-dock {
+      border-color: var(--dock-color, #FFDF00);
+      background: radial-gradient(circle at center, rgba(255, 223, 0, 0.22) 0%, rgba(20, 4, 24, 0.85) 75%);
+      box-shadow: 0 0 16px var(--dock-glow, rgba(255, 223, 0, 0.55)), inset 0 0 10px rgba(255, 255, 255, 0.14);
+      animation: dockHaloPulse 1.4s infinite alternate ease-in-out;
+    }
+
+    @keyframes dockHaloPulse {
+      from { box-shadow: 0 0 10px var(--dock-glow, rgba(255, 223, 0, 0.45)), inset 0 0 6px rgba(255, 255, 255, 0.1); }
+      to   { box-shadow: 0 0 22px var(--dock-glow, rgba(255, 223, 0, 0.85)), inset 0 0 12px rgba(255, 255, 255, 0.22); }
+    }
+
+    .ls-dock-placeholder {
+      font-size: 16px;
+      opacity: 0.22;
+      pointer-events: none;
+      user-select: none;
+      position: absolute;
+      transition: opacity 0.2s ease;
+    }
+
+    .ls-player-dice-dock.active-dock .ls-dock-placeholder {
+      opacity: 0;
+    }
+
+    /* Smooth scaling when the 3D dice docks inside an opponent profile pod */
+    .dice-3d-arena.in-opp-dock {
+      transform: scale(0.66);
+      transform-origin: center center;
+    }
+
+    .dice-3d-arena.dice-in-flight {
+      z-index: 999 !important;
+      filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 16px rgba(255, 223, 0, 0.75));
+      pointer-events: none;
     }
 
     .ls-avatar-ring {
@@ -2583,12 +2647,18 @@
             <div class="ls-player-pod-name" id="name-slot-1">Shivali Mahajan</div>
             <div class="ls-player-pod-tokens" id="tokens-slot-1">0/4 🏁</div>
           </div>
-          <button class="ls-mini-gift-btn" onclick="showNotificationToast('🎁 Sent 100 free coins to Shivali!')">🎁</button>
+          <div class="ls-player-dice-dock opp-dock" id="dice-dock-1" onclick="event.stopPropagation()">
+            <span class="ls-dock-placeholder">🎲</span>
+          </div>
+          <button class="ls-mini-gift-btn" onclick="event.stopPropagation(); showNotificationToast('🎁 Sent 100 free coins to Shivali!')">🎁</button>
           <div class="player-speech-bubble" id="bubble-1" style="display: none;"></div>
         </div>
 
         <!-- Player 3 (Yellow / Top-Right): Sachin Kumar Sh -->
         <div class="ls-player-pod" id="hud-slot-2" onclick="openOpponentGiftLauncher(2)" style="cursor: pointer;" title="Tap to throw gifts!">
+          <div class="ls-player-dice-dock opp-dock" id="dice-dock-2" onclick="event.stopPropagation()">
+            <span class="ls-dock-placeholder">🎲</span>
+          </div>
           <div class="ls-avatar-ring yellow">🧔</div>
           <div class="ls-player-pod-meta">
             <div class="ls-player-pod-name" id="name-slot-2">Sachin Kumar Sh</div>
@@ -2611,6 +2681,9 @@
         <!-- Bottom-Right Opponent (Blue / Thiago Rodrigues) -->
         <div class="ls-bottom-opp-row">
           <div class="ls-player-pod" id="hud-slot-3" onclick="openOpponentGiftLauncher(3)" style="cursor: pointer;" title="Tap to throw gifts!">
+            <div class="ls-player-dice-dock opp-dock" id="dice-dock-3" onclick="event.stopPropagation()">
+              <span class="ls-dock-placeholder">🎲</span>
+            </div>
             <div class="ls-avatar-ring blue">👱‍♂️</div>
             <div class="ls-player-pod-meta">
               <div class="ls-player-pod-name" id="name-slot-3">Thiago Rodrigues</div>
@@ -2660,10 +2733,12 @@
             </div>
           </div>
 
-          <!-- THE LUDO STAR DICE STATION -->
+          <!-- THE LUDO STAR DICE STATION (Your Profile Dice Dock) -->
           <div class="ls-dice-station-box">
-            <!-- Ultra-Advanced 3D Cube Dice -->
-            <div class="dice-3d-arena" id="diceBtn" onclick="onDiceClick()" title="Tap to Roll 3D Dice!">
+            <div class="ls-player-dice-dock main-dock active-dock" id="dice-dock-0" style="--dock-color: #E74C4C; --dock-glow: rgba(231, 76, 76, 0.7);">
+              <span class="ls-dock-placeholder">🎲</span>
+              <!-- Ultra-Advanced 3D Cube Dice (Flies smoothly to active player's profile dock!) -->
+              <div class="dice-3d-arena" id="diceBtn" onclick="onDiceClick()" title="Tap to Roll 3D Dice!">
               <!-- Authentic Ludo Star Bouncing Arrow (Directly on Upper Side of Dice, ONLY on Your Roll Turn) -->
               <div class="ls-bouncing-arrow-down" id="turnArrow">
                 <svg viewBox="0 0 40 40" width="34" height="34">
@@ -2719,6 +2794,7 @@
                   <div class="pip-slot p-br"><span class="dice-pip"></span></div>
                 </div>
               </div>
+            </div>
             </div>
 
             <!-- The Iconic Lucky Reroll Button (💎 3) -->
@@ -5000,6 +5076,86 @@
       }
     }
 
+    let diceFlightTimer = null;
+    function moveDiceToPlayerDock(seat, animate = true) {
+      const diceArena = document.getElementById('diceBtn');
+      const targetDock = document.getElementById(`dice-dock-${seat}`);
+      if (!diceArena || !targetDock) return;
+
+      const colors = ['#E74C4C', '#2ECC71', '#F1C40F', '#3498DB'];
+      const glows = [
+        'rgba(231, 76, 76, 0.75)',
+        'rgba(46, 204, 113, 0.75)',
+        'rgba(241, 196, 15, 0.85)',
+        'rgba(52, 152, 219, 0.75)'
+      ];
+      const activeColor = colors[seat] || '#FFDF00';
+      const activeGlow = glows[seat] || 'rgba(255, 223, 0, 0.75)';
+
+      // Highlight the active player's dice dock and reset others
+      for (let i = 0; i < 4; i++) {
+        const dock = document.getElementById(`dice-dock-${i}`);
+        if (!dock) continue;
+        if (i === seat) {
+          dock.classList.add('active-dock');
+          dock.style.setProperty('--dock-color', activeColor);
+          dock.style.setProperty('--dock-glow', activeGlow);
+        } else {
+          dock.classList.remove('active-dock');
+        }
+      }
+
+      const isOpp = seat !== 0;
+      const targetScale = isOpp ? 0.66 : 1;
+
+      // Already docked in this player's profile section
+      if (diceArena.parentElement === targetDock) {
+        diceArena.classList.toggle('in-opp-dock', isOpp);
+        return;
+      }
+
+      // FLIP (First-Last-Invert-Play) smooth flight animation across the board
+      const beforeRect = diceArena.getBoundingClientRect();
+      const canAnimate = animate && beforeRect.width > 0 && beforeRect.height > 0;
+      const fromScale = diceArena.classList.contains('in-opp-dock') ? 0.66 : 1;
+
+      if (diceFlightTimer) {
+        clearTimeout(diceFlightTimer);
+        diceFlightTimer = null;
+      }
+
+      // Move DOM node into the active player's profile dock
+      diceArena.style.transition = 'none';
+      diceArena.style.transform = '';
+      diceArena.classList.toggle('in-opp-dock', isOpp);
+      targetDock.appendChild(diceArena);
+
+      if (!canAnimate) return;
+
+      const afterRect = diceArena.getBoundingClientRect();
+      if (afterRect.width === 0 || afterRect.height === 0) return;
+
+      const dx = (beforeRect.left + beforeRect.width / 2) - (afterRect.left + afterRect.width / 2);
+      const dy = (beforeRect.top + beforeRect.height / 2) - (afterRect.top + afterRect.height / 2);
+
+      // Invert: place dice visually back at the previous player's dock
+      diceArena.classList.add('dice-in-flight');
+      diceArena.style.transition = 'none';
+      diceArena.style.transform = `translate(${dx}px, ${dy}px) scale(${fromScale * 1.12}) rotate(-10deg)`;
+      void diceArena.offsetWidth; // Force reflow
+
+      // Play: glide smoothly with spring overshoot into the new player's profile section
+      diceArena.style.transition = 'transform 0.44s cubic-bezier(0.22, 1.22, 0.36, 1)';
+      diceArena.style.transform = `translate(0px, 0px) scale(${targetScale}) rotate(0deg)`;
+
+      diceFlightTimer = setTimeout(() => {
+        diceArena.classList.remove('dice-in-flight');
+        diceArena.style.transition = '';
+        diceArena.style.transform = '';
+        diceFlightTimer = null;
+      }, 460);
+    }
+
     function updateTurnHUD() {
       const seat = gameState.currentTurnSeat;
       const isMyTurn = seat === 0;
@@ -5008,6 +5164,9 @@
       const colors = ['#E74C4C', '#2ECC71', '#F1C40F', '#3498DB'];
       const colorNames = ['RED', 'GREEN', 'YELLOW', 'BLUE'];
       const activeColor = colors[seat];
+
+      // Smoothly animate the 3D dice to the active player's profile section (Ludo Star Style)
+      moveDiceToPlayerDock(seat, true);
       
       // Update Pod Highlighting and Inactive Player Dimming
       for (let i = 0; i < 4; i++) {
