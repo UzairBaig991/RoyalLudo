@@ -52,6 +52,7 @@ export default function LiveGameScreen() {
     lastDiceRoll,
     firstTurnAnnouncement,
     gameSpeed,
+    boardColorOffset,
     rollDice,
     selectAndMoveToken,
     usePowerUp,
@@ -60,6 +61,15 @@ export default function LiveGameScreen() {
     startNewGame,
     resetGame,
   } = useGameStore();
+
+  const rotatedPalette = [
+    { hex: NOVA_COLORS.coral, name: 'RED' as const },
+    { hex: NOVA_COLORS.mint, name: 'GREEN' as const },
+    { hex: NOVA_COLORS.gold, name: 'YELLOW' as const },
+    { hex: NOVA_COLORS.blue, name: 'BLUE' as const },
+  ];
+  const getSeatVisual = (seatIdx: number) =>
+    rotatedPalette[(seatIdx + (boardColorOffset || 0)) % 4];
 
   // Screen 15 (Game Chat) and Screen 16 (Game Menu) modal states
   const [showChatModal, setShowChatModal] = useState<boolean>(false);
@@ -743,29 +753,30 @@ export default function LiveGameScreen() {
 
       {/* 2. TOP OPPONENTS ROW (Aligned directly over Green Home & Yellow Home) */}
       <View style={styles.playersRow}>
-        {/* Top-Left Slot: Green (Player 1 in 4P mode, Hidden spacer in 2P mode) */}
+        {/* Top-Left Slot (Seat 1 in 4P mode, Hidden spacer in 2P mode) */}
         {!isTwoPlayerMode ? (
-          renderPlayerCard(1, p1, NOVA_COLORS.mint, 'GREEN')
+          renderPlayerCard(1, p1, getSeatVisual(1).hex, getSeatVisual(1).name)
         ) : (
           <View style={[styles.playerCardContainer, styles.playerCardSpacer]} />
         )}
 
-        {/* Top-Right Slot: Yellow (Companion in 2P mode, Player 2 in 4P mode — DIAGONAL) */}
+        {/* Top-Right Slot (Seat 2 — DIAGONAL) */}
         {renderPlayerCard(
           2,
           p2,
-          NOVA_COLORS.gold,
-          'YELLOW',
+          getSeatVisual(2).hex,
+          getSeatVisual(2).name,
           isTwoPlayerMode ? 'DIAGONAL' : undefined
         )}
       </View>
 
-      {/* 3. CENTER LUDO BOARD (With Active Turn Profile Picture on Active Color Home & Floating Toasts) */}
+      {/* 3. CENTER LUDO BOARD (With Dynamic Rotated Home Colors & Active Profile Badge) */}
       <View style={styles.boardWrapper}>
         <LudoBoardSvg
           size={BOARD_SIZE}
           gameState={gameState}
           validMoves={gameState.validMoves}
+          colorOffset={boardColorOffset}
           onSelectToken={(seatIndex, tokenId) => {
             handleSelectToken(seatIndex, tokenId);
           }}
@@ -786,14 +797,7 @@ export default function LiveGameScreen() {
               justifyContent: 'center',
               zIndex: 25,
               elevation: 6,
-              backgroundColor:
-                currentTurnSeat === 0
-                  ? NOVA_COLORS.coral
-                  : currentTurnSeat === 1
-                  ? NOVA_COLORS.mint
-                  : currentTurnSeat === 2
-                  ? NOVA_COLORS.gold
-                  : NOVA_COLORS.blue,
+              backgroundColor: getSeatVisual(currentTurnSeat).hex,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.55,
@@ -852,18 +856,18 @@ export default function LiveGameScreen() {
 
       {/* 4. BOTTOM OPPONENTS ROW */}
       <View style={styles.playersRow}>
-        {/* Bottom-Left Slot: Red (Player 0 / You — Seat 0) */}
+        {/* Bottom-Left Slot (Player 0 / You — Seat 0, dynamically rotated color!) */}
         {renderPlayerCard(
           0,
           p0,
-          NOVA_COLORS.coral,
-          'RED',
-          isTwoPlayerMode ? 'YOU (RED)' : undefined
+          getSeatVisual(0).hex,
+          getSeatVisual(0).name,
+          isTwoPlayerMode ? `YOU (${getSeatVisual(0).name})` : undefined
         )}
 
-        {/* Bottom-Right Slot: Blue (Player 3 in 4P mode, Hidden spacer in 2P mode) */}
+        {/* Bottom-Right Slot (Player 3 in 4P mode, Hidden spacer in 2P mode) */}
         {!isTwoPlayerMode ? (
-          renderPlayerCard(3, p3, NOVA_COLORS.blue, 'BLUE')
+          renderPlayerCard(3, p3, getSeatVisual(3).hex, getSeatVisual(3).name)
         ) : (
           <View style={[styles.playerCardContainer, styles.playerCardSpacer]} />
         )}

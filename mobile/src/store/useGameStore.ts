@@ -14,6 +14,7 @@ interface GameStoreState {
   botDifficulty: 'easy' | 'medium' | 'hard';
   firstTurnAnnouncement: string | null;
   gameSpeed: 1 | 2;
+  boardColorOffset: number;
 
   // Actions
   startNewGame: (config: {
@@ -58,6 +59,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   botDifficulty: 'medium',
   firstTurnAnnouncement: null,
   gameSpeed: 1,
+  boardColorOffset: 0,
 
   startNewGame: ({ mode, playerCount, players, rules, botDifficulty, randomizeTurn, startingSeat }) => {
     const fullRules = RuleSetFactory.getRules(mode, playerCount, rules);
@@ -70,12 +72,20 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       game.randomizeStartingTurn();
     }
 
+    // Rotate board colors on every new match so you don't always play the same home color (Ludo Star style!)
+    const prevOffset = get().boardColorOffset;
+    const colorChoices = [0, 1, 2, 3].filter((o) => o !== prevOffset);
+    const nextColorOffset = colorChoices[Math.floor(Math.random() * colorChoices.length)];
+    const colorOrder: Array<'RED' | 'GREEN' | 'YELLOW' | 'BLUE'> = ['RED', 'GREEN', 'YELLOW', 'BLUE'];
+    const myColorName = colorOrder[nextColorOffset];
+
     const initialState = game.getState();
     const firstPlayer = initialState.players.find((p) => p.seatIndex === initialState.currentTurnSeat);
+    const firstVisualColor = firstPlayer ? colorOrder[(firstPlayer.seatIndex + nextColorOffset) % 4] : myColorName;
     const announcement = firstPlayer
       ? firstPlayer.seatIndex === 0
-        ? `🎲 Coin Toss: ${firstPlayer.username} (Red) rolls first!`
-        : `🎲 Coin Toss: ${firstPlayer.username} (${firstPlayer.color}) rolls first!`
+        ? `🎨 You are ${myColorName}! · 🎲 ${firstPlayer.username} rolls first!`
+        : `🎨 You are ${myColorName}! · 🎲 ${firstPlayer.username} (${firstVisualColor}) rolls first!`
       : null;
 
     set({
@@ -86,6 +96,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       lastDiceRoll: null,
       botDifficulty: botDifficulty || 'medium',
       firstTurnAnnouncement: announcement,
+      boardColorOffset: nextColorOffset,
     });
 
     if (firstPlayer && firstPlayer.isBot) {

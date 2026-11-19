@@ -13,6 +13,7 @@ interface LudoBoardSvgProps {
   gameState?: GameState;
   validMoves?: ValidMove[];
   selectedTokenId?: number | null;
+  colorOffset?: number;
   onSelectToken?: (seatIndex: number, tokenId: number) => void;
   onTilePress?: (gridX: number, gridY: number) => void;
   onTokenPress?: (seatIndex: number, tokenId: number) => void;
@@ -24,6 +25,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
   gameState,
   validMoves = [],
   selectedTokenId,
+  colorOffset = 0,
   onSelectToken,
   onTilePress,
   onTokenPress,
@@ -36,6 +38,13 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
   const boardBgColor = equippedBoard?.boardBg || ROYAL_COLORS.primaryBg;
   const boardCellBg = equippedBoard?.cellBg || ROYAL_COLORS.cardBg;
   const boardBorderColor = equippedBoard?.borderColor || ROYAL_COLORS.borderGold;
+
+  const colorOrder: Array<'RED' | 'GREEN' | 'YELLOW' | 'BLUE'> = ['RED', 'GREEN', 'YELLOW', 'BLUE'];
+  const getRotatedColor = (baseColor: 'RED' | 'GREEN' | 'YELLOW' | 'BLUE') => {
+    const idx = colorOrder.indexOf(baseColor);
+    const rotatedKey = colorOrder[(idx + (colorOffset % 4) + 4) % 4];
+    return COLOR_MAP[rotatedKey];
+  };
 
   // Star SVG Path centered at (cx, cy)
   const renderStar = (cx: number, cy: number, r: number, color = ROYAL_COLORS.gold) => {
@@ -74,7 +83,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
     const x = startCol * tileSize;
     const y = startRow * tileSize;
     const yardSize = 6 * tileSize;
-    const color = COLOR_MAP[colorKey];
+    const color = getRotatedColor(colorKey);
 
     const innerPadding = tileSize * 0.75;
     const innerX = x + innerPadding;
@@ -176,27 +185,27 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
         let arrowDirection: 'UP' | 'RIGHT' | 'DOWN' | 'LEFT' | null = null;
         let isStartCell = false;
 
-        // Colored Home Stretch Paths
-        if (r === 7 && c >= 1 && c <= 5) cellBg = COLOR_MAP.GREEN.primary; // Green Home stretch
-        else if (c === 7 && r >= 1 && r <= 5) cellBg = COLOR_MAP.YELLOW.primary; // Yellow Home stretch
-        else if (r === 7 && c >= 9 && c <= 13) cellBg = COLOR_MAP.BLUE.primary; // Blue Home stretch
-        else if (c === 7 && r >= 9 && r <= 13) cellBg = COLOR_MAP.RED.primary; // Red Home stretch
+        // Colored Home Stretch Paths (Rotated with colorOffset!)
+        if (r === 7 && c >= 1 && c <= 5) cellBg = getRotatedColor('GREEN').primary;
+        else if (c === 7 && r >= 1 && r <= 5) cellBg = getRotatedColor('YELLOW').primary;
+        else if (r === 7 && c >= 9 && c <= 13) cellBg = getRotatedColor('BLUE').primary;
+        else if (c === 7 && r >= 9 && r <= 13) cellBg = getRotatedColor('RED').primary;
 
         // Colored Starting Cells with Movement Direction Arrows
         else if (r === 6 && c === 1) {
-          cellBg = COLOR_MAP.GREEN.primary;
+          cellBg = getRotatedColor('GREEN').primary;
           arrowDirection = 'RIGHT';
           isStartCell = true;
         } else if (r === 1 && c === 8) {
-          cellBg = COLOR_MAP.YELLOW.primary;
+          cellBg = getRotatedColor('YELLOW').primary;
           arrowDirection = 'DOWN';
           isStartCell = true;
         } else if (r === 8 && c === 13) {
-          cellBg = COLOR_MAP.BLUE.primary;
+          cellBg = getRotatedColor('BLUE').primary;
           arrowDirection = 'LEFT';
           isStartCell = true;
         } else if (r === 13 && c === 6) {
-          cellBg = COLOR_MAP.RED.primary;
+          cellBg = getRotatedColor('RED').primary;
           arrowDirection = 'UP';
           isStartCell = true;
         }
@@ -254,14 +263,14 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
 
     return (
       <G key="center_finish">
-        {/* Left Triangle (Green) */}
-        <Polygon points={`${left},${top} ${cx},${cy} ${left},${bottom}`} fill={COLOR_MAP.GREEN.primary} />
-        {/* Top Triangle (Yellow) */}
-        <Polygon points={`${left},${top} ${cx},${cy} ${right},${top}`} fill={COLOR_MAP.YELLOW.primary} />
-        {/* Right Triangle (Blue) */}
-        <Polygon points={`${right},${top} ${cx},${cy} ${right},${bottom}`} fill={COLOR_MAP.BLUE.primary} />
-        {/* Bottom Triangle (Red) */}
-        <Polygon points={`${left},${bottom} ${cx},${cy} ${right},${bottom}`} fill={COLOR_MAP.RED.primary} />
+        {/* Left Triangle */}
+        <Polygon points={`${left},${top} ${cx},${cy} ${left},${bottom}`} fill={getRotatedColor('GREEN').primary} />
+        {/* Top Triangle */}
+        <Polygon points={`${left},${top} ${cx},${cy} ${right},${top}`} fill={getRotatedColor('YELLOW').primary} />
+        {/* Right Triangle */}
+        <Polygon points={`${right},${top} ${cx},${cy} ${right},${bottom}`} fill={getRotatedColor('BLUE').primary} />
+        {/* Bottom Triangle */}
+        <Polygon points={`${left},${bottom} ${cx},${cy} ${right},${bottom}`} fill={getRotatedColor('RED').primary} />
 
         {/* Center Royal Crown/Medallion */}
         <Circle cx={cx} cy={cy} r={tileSize * 0.6} fill={ROYAL_COLORS.cardBg} stroke={ROYAL_COLORS.gold} strokeWidth={2} />
@@ -426,7 +435,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
 
       items.forEach((item, idx) => {
         const { player, token, isValid } = item;
-        const color = COLOR_MAP[player.color as keyof typeof COLOR_MAP] || COLOR_MAP.RED;
+        const color = getRotatedColor((player.color as 'RED' | 'GREEN' | 'YELLOW' | 'BLUE') || 'RED');
 
         const move = validMoves.find((m) => m.tokenId === token.id && player.seatIndex === currentTurnSeat);
         const isCaptureMove = !!move?.capturesToken;
