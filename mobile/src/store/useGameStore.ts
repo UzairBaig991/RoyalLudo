@@ -15,6 +15,7 @@ interface GameStoreState {
   firstTurnAnnouncement: string | null;
   gameSpeed: 1 | 2;
   boardColorOffset: number;
+  hoppingToken: { seatIndex: number; tokenId: number; currentStep: number; isMidAir: boolean } | null;
 
   // Actions
   startNewGame: (config: {
@@ -60,6 +61,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   firstTurnAnnouncement: null,
   gameSpeed: 1,
   boardColorOffset: 0,
+  hoppingToken: null,
 
   startNewGame: ({ mode, playerCount, players, rules, botDifficulty, randomizeTurn, startingSeat }) => {
     const fullRules = RuleSetFactory.getRules(mode, playerCount, rules);
@@ -149,23 +151,55 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   selectAndMoveToken: (seatIndex, tokenId) => {
     const { game } = get();
     if (!game) return;
-    const targetMatchId = game.getState().matchId;
+    const preState = game.getState();
+    const targetMatchId = preState.matchId;
     const speedFactor = get().gameSpeed === 2 ? 0.55 : 1;
+    const moveInfo = preState.validMoves.find((m) => m.tokenId === tokenId);
 
     try {
       game.moveToken(seatIndex, tokenId);
+      const nextState = game.getState();
+
+      // Build step-by-step tile hop sequence for realistic Ludo Star visual hopping
+      const hopSteps: number[] = [];
+      if (moveInfo) {
+        if (moveInfo.fromStep < 0) {
+          hopSteps.push(0);
+        } else if (moveInfo.toStep > moveInfo.fromStep) {
+          for (let s = moveInfo.fromStep + 1; s <= moveInfo.toStep; s++) hopSteps.push(s);
+        } else if (moveInfo.toStep < moveInfo.fromStep) {
+          for (let s = moveInfo.fromStep + 1; s < 52; s++) hopSteps.push(s);
+          for (let s = 0; s <= moveInfo.toStep; s++) hopSteps.push(s);
+        }
+      }
+
       set({
         selectedTokenId: tokenId,
-        gameState: game.getState(),
+        gameState: nextState,
+        hoppingToken:
+          hopSteps.length > 0
+            ? { seatIndex, tokenId, currentStep: hopSteps[0], isMidAir: true }
+            : null,
       });
 
-      // Clear selection after animation
+      const stepMs = Math.round(115 * speedFactor);
+      hopSteps.forEach((stepVal, idx) => {
+        if (idx === 0) return;
+        setTimeout(() => {
+          if (get().game?.getState().matchId !== targetMatchId) return;
+          set({
+            hoppingToken: { seatIndex, tokenId, currentStep: stepVal, isMidAir: idx % 2 === 0 },
+          });
+        }, idx * stepMs);
+      });
+
+      const totalHopMs = Math.max(220, hopSteps.length * stepMs + 80);
       setTimeout(() => {
         if (get().game?.getState().matchId !== targetMatchId) return;
-        set({ selectedTokenId: null });
+        set({ selectedTokenId: null, hoppingToken: null });
         // Check if next player is a bot
         get().triggerBotTurn();
-      }, Math.round(220 * speedFactor));
+      }, totalHopMs);
     } catch (e) {
       console.warn('Move error:', e);
     }

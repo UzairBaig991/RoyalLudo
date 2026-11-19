@@ -53,6 +53,7 @@ export default function LiveGameScreen() {
     firstTurnAnnouncement,
     gameSpeed,
     boardColorOffset,
+    hoppingToken,
     rollDice,
     selectAndMoveToken,
     usePowerUp,
@@ -777,6 +778,7 @@ export default function LiveGameScreen() {
           gameState={gameState}
           validMoves={gameState.validMoves}
           colorOffset={boardColorOffset}
+          hoppingToken={hoppingToken}
           onSelectToken={(seatIndex, tokenId) => {
             handleSelectToken(seatIndex, tokenId);
           }}

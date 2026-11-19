@@ -14,6 +14,7 @@ interface LudoBoardSvgProps {
   validMoves?: ValidMove[];
   selectedTokenId?: number | null;
   colorOffset?: number;
+  hoppingToken?: { seatIndex: number; tokenId: number; currentStep: number; isMidAir: boolean } | null;
   onSelectToken?: (seatIndex: number, tokenId: number) => void;
   onTilePress?: (gridX: number, gridY: number) => void;
   onTokenPress?: (seatIndex: number, tokenId: number) => void;
@@ -26,6 +27,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
   validMoves = [],
   selectedTokenId,
   colorOffset = 0,
+  hoppingToken = null,
   onSelectToken,
   onTilePress,
   onTokenPress,
@@ -414,9 +416,16 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
 
     for (const player of gameState.players) {
       for (const token of player.tokens) {
-        if (token.position.state === 'FINISHED') continue;
+        const isHopping =
+          hoppingToken &&
+          hoppingToken.seatIndex === player.seatIndex &&
+          hoppingToken.tokenId === token.id;
 
-        const coord = token.position.gridCoord;
+        if (token.position.state === 'FINISHED' && !isHopping) continue;
+
+        const coord = isHopping
+          ? LudoBoard.createTokenPosition(player.color, token.id, hoppingToken.currentStep).gridCoord
+          : token.position.gridCoord;
         const key = `${coord.row}_${coord.col}`;
         const isValid = validMoves.some((m) => m.tokenId === token.id && player.seatIndex === currentTurnSeat);
 
@@ -445,6 +454,11 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
         // Slight offset if stacked on same tile
         const offset = items.length > 1 ? (idx - (items.length - 1) / 2) * 5 : 0;
         const tokenDiameter = tileSize * 0.85;
+        const isHoppingThis =
+          hoppingToken &&
+          hoppingToken.seatIndex === player.seatIndex &&
+          hoppingToken.tokenId === token.id;
+        const hopLiftY = isHoppingThis ? (hoppingToken.isMidAir ? -tileSize * 0.34 : -tileSize * 0.14) : 0;
 
         tokenElements.push(
           <TouchableOpacity
@@ -463,6 +477,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
               styles.tokenContainer,
               {
                 left: cellX + (tileSize - tokenDiameter) / 2 + offset,
+                zIndex: isHoppingThis ? 99 : undefined,
                 top: cellY + (tileSize - tokenDiameter) / 2 + offset,
                 width: tokenDiameter,
                 height: tokenDiameter,
@@ -476,7 +491,10 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
                   ? ROYAL_COLORS.goldLight
                   : '#FFFFFF',
                 borderWidth: token.isShielded ? 3 : isValid ? 2.8 : 1.5,
-                transform: [{ scale: isValid ? 1.14 : 1 }],
+                transform: [
+                  { translateY: hopLiftY },
+                  { scale: isHoppingThis ? 1.18 : isValid ? 1.14 : 1 },
+                ],
                 elevation: isValid ? 9 : 4,
                 shadowColor: token.isShielded
                   ? '#83e6c0'

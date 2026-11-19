@@ -4575,6 +4575,14 @@
       playTone(587.33, 'sine', 0.07, 0.18);
     }
 
+    function playStepHopSound(hopIdx = 0) {
+      if (!soundEnabled) return;
+      // Subtle ascending wooden pawn hop clack (Ludo Star feel)
+      const baseFreq = 420 + Math.min(hopIdx, 6) * 42;
+      playTone(baseFreq, 'sine', 0.055, 0.16);
+      setTimeout(() => playTone(baseFreq * 1.35, 'triangle', 0.03, 0.08), 18);
+    }
+
     function playCaptureSound() {
       if (!soundEnabled) return;
       playTone(200, 'sawtooth', 0.18, 0.3);
@@ -5130,6 +5138,7 @@
 
           const group = document.createElementNS(SVG_NS, 'g');
           group.setAttribute('class', 'token-group');
+          group.setAttribute('data-token-key', `${token.color}_${token.id}`);
 
           const isMovable = gameState.phase === 'SELECT_TOKEN' &&
             token.color === activeColor &&
@@ -5463,84 +5472,156 @@
       }
 
       const prevStep = token.step;
-      token.step = nextStep;
-      playMoveSound();
-
-      // Safe star chime
-      if (nextStep >= 0 && nextStep <= 50) {
-        const abs = (COLOR_START_INDEX[color] + nextStep) % 52;
-        if (SAFE_INDICES.includes(abs)) {
-          playStarSound();
-        }
-      }
-
-      let earnedExtra = roll === 6;
-      if (nextStep >= 0 && nextStep <= 50) {
-        const abs = (COLOR_START_INDEX[color] + nextStep) % 52;
-        if (!SAFE_INDICES.includes(abs)) {
-          gameState.tokens.forEach(o => {
-            // In team mode, do not capture teammates
-            if (gameState.isTeamMode && ((color === 'RED' && o.color === 'YELLOW') || (color === 'YELLOW' && o.color === 'RED'))) {
-              return;
-            }
-            if (o.color !== color && o.step >= 0 && o.step <= 50 && (COLOR_START_INDEX[o.color] + o.step) % 52 === abs) {
-              o.step = -1;
-              activePlayer.hasKilledOpponent = true;
-              if (typeof incrementMissionProgress === 'function' && gameState.currentTurnSeat === 0) {
-                incrementMissionProgress('captures', 1);
-              }
-              playCaptureSound();
-              triggerBoardShake();
-              if (gameState.currentTurnSeat === 0) {
-                gameState.gold += 150;
-                updateCurrencyDisplay();
-                triggerBoardJuice('⚔️ SMASH! +150 🪙', true);
-              } else {
-                triggerBoardJuice('⚔️ CAPTURED!', true);
-              }
-              earnedExtra = true;
-              showSpeechBubble(gameState.currentTurnSeat, 'Capture! ⚔️');
-              updateHomeLockIndicators();
-              showNotificationToast('🔓 HOME UNLOCKED! ' + activePlayer.name + ' achieved first kill!');
-            }
-          });
-        }
-      }
-
-      if (nextStep === 56) {
-        earnedExtra = true;
-        playSixSound();
-        if (gameState.currentTurnSeat === 0) {
-          gameState.gold += 250;
-          updateCurrencyDisplay();
-          triggerBoardJuice('🏁 HOME! +250 🪙', false);
-        } else {
-          triggerBoardJuice('🏁 TOKEN HOME!', false);
-        }
-      }
-
-      renderBoard();
-
-      // Check finish
-      const finished = gameState.tokens.filter(t => t.color === color && t.step === 56).length;
-      const targetFinish = gameState.selectedVariation === 'quick' ? 2 : 4;
-      if (finished >= targetFinish) {
-        handleMatchVictory(color);
-        return;
-      }
-
       const speedDiv = gameState.gameSpeed === 2 ? 2 : 1;
-      if (earnedExtra) {
-        gameState.phase = 'ROLL_DICE';
-        updateTurnHUD();
-        renderTokens();
-        const p = gameState.players[gameState.currentTurnSeat];
-        if (p.isBot || (gameState.isAutoPlay && gameState.currentTurnSeat === 0)) {
-          setTimeout(rollDice, Math.round(600 / speedDiv));
-        }
+
+      // Build realistic step-by-step tile path so the token hops tile-by-tile (never teleports!)
+      const hopSteps = [];
+      if (prevStep < 0) {
+        hopSteps.push(0);
+      } else if (nextStep >= prevStep) {
+        for (let s = prevStep + 1; s <= nextStep; s++) hopSteps.push(s);
       } else {
-        setTimeout(passTurn, Math.round(400 / speedDiv));
+        // Perimeter loop-around when kill is required
+        for (let s = prevStep + 1; s < 52; s++) hopSteps.push(s);
+        for (let s = 0; s <= nextStep; s++) hopSteps.push(s);
       }
+
+      const finalizeTokenMove = () => {
+        token.step = nextStep;
+
+        // Safe star chime
+        if (nextStep >= 0 && nextStep <= 50) {
+          const abs = (COLOR_START_INDEX[color] + nextStep) % 52;
+          if (SAFE_INDICES.includes(abs)) {
+            playStarSound();
+          }
+        }
+
+        let earnedExtra = roll === 6;
+        if (nextStep >= 0 && nextStep <= 50) {
+          const abs = (COLOR_START_INDEX[color] + nextStep) % 52;
+          if (!SAFE_INDICES.includes(abs)) {
+            gameState.tokens.forEach(o => {
+              // In team mode, do not capture teammates
+              if (gameState.isTeamMode && ((color === 'RED' && o.color === 'YELLOW') || (color === 'YELLOW' && o.color === 'RED'))) {
+                return;
+              }
+              if (o.color !== color && o.step >= 0 && o.step <= 50 && (COLOR_START_INDEX[o.color] + o.step) % 52 === abs) {
+                o.step = -1;
+                activePlayer.hasKilledOpponent = true;
+                if (typeof incrementMissionProgress === 'function' && gameState.currentTurnSeat === 0) {
+                  incrementMissionProgress('captures', 1);
+                }
+                playCaptureSound();
+                triggerBoardShake();
+                if (gameState.currentTurnSeat === 0) {
+                  gameState.gold += 150;
+                  updateCurrencyDisplay();
+                  triggerBoardJuice('⚔️ SMASH! +150 🪙', true);
+                } else {
+                  triggerBoardJuice('⚔️ CAPTURED!', true);
+                }
+                earnedExtra = true;
+                showSpeechBubble(gameState.currentTurnSeat, 'Capture! ⚔️');
+                updateHomeLockIndicators();
+                showNotificationToast('🔓 HOME UNLOCKED! ' + activePlayer.name + ' achieved first kill!');
+              }
+            });
+          }
+        }
+
+        if (nextStep === 56) {
+          earnedExtra = true;
+          playSixSound();
+          if (gameState.currentTurnSeat === 0) {
+            gameState.gold += 250;
+            updateCurrencyDisplay();
+            triggerBoardJuice('🏁 HOME! +250 🪙', false);
+          } else {
+            triggerBoardJuice('🏁 TOKEN HOME!', false);
+          }
+        }
+
+        renderBoard();
+
+        // Check finish
+        const finished = gameState.tokens.filter(t => t.color === color && t.step === 56).length;
+        const targetFinish = gameState.selectedVariation === 'quick' ? 2 : 4;
+        if (finished >= targetFinish) {
+          handleMatchVictory(color);
+          return;
+        }
+
+        if (earnedExtra) {
+          gameState.phase = 'ROLL_DICE';
+          updateTurnHUD();
+          renderTokens();
+          const p = gameState.players[gameState.currentTurnSeat];
+          if (p.isBot || (gameState.isAutoPlay && gameState.currentTurnSeat === 0)) {
+            setTimeout(rollDice, Math.round(520 / speedDiv));
+          }
+        } else {
+          setTimeout(passTurn, Math.round(300 / speedDiv));
+        }
+      };
+
+      // Hide quick-move assist bar & destination previews while hopping
+      const qBar = document.getElementById('webQuickMoveBar');
+      if (qBar) qBar.style.display = 'none';
+      const svg = document.getElementById('ludoSvg');
+      if (svg) svg.querySelectorAll('.dest-preview').forEach(e => e.remove());
+
+      const hopDuration = Math.round(125 / speedDiv);
+      let hopIndex = 0;
+
+      function runNextHop() {
+        if (hopIndex >= hopSteps.length) {
+          finalizeTokenMove();
+          return;
+        }
+        const fromStep = hopIndex === 0 ? prevStep : hopSteps[hopIndex - 1];
+        const toStep = hopSteps[hopIndex];
+        const fromCoord = getTokenCoord({ color: token.color, id: token.id, step: fromStep });
+        const toCoord = getTokenCoord({ color: token.color, id: token.id, step: toStep });
+        const dx = (toCoord.col - fromCoord.col) * CELL_SIZE;
+        const dy = (toCoord.row - fromCoord.row) * CELL_SIZE;
+
+        token.step = fromStep;
+        renderTokens();
+
+        const tokenEl = document.querySelector(`g.token-group[data-token-key="${token.color}_${token.id}"]`);
+        if (!tokenEl) {
+          token.step = toStep;
+          hopIndex++;
+          runNextHop();
+          return;
+        }
+
+        if (tokenEl.parentNode) tokenEl.parentNode.appendChild(tokenEl);
+
+        const startTime = performance.now();
+        const peakHeight = prevStep < 0 && hopIndex === 0 ? 22 : 16;
+
+        function animateFrame(now) {
+          const t = Math.min(1, (now - startTime) / hopDuration);
+          const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+          const curX = dx * ease;
+          const curY = dy * ease - Math.sin(Math.PI * t) * peakHeight;
+          tokenEl.setAttribute('transform', `translate(${curX.toFixed(2)}, ${curY.toFixed(2)})`);
+
+          if (t < 1) {
+            requestAnimationFrame(animateFrame);
+          } else {
+            token.step = toStep;
+            playStepHopSound(hopIndex);
+            hopIndex++;
+            runNextHop();
+          }
+        }
+        requestAnimationFrame(animateFrame);
+      }
+
+      runNextHop();
     }
 
     function passTurn() {
