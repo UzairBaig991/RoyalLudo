@@ -1345,8 +1345,12 @@
 
     .dice-3d-arena.dice-in-flight {
       z-index: 999 !important;
-      filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 16px rgba(255, 223, 0, 0.75));
       pointer-events: none;
+    }
+
+    .ls-player-dice-dock.ready-to-roll {
+      border-color: #2ECC71 !important;
+      box-shadow: 0 0 18px rgba(46, 204, 113, 0.85), inset 0 0 10px rgba(46, 204, 113, 0.35) !important;
     }
 
     /* ACTIVE HOME CORNER PROFILE AVATAR BADGE (Appears on the active player's color home!) */
@@ -2601,24 +2605,14 @@
       box-shadow: 0 10px 35px rgba(46, 204, 113, 0.35), inset 0 0 0 4px #1B4D3E !important;
     }
 
-    /* Turn Pulsing on 3D Dice (Filter-only so cube 3D rotation transform is NEVER overridden!) */
-    .dice-3d-arena.turn-ready .dice-3d-cube {
-      animation: dice3dGlowPulse 1.1s infinite alternate ease-in-out;
-    }
-    @keyframes dice3dGlowPulse {
-      0% { filter: drop-shadow(0 0 6px rgba(46, 204, 113, 0.55)); }
-      100% { filter: drop-shadow(0 0 18px rgba(46, 204, 113, 0.98)); }
+    /* IMPORTANT: Never apply CSS filter to .dice-3d-cube or .dice-3d-arena,
+       because filter flattens transform-style: preserve-3d in Chromium/WebKit and hides 3D faces! */
+    .dice-3d-arena.turn-ready {
+      cursor: pointer;
     }
 
-    /* Authentic Ludo Star 3D Dice Rolling Hop & Impact Settle */
     .dice-3d-arena.rolling {
-      animation: diceArenaHop 0.44s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    @keyframes diceArenaHop {
-      0%   { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.45)); }
-      35%  { filter: drop-shadow(0 16px 18px rgba(255, 223, 0, 0.75)); }
-      75%  { filter: drop-shadow(0 8px 12px rgba(255, 223, 0, 0.5)); }
-      100% { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.45)); }
+      pointer-events: none;
     }
 
     /* ARCADE COMBO ANNOUNCER BANNER */
@@ -4473,9 +4467,57 @@
 
     function playDiceSound() {
       if (!soundEnabled) return;
-      for (let i = 0; i < 4; i++) {
-        setTimeout(() => playTone(300 + Math.random() * 180, 'triangle', 0.04, 0.16), i * 42);
-      }
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+        // Authentic Ludo Star multi-bounce ivory/wood dice rattle + final table settle clack
+        const bounceOffsets = [0, 0.055, 0.115, 0.185, 0.27, 0.365];
+        bounceOffsets.forEach((offset, idx) => {
+          const t = now + offset;
+          const isFinalHit = idx === bounceOffsets.length - 1;
+
+          // 1. Crisp filtered percussion clack (bandpass noise burst)
+          const bufLen = Math.floor(audioCtx.sampleRate * (isFinalHit ? 0.045 : 0.028));
+          const noiseBuf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+          const data = noiseBuf.getChannelData(0);
+          for (let i = 0; i < bufLen; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufLen * 0.28));
+          }
+          const noiseSrc = audioCtx.createBufferSource();
+          noiseSrc.buffer = noiseBuf;
+
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(isFinalHit ? 1450 : (1900 + Math.random() * 900), t);
+          filter.Q.setValueAtTime(2.6, t);
+
+          const noiseGain = audioCtx.createGain();
+          const peak = isFinalHit ? 0.42 : (0.28 - idx * 0.025);
+          noiseGain.gain.setValueAtTime(Math.max(0.08, peak), t);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, t + (isFinalHit ? 0.045 : 0.028));
+
+          noiseSrc.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(audioCtx.destination);
+          noiseSrc.start(t);
+
+          // 2. Warm wooden-board knock resonance
+          const osc = audioCtx.createOscillator();
+          const oscGain = audioCtx.createGain();
+          osc.type = 'triangle';
+          const startFreq = isFinalHit ? 420 : (760 + Math.random() * 260);
+          const endFreq = isFinalHit ? 140 : 220;
+          osc.frequency.setValueAtTime(startFreq, t);
+          osc.frequency.exponentialRampToValueAtTime(endFreq, t + 0.032);
+          oscGain.gain.setValueAtTime(isFinalHit ? 0.24 : 0.14, t);
+          oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.036);
+          osc.connect(oscGain);
+          oscGain.connect(audioCtx.destination);
+          osc.start(t);
+          osc.stop(t + 0.04);
+        });
+      } catch (e) {}
     }
 
     function playMoveSound() {
@@ -5530,17 +5572,20 @@
         }
       }
 
-      // Bouncing Arrow
+      // Bouncing Arrow (Strictly on upper side of dice ONLY on human roll turn)
       const arrow = document.getElementById('turnArrow');
       if (arrow) arrow.style.display = (isHumanTurn && gameState.phase === 'ROLL_DICE') ? 'block' : 'none';
 
-      // 3D Dice Station Glow
+      // 3D Dice Station Ready Glow (Applied on the dock container so 3D cube preserve-3d is never flattened!)
       const diceArena = document.getElementById('diceBtn');
+      const isReadyToRoll = isHumanTurn && gameState.phase === 'ROLL_DICE';
       if (diceArena) {
-        if (isHumanTurn && gameState.phase === 'ROLL_DICE') {
-          diceArena.classList.add('turn-ready');
-        } else {
-          diceArena.classList.remove('turn-ready');
+        diceArena.classList.toggle('turn-ready', isReadyToRoll);
+      }
+      for (let i = 0; i < 4; i++) {
+        const dock = document.getElementById(`dice-dock-${i}`);
+        if (dock) {
+          dock.classList.toggle('ready-to-roll', i === seat && isReadyToRoll);
         }
       }
 
