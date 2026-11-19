@@ -323,12 +323,24 @@ export default function LiveGameScreen() {
     );
   };
 
-  // Handle Turn Countdown Timer with low-time warning sounds
+  const isAnyModalOpen =
+    showChatModal ||
+    showMenuModal ||
+    showRulesModal ||
+    showDiceSkinModal ||
+    showBoardSkinModal ||
+    showGiftModal;
+
+  // Handle Turn Countdown Timer with low-time warning sounds (paused when any modal is open)
   useEffect(() => {
-    setTurnSecondsLeft(12);
+    setTurnSecondsLeft(15);
+  }, [currentTurnSeat, gameState?.turnPhase]);
+
+  useEffect(() => {
+    if (isAnyModalOpen || gameState?.turnPhase === 'GAME_OVER') return;
     const interval = setInterval(() => {
       setTurnSecondsLeft((prev) => {
-        if (prev <= 4 && prev > 1 && isMyTurn) {
+        if ((prev === 3 || prev === 2) && isMyTurn) {
           sfxEngine.playTimerWarning();
         }
         if (prev <= 1) {
@@ -341,14 +353,14 @@ export default function LiveGameScreen() {
           } else {
             triggerBotTurn();
           }
-          return 12;
+          return 15;
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [currentTurnSeat, gameState?.turnPhase, isMyTurn, canRollDice]);
+  }, [currentTurnSeat, gameState?.turnPhase, isMyTurn, canRollDice, isAnyModalOpen]);
 
   // Celebrate rolling a 6 with special sound and celebratory banner
   useEffect(() => {
@@ -641,8 +653,10 @@ export default function LiveGameScreen() {
         </View>
       </View>
 
-      {/* 1.5. GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER */}
-      <View
+      {/* 1.5. GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER (Tappable to Roll!) */}
+      <TouchableOpacity
+        activeOpacity={canRollDice ? 0.75 : 1}
+        onPress={canRollDice ? handleRoll : undefined}
         style={[
           styles.turnAnnouncementBanner,
           {
@@ -700,7 +714,7 @@ export default function LiveGameScreen() {
             </View>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* 2. TOP OPPONENTS ROW */}
       <View style={styles.playersRow}>
@@ -721,7 +735,7 @@ export default function LiveGameScreen() {
         )}
       </View>
 
-      {/* 3. CENTER LUDO BOARD */}
+      {/* 3. CENTER LUDO BOARD (With Non-Layout-Shifting Floating Toast Overlays) */}
       <View style={styles.boardWrapper}>
         <LudoBoardSvg
           size={BOARD_SIZE}
@@ -731,6 +745,43 @@ export default function LiveGameScreen() {
             handleSelectToken(seatIndex, tokenId);
           }}
         />
+
+        {/* FLOATING NON-SHIFTING CELEBRATION & HINT BANNERS */}
+        {(celebrateSix || captureBanner || tacticalHint || activeSpeech) && (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: 8,
+              left: 10,
+              right: 10,
+              alignItems: 'center',
+              zIndex: 50,
+              gap: 4,
+            }}
+          >
+            {celebrateSix && (
+              <View style={[styles.celebrationBanner, { backgroundColor: 'rgba(13, 16, 30, 0.92)' }]}>
+                <Text style={styles.celebrationBannerText}>🎉 SIX! Roll again! ⚡</Text>
+              </View>
+            )}
+            {captureBanner && (
+              <View style={[styles.captureBanner, { backgroundColor: 'rgba(13, 16, 30, 0.92)' }]}>
+                <Text style={styles.captureBannerText}>{captureBanner}</Text>
+              </View>
+            )}
+            {tacticalHint && (
+              <View style={[styles.celebrationBanner, { backgroundColor: 'rgba(13, 16, 30, 0.92)' }]}>
+                <Text style={styles.celebrationBannerText}>{tacticalHint}</Text>
+              </View>
+            )}
+            {activeSpeech && (
+              <View style={[styles.speechBubble, { backgroundColor: 'rgba(48, 37, 78, 0.95)' }]}>
+                <Text style={styles.speechBubbleText}>💬 {activeSpeech.sender}: {activeSpeech.text}</Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
 
       {/* 4. BOTTOM OPPONENTS ROW */}
@@ -752,45 +803,21 @@ export default function LiveGameScreen() {
         )}
       </View>
 
-      {/* CELEBRATION BANNERS */}
-      {celebrateSix && (
-        <View style={styles.celebrationBanner}>
-          <Text style={styles.celebrationBannerText}>🎉 SIX! Roll again! ⚡</Text>
-        </View>
-      )}
-
-      {captureBanner && (
-        <View style={styles.captureBanner}>
-          <Text style={styles.captureBannerText}>{captureBanner}</Text>
-        </View>
-      )}
-
-      {tacticalHint && (
-        <View style={styles.celebrationBanner}>
-          <Text style={styles.celebrationBannerText}>{tacticalHint}</Text>
-        </View>
-      )}
-
-      {/* ACTIVE SPEECH BUBBLE */}
-      {activeSpeech && (
-        <View style={styles.speechBubble}>
-          <Text style={styles.speechBubbleText}>💬 {activeSpeech.sender}: {activeSpeech.text}</Text>
-        </View>
-      )}
-
-      {/* 4.2. 1-TAP QUICK-MOVE ASSIST BAR (Shows when human player has valid moves to choose from) */}
+      {/* 4.2. 1-TAP QUICK-MOVE ASSIST BAR (Deduplicated so identical base moves show 1 clean button) */}
       {isMyTurn && gameState.turnPhase === 'SELECT_TOKEN' && gameState.validMoves.length > 0 && (
         <View style={{ marginVertical: 2 }}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
-            {gameState.validMoves.map((m) => {
-              const label = m.isFinish
-                ? `👑 Finish Token #${m.tokenId + 1}`
-                : m.capturesToken
-                ? `⚔️ Capture with #${m.tokenId + 1}`
-                : m.isEntry
-                ? `🚀 Deploy Token #${m.tokenId + 1}`
-                : `♟️ Move Token #${m.tokenId + 1} (→${m.toStep})`;
-              return (
+            {gameState.validMoves
+              .filter((m, idx, arr) => arr.findIndex((x) => x.fromStep === m.fromStep && x.toStep === m.toStep) === idx)
+              .map((m) => {
+                const label = m.isFinish
+                  ? `👑 Finish Token #${m.tokenId + 1}`
+                  : m.capturesToken
+                  ? `⚔️ Capture with #${m.tokenId + 1}`
+                  : m.isEntry
+                  ? `🚀 Deploy from Base`
+                  : `♟️ Move Token #${m.tokenId + 1} (→${m.toStep})`;
+                return (
                 <TouchableOpacity
                   key={`qm_${m.tokenId}`}
                   onPress={() => handleSelectToken(currentTurnSeat, m.tokenId)}
@@ -922,7 +949,7 @@ export default function LiveGameScreen() {
             style={[
               styles.timerFill,
               {
-                width: `${Math.max(0, Math.min(100, (turnSecondsLeft / 12) * 100))}%`,
+                width: `${Math.max(0, Math.min(100, (turnSecondsLeft / 15) * 100))}%`,
                 backgroundColor:
                   turnSecondsLeft <= 3
                     ? '#ff4757'
@@ -935,9 +962,13 @@ export default function LiveGameScreen() {
         </View>
       </View>
 
-      {/* 5. TURN ACTION CONSOLE */}
+      {/* 5. TURN ACTION CONSOLE (Left side tappable to roll when it's your turn) */}
       <View style={styles.actionConsole}>
-        <View style={styles.actionConsoleLeft}>
+        <TouchableOpacity
+          style={styles.actionConsoleLeft}
+          activeOpacity={canRollDice ? 0.7 : 1}
+          onPress={canRollDice ? handleRoll : undefined}
+        >
           <View
             style={[
               styles.turnRoleDot,
@@ -957,7 +988,7 @@ export default function LiveGameScreen() {
             <Text style={styles.statusTitle}>{getStatusMessage()}</Text>
             <Text style={styles.statusSubtitle}>{getSubStatus()}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.actionRightControls}>
           <TouchableOpacity

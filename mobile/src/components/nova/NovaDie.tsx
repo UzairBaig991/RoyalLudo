@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Easing, ViewStyle } from 'react-native';
 
 export type NovaDieTheme =
@@ -145,16 +145,23 @@ export const NovaDie: React.FC<NovaDieProps> = ({
 }) => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [displayValue, setDisplayValue] = useState<number>(value);
 
   useEffect(() => {
+    let faceInterval: ReturnType<typeof setInterval> | null = null;
+
     if (rolling) {
+      faceInterval = setInterval(() => {
+        setDisplayValue(Math.floor(Math.random() * 6) + 1);
+      }, 55);
+
       Animated.parallel([
         Animated.loop(
           Animated.sequence([
             Animated.timing(rotateAnim, {
               toValue: 1,
-              duration: 350,
-              easing: Easing.linear,
+              duration: 190,
+              easing: Easing.out(Easing.quad),
               useNativeDriver: true,
             }),
             Animated.timing(rotateAnim, {
@@ -164,30 +171,29 @@ export const NovaDie: React.FC<NovaDieProps> = ({
             }),
           ])
         ),
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.15,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 0.95,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-        ]),
+        Animated.timing(scaleAnim, {
+          toValue: 1.12,
+          duration: 100,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
       ]).start();
     } else {
+      setDisplayValue(value);
       rotateAnim.stopAnimation();
       rotateAnim.setValue(0);
-      scaleAnim.setValue(1);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 5,
+        tension: 180,
+        useNativeDriver: true,
+      }).start();
     }
-  }, [rolling]);
+
+    return () => {
+      if (faceInterval) clearInterval(faceInterval);
+    };
+  }, [rolling, value]);
 
   const spin = rotateAnim.interpolate({
     inputRange: [0, 1],
@@ -201,7 +207,7 @@ export const NovaDie: React.FC<NovaDieProps> = ({
   const pipColor = palette.pip;
 
   const renderPips = () => {
-    const val = Math.max(1, Math.min(6, value));
+    const val = Math.max(1, Math.min(6, displayValue));
 
     const hasCenter = val === 1 || val === 3 || val === 5;
     const hasTopLeft = val >= 2;

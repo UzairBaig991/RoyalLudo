@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { NOVA_COLORS } from '../../src/theme/colors';
@@ -26,8 +26,11 @@ export default function MatchmakingScreen() {
 
   const [seconds, setSeconds] = useState(isTwoPlayer ? 3 : 4);
   const [playersFound, setPlayersFound] = useState(isTwoPlayer ? 1 : 3);
+  const cancelledRef = useRef<boolean>(false);
 
   const launchMatchNow = () => {
+    if (cancelledRef.current) return;
+    cancelledRef.current = true;
     const myName = profile?.username || 'You';
     startNewGame({
       mode: (mode === 'quick' ? 'quick' : 'classic') as any,
@@ -52,6 +55,7 @@ export default function MatchmakingScreen() {
   };
 
   useEffect(() => {
+    cancelledRef.current = false;
     const timer = setInterval(() => {
       setSeconds((prev) => {
         if (prev <= 1) {
@@ -59,14 +63,17 @@ export default function MatchmakingScreen() {
           setPlayersFound(isTwoPlayer ? 2 : 4);
           setTimeout(() => {
             launchMatchNow();
-          }, 400);
+          }, 350);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      cancelledRef.current = true;
+      clearInterval(timer);
+    };
   }, [isTwoPlayer, players]);
 
   return (
@@ -171,7 +178,10 @@ export default function MatchmakingScreen() {
         <NovaButton
           title="Cancel search"
           variant="dark"
-          onPress={() => router.back()}
+          onPress={() => {
+            cancelledRef.current = true;
+            router.back();
+          }}
         />
       </View>
     </View>

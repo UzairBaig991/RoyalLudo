@@ -1869,7 +1869,8 @@
       height: 58px;
       position: relative;
       transform-style: preserve-3d;
-      transition: transform 0.65s cubic-bezier(0.2, 0.85, 0.35, 1.2);
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
     }
 
     .dice-face {
@@ -2560,8 +2561,8 @@
         <button class="ls-icon-btn" onclick="switchNavTab('shop')" title="Shop">🛒</button>
       </div>
 
-      <!-- GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER -->
-      <div class="ls-turn-announcement-banner" id="turnAnnouncementBanner">
+      <!-- GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER (Tappable to Roll) -->
+      <div class="ls-turn-announcement-banner" id="turnAnnouncementBanner" onclick="onDiceClick()" style="cursor: pointer;">
         <span class="ls-turn-banner-dot" id="turnBannerDot">🔴</span>
         <span class="ls-turn-banner-text" id="turnBannerText">YOUR TURN TO ROLL!</span>
         <span class="ls-turn-banner-pill" id="turnBannerPill">TAP DICE 🎲</span>
@@ -4085,8 +4086,8 @@
 
     function playDiceSound() {
       if (!soundEnabled) return;
-      for (let i = 0; i < 6; i++) {
-        setTimeout(() => playTone(280 + Math.random() * 160, 'triangle', 0.05, 0.2), i * 65);
+      for (let i = 0; i < 4; i++) {
+        setTimeout(() => playTone(300 + Math.random() * 180, 'triangle', 0.04, 0.16), i * 42);
       }
     }
 
@@ -4694,23 +4695,23 @@
       const target = DICE_3D_TARGETS[val] || DICE_3D_TARGETS[1];
 
       if (isAnimated) {
-        diceTotalRotX += 720;
-        diceTotalRotY += 1080;
+        diceTotalRotX += 360;
+        diceTotalRotY += 720;
 
         if (shadow) {
-          shadow.style.transform = 'scale(0.5)';
-          shadow.style.opacity = '0.3';
+          shadow.style.transform = 'scale(0.55)';
+          shadow.style.opacity = '0.35';
         }
 
         cube.style.transform = `rotateX(${diceTotalRotX + target.x}deg) rotateY(${diceTotalRotY + target.y}deg) rotateZ(0deg)`;
 
         setTimeout(() => {
           if (shadow) {
-            shadow.style.transform = 'scale(1.15)';
+            shadow.style.transform = 'scale(1.12)';
             shadow.style.opacity = '0.85';
-            setTimeout(() => { shadow.style.transform = 'scale(1)'; }, 140);
+            setTimeout(() => { shadow.style.transform = 'scale(1)'; }, 100);
           }
-        }, 620);
+        }, 300);
       } else {
         cube.style.transform = `rotateX(${target.x}deg) rotateY(${target.y}deg) rotateZ(0deg)`;
       }
@@ -4761,17 +4762,22 @@
 
     function rollDice() {
       if (gameState.phase !== 'ROLL_DICE') return;
+      const gameScreen = document.getElementById('view-game');
+      if (gameScreen && !gameScreen.classList.contains('active')) return;
       gameState.phase = 'ANIMATING';
+      const speedDiv = gameState.gameSpeed === 2 ? 2 : 1;
 
       const diceBox = document.getElementById('diceBtn');
-      diceBox.classList.add('rolling');
+      const roll = Math.floor(Math.random() * 6) + 1;
+      gameState.currentRoll = roll;
+
+      // Instant 0ms response: start 3D cube tumble and crisp dice audio immediately!
+      if (diceBox) diceBox.classList.add('rolling');
+      render3dDiceRoll(roll, true);
       playDiceSound();
 
       setTimeout(() => {
-        diceBox.classList.remove('rolling');
-        const roll = Math.floor(Math.random() * 6) + 1;
-        gameState.currentRoll = roll;
-        render3dDiceRoll(roll, true);
+        if (diceBox) diceBox.classList.remove('rolling');
 
         if (roll === 6) {
           playSixSound();
@@ -4791,12 +4797,12 @@
         if (gameState.consecutiveSixes === 3) {
           gameState.consecutiveSixes = 0;
           showComboAnnouncer('⚠️ 3 CONSECUTIVE 6s! TURN LOST!');
-          setTimeout(passTurn, 800);
+          setTimeout(passTurn, Math.round(450 / speedDiv));
           return;
         }
 
         handlePostRoll(roll);
-      }, 550);
+      }, Math.round(330 / speedDiv));
     }
 
     function luckyReroll(e) {
@@ -4826,9 +4832,10 @@
     function handlePostRoll(roll) {
       const activeColor = COLORS[gameState.currentTurnSeat];
       const movable = getMovableTokens(activeColor, roll);
+      const speedDiv = gameState.gameSpeed === 2 ? 2 : 1;
 
       if (movable.length === 0) {
-        setTimeout(passTurn, 700);
+        setTimeout(passTurn, Math.round(360 / speedDiv));
         return;
       }
 
@@ -4837,10 +4844,12 @@
 
       const activePlayer = gameState.players[gameState.currentTurnSeat];
       if (activePlayer.isBot || (gameState.isAutoPlay && gameState.currentTurnSeat === 0)) {
-        setTimeout(() => botPickMove(movable, roll), 550);
+        setTimeout(() => botPickMove(movable, roll), Math.round(280 / speedDiv));
       } else {
-        if (movable.length === 1) {
-          setTimeout(() => onTokenClick(activeColor, movable[0].id), 350);
+        // Auto-move if only 1 movable token OR all movable tokens share the exact same step (e.g., all in base at -1)
+        const distinctPositions = new Set(movable.map(t => t.step));
+        if (distinctPositions.size === 1) {
+          setTimeout(() => onTokenClick(activeColor, movable[0].id), Math.round(180 / speedDiv));
         }
       }
     }
@@ -4933,18 +4942,22 @@
         return;
       }
 
+      const speedDiv = gameState.gameSpeed === 2 ? 2 : 1;
       if (earnedExtra) {
         gameState.phase = 'ROLL_DICE';
+        renderTokens();
         const p = gameState.players[gameState.currentTurnSeat];
         if (p.isBot || (gameState.isAutoPlay && gameState.currentTurnSeat === 0)) {
-          setTimeout(rollDice, 650);
+          setTimeout(rollDice, Math.round(600 / speedDiv));
         }
       } else {
-        setTimeout(passTurn, 450);
+        setTimeout(passTurn, Math.round(400 / speedDiv));
       }
     }
 
     function passTurn() {
+      const gameScreen = document.getElementById('view-game');
+      if (gameScreen && !gameScreen.classList.contains('active')) return;
       let nextSeat = (gameState.currentTurnSeat + 1) % 4;
       if (gameState.activePlayerCount === 2) {
         nextSeat = gameState.currentTurnSeat === 0 ? 2 : 0;
@@ -4959,11 +4972,12 @@
       updateTurnHUD();
       renderTokens();
 
+      const speedDiv = gameState.gameSpeed === 2 ? 2 : 1;
       const nextP = gameState.players[nextSeat];
       if (nextP.isBot) {
-        setTimeout(rollDice, 700);
+        setTimeout(rollDice, Math.round(650 / speedDiv));
       } else if (gameState.isAutoPlay && nextSeat === 0) {
-        setTimeout(rollDice, 400);
+        setTimeout(rollDice, Math.round(350 / speedDiv));
       }
     }
 
@@ -6518,9 +6532,14 @@
       updateTurnTimerDisplay();
 
       turnTimerInterval = setInterval(() => {
+        // Pause turn timer while any modal or non-game screen is open
+        if (document.querySelector('.modal-overlay.open')) return;
+        const gameScreen = document.getElementById('view-game');
+        if (gameScreen && !gameScreen.classList.contains('active')) return;
+
         turnTimeLeft -= 1;
         updateTurnTimerDisplay();
-        if (turnTimeLeft <= 5 && turnTimeLeft > 0) {
+        if (turnTimeLeft === 3 || turnTimeLeft === 2) {
           playTickingSound();
         }
 
@@ -6750,7 +6769,10 @@
 
       bar.style.display = 'flex';
       bar.innerHTML = '';
+      const seenSteps = new Set();
       movable.forEach(t => {
+        if (seenSteps.has(t.step)) return;
+        seenSteps.add(t.step);
         const nextStep = calculateTargetStep(t, gameState.currentRoll || 0);
         const willCapture = willMoveCaptureOpponent(t.color, nextStep);
         const isFinish = nextStep === 56;
@@ -6768,7 +6790,7 @@
           : willCapture
           ? `⚔️ Capture with #${t.id + 1}`
           : isDeploy
-          ? `🚀 Deploy Pawn #${t.id + 1}`
+          ? `🚀 Deploy from Base`
           : `♟️ Move Pawn #${t.id + 1} (→${nextStep})`;
         btn.onclick = () => onTokenClick(t.color, t.id);
         bar.appendChild(btn);
