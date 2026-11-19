@@ -92,11 +92,22 @@
       if (titleElem) titleElem.textContent = `${mode} (${bet.toLocaleString()} 🪙)`;
 
       const hud1 = document.getElementById('hud-slot-1');
-      if (hud1) hud1.style.display = count === 2 ? 'none' : 'flex';
+      if (hud1) {
+        hud1.style.display = 'flex';
+        hud1.style.visibility = count === 2 ? 'hidden' : 'visible';
+        hud1.style.pointerEvents = count === 2 ? 'none' : 'auto';
+      }
       const hud3 = document.getElementById('hud-slot-3');
-      if (hud3) hud3.style.display = count === 2 ? 'none' : 'flex';
+      if (hud3) {
+        hud3.style.display = 'flex';
+        hud3.style.visibility = count === 2 ? 'hidden' : 'visible';
+        hud3.style.pointerEvents = count === 2 ? 'none' : 'auto';
+      }
       const hud2 = document.getElementById('hud-slot-2');
-      if (hud2) hud2.style.display = 'flex';
+      if (hud2) {
+        hud2.style.display = 'flex';
+        hud2.style.visibility = 'visible';
+      }
 
       const name2 = document.getElementById('name-slot-2');
       if (name2) name2.textContent = gameState.players[2].name;
@@ -1249,66 +1260,62 @@
       to { transform: scale(1.08); }
     }
 
-    /* TOP PLAYERS HUD ROW */
-    .ls-opponents-hud-row {
+    /* SYMMETRICAL CORNER PLAYER ROWS (Directly aligned with Green/Yellow & Red/Blue Homes) */
+    .ls-opponents-hud-row,
+    .ls-bottom-players-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       width: 100%;
       max-width: 480px;
       margin: 0 auto;
+      gap: 8px;
       flex-shrink: 0;
     }
 
     .ls-player-pod {
       display: flex;
       align-items: center;
-      background: rgba(35, 4, 34, 0.9);
+      justify-content: space-between;
+      background: rgba(28, 4, 30, 0.92);
       border: 2px solid #521350;
-      border-radius: 20px;
-      padding: 4px 8px 4px 5px;
+      border-radius: 18px;
+      padding: 4px 7px;
       position: relative;
-      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease, opacity 0.25s ease;
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.3s ease, opacity 0.25s ease;
+      flex: 1;
+      min-width: 0;
       max-width: 49%;
       gap: 6px;
     }
 
     .ls-player-pod.active-turn {
       border-color: #27AE70;
-      background: rgba(54, 12, 54, 0.96);
+      background: rgba(54, 12, 54, 0.98);
       box-shadow: 0 0 18px rgba(39, 174, 112, 0.65);
-      transform: scale(1.03);
-      z-index: 20;
+      transform: scale(1.02);
+      z-index: 25;
     }
 
-    /* LUDO STAR MOVING DICE DOCK INSIDE EVERY PLAYER PROFILE */
+    /* UNIFORM FIXED-SIZE DICE DOCK FOR ALL 4 PLAYERS (LUDO STAR STYLE) */
     .ls-player-dice-dock {
       position: relative;
+      width: 54px;
+      height: 54px;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 14px;
-      background: rgba(15, 2, 16, 0.55);
+      background: rgba(15, 2, 16, 0.6);
       border: 2px solid rgba(255, 255, 255, 0.14);
       transition: border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
       flex-shrink: 0;
     }
 
-    .ls-player-dice-dock.opp-dock {
-      width: 50px;
-      height: 50px;
-      border-radius: 13px;
-    }
-
-    .ls-player-dice-dock.main-dock {
-      width: 74px;
-      height: 74px;
-      border-radius: 18px;
-    }
-
     .ls-player-dice-dock.active-dock {
       border-color: var(--dock-color, #FFDF00);
-      background: radial-gradient(circle at center, rgba(255, 223, 0, 0.22) 0%, rgba(20, 4, 24, 0.85) 75%);
-      box-shadow: 0 0 16px var(--dock-glow, rgba(255, 223, 0, 0.55)), inset 0 0 10px rgba(255, 255, 255, 0.14);
+      background: radial-gradient(circle at center, rgba(255, 223, 0, 0.24) 0%, rgba(20, 4, 24, 0.88) 75%);
+      box-shadow: 0 0 16px var(--dock-glow, rgba(255, 223, 0, 0.6)), inset 0 0 10px rgba(255, 255, 255, 0.14);
       animation: dockHaloPulse 1.4s infinite alternate ease-in-out;
     }
 
@@ -1319,7 +1326,7 @@
 
     .ls-dock-placeholder {
       font-size: 16px;
-      opacity: 0.22;
+      opacity: 0.18;
       pointer-events: none;
       user-select: none;
       position: absolute;
@@ -1330,9 +1337,9 @@
       opacity: 0;
     }
 
-    /* Smooth scaling when the 3D dice docks inside an opponent profile pod */
-    .dice-3d-arena.in-opp-dock {
-      transform: scale(0.66);
+    /* SINGLE FIXED DICE SCALE FOR ALL 4 PLAYERS (Zero shrink/grow between turns) */
+    .dice-3d-arena.in-player-dock {
+      transform: scale(0.75);
       transform-origin: center center;
     }
 
@@ -1340,6 +1347,77 @@
       z-index: 999 !important;
       filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 16px rgba(255, 223, 0, 0.75));
       pointer-events: none;
+    }
+
+    /* ACTIVE HOME CORNER PROFILE AVATAR BADGE (Appears on the active player's color home!) */
+    .ls-home-turn-badge {
+      position: absolute;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      border: 2.5px solid #FFFFFF;
+      z-index: 18;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 16px var(--home-glow, #FFDF00);
+      animation: homeBadgePop 0.35s cubic-bezier(0.22, 1.35, 0.36, 1);
+    }
+
+    .ls-home-turn-badge.visible {
+      display: flex;
+    }
+
+    @keyframes homeBadgePop {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    /* Position each home corner badge right at the corner of that color's home base */
+    .ls-home-turn-badge.home-seat-0 { bottom: 6px; left: 6px; background: #E74C3C; --home-glow: rgba(231, 76, 60, 0.9); }
+    .ls-home-turn-badge.home-seat-1 { top: 6px; left: 6px; background: #27AE60; --home-glow: rgba(46, 204, 113, 0.9); }
+    .ls-home-turn-badge.home-seat-2 { top: 6px; right: 6px; background: #F1C40F; --home-glow: rgba(241, 196, 15, 0.95); }
+    .ls-home-turn-badge.home-seat-3 { bottom: 6px; right: 6px; background: #2980B9; --home-glow: rgba(52, 152, 219, 0.9); }
+
+    /* MINIMALIST LUDO STAR BOTTOM UTILITY BAR (4 Clean Buttons, Zero Clutter) */
+    .ls-clean-bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 480px;
+      margin: 2px auto 0 auto;
+      flex-shrink: 0;
+    }
+
+    .ls-clean-util-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      background: rgba(54, 14, 54, 0.92);
+      border: 1.5px solid #752273;
+      border-radius: 14px;
+      padding: 6px 14px;
+      font-family: 'Fredoka', cursive;
+      font-size: 11px;
+      font-weight: 800;
+      color: #FFF;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+      transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .ls-clean-util-btn:active {
+      transform: scale(0.94);
+    }
+
+    .ls-clean-util-btn:hover {
+      border-color: var(--ls-gold-top);
+      background: rgba(82, 19, 80, 0.95);
     }
 
     .ls-avatar-ring {
@@ -1587,42 +1665,28 @@
         height: 30px;
         font-size: 14px;
       }
-      .ls-info-pill {
-        padding: 4px 9px;
-        font-size: 10px;
-      }
       .ls-win-pill {
-        padding: 3px 8px;
+        padding: 3px 9px;
       }
       .ls-win-text {
         font-size: 11px;
       }
-      .ls-turn-announcement-banner {
-        padding: 3px 8px;
-        margin: 1px auto 2px auto;
-        gap: 5px;
-      }
-      .ls-turn-banner-text {
-        font-size: 11px;
-      }
-      .ls-opponents-hud-row {
+      .ls-opponents-hud-row,
+      .ls-bottom-players-row {
         gap: 6px;
       }
       .ls-player-pod {
-        flex: 1;
-        min-width: 0;
-        max-width: 49.5%;
-        padding: 3px 6px 3px 4px;
-        gap: 4px;
-        border-radius: 16px;
+        padding: 3px 6px;
+        gap: 5px;
+        border-radius: 15px;
       }
       .ls-avatar-ring {
-        width: 30px;
-        height: 30px;
-        font-size: 16px;
+        width: 32px;
+        height: 32px;
+        font-size: 17px;
       }
       .ls-player-pod-meta {
-        margin-left: 3px;
+        margin-left: 2px;
         min-width: 0;
         flex: 1;
       }
@@ -1632,65 +1696,54 @@
       .ls-player-pod-tokens {
         font-size: 9px;
       }
-      .ls-player-dice-dock.opp-dock {
-        width: 42px;
-        height: 42px;
-        border-radius: 11px;
+      /* UNIFORM FIXED DICE SIZE FOR ALL 4 PLAYERS ON MOBILE */
+      .ls-player-dice-dock {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
       }
-      .dice-3d-arena.in-opp-dock {
-        transform: scale(0.56);
-      }
-      .ls-mini-gift-btn {
-        display: none;
+      .dice-3d-arena.in-player-dock {
+        transform: scale(0.70);
       }
       .ls-board-stage {
-        width: min(94vw, 44dvh, 370px);
-        height: min(94vw, 44dvh, 370px);
+        width: min(95vw, 54dvh, 410px);
+        height: min(95vw, 54dvh, 410px);
         border-width: 2.5px;
         border-radius: 14px;
       }
-      .ls-bottom-opp-row .ls-player-pod {
-        flex: 0 1 auto;
-        max-width: 62%;
-      }
       .ls-avatar-with-timer {
-        width: 44px;
-        height: 44px;
+        width: 38px;
+        height: 38px;
       }
       .ls-timer-svg {
-        width: 44px;
-        height: 44px;
+        width: 38px;
+        height: 38px;
       }
       .ls-player-avatar-circle {
-        width: 36px;
-        height: 36px;
-        font-size: 20px;
+        width: 30px;
+        height: 30px;
+        font-size: 17px;
       }
-      .ls-player-dice-dock.main-dock {
-        width: 66px;
-        height: 66px;
+      .ls-clean-bottom-bar {
+        gap: 6px;
       }
-      .ls-player-hud {
-        max-width: calc(100% - 122px);
+      .ls-clean-util-btn {
+        padding: 5px 10px;
+        font-size: 10px;
+        border-radius: 12px;
       }
-      .ls-lucky-reroll-badge-btn {
-        width: 42px;
-        height: 50px;
+      .ls-home-turn-badge {
+        width: 28px;
+        height: 28px;
+        font-size: 15px;
       }
     }
 
     /* Short Mobile Viewports (e.g. small Android / iPhone SE <= 700px height) */
     @media (max-height: 700px) {
       .ls-board-stage {
-        width: min(88vw, 40dvh, 330px);
-        height: min(88vw, 40dvh, 330px);
-      }
-      .ls-turn-announcement-banner {
-        padding: 2px 8px;
-        margin: 1px auto;
-      }
-      .ls-speech-bubble-pop {
-        display: none;
+        width: min(92vw, 48dvh, 360px);
+        height: min(92vw, 48dvh, 360px);
       }
     }
 
@@ -1701,37 +1754,35 @@
         max-width: 580px;
       }
       .ls-in-game-header,
-      .ls-turn-announcement-banner,
       .ls-opponents-hud-row,
-      .ls-in-game-bottom-area {
-        max-width: 600px;
+      .ls-bottom-players-row,
+      .ls-clean-bottom-bar {
+        max-width: 560px;
       }
       .ls-board-stage {
-        width: min(56vh, 520px);
-        height: min(56vh, 520px);
+        width: min(60vh, 520px);
+        height: min(60vh, 520px);
         border-width: 4px;
       }
       .ls-player-pod {
-        padding: 6px 12px 6px 8px;
+        padding: 6px 10px;
         gap: 8px;
       }
       .ls-player-pod-name {
-        font-size: 13px;
+        font-size: 12px;
       }
-      .ls-player-hud {
-        max-width: calc(100% - 150px);
+      /* UNIFORM FIXED DICE SIZE FOR ALL 4 PLAYERS ON DESKTOP */
+      .ls-player-dice-dock {
+        width: 62px;
+        height: 62px;
+        border-radius: 15px;
       }
-      .ls-action-buttons-under {
-        flex-wrap: wrap;
-        overflow-x: visible;
+      .dice-3d-arena.in-player-dock {
+        transform: scale(0.86);
       }
-      .ls-mini-action-pill {
-        font-size: 10px;
-        padding: 4px 10px;
-      }
-      .ls-mini-action-pill:hover {
-        filter: brightness(1.18);
-        transform: translateY(-1px);
+      .ls-clean-util-btn {
+        padding: 7px 16px;
+        font-size: 12px;
       }
     }
 
@@ -2801,12 +2852,11 @@
          SCREEN 2: ADVANCED LUDO STAR IN-GAME BOARD (SINGLE PAGE)
          ======================================================== -->
     <section class="screen-view" id="view-game">
-      <!-- 1. TOP HEADER (Image 2 Screen 3 replica) -->
+      <!-- 1. CLEAN LUDO STAR TOP HEADER -->
       <div class="ls-in-game-header">
-        <button class="ls-icon-btn" onclick="openInGameMenu()" title="Match Menu (Three Lines)">☰</button>
-        <button class="ls-info-pill" onclick="openMatchRulesModal()">INFO</button>
+        <button class="ls-icon-btn" onclick="openInGameMenu()" title="Match Menu">☰</button>
         <div class="ls-win-pill">
-          <span style="font-size: 15px; margin-right: 4px;">🏆</span>
+          <span style="font-size: 14px; margin-right: 4px;">🏆</span>
           <span class="ls-win-text" id="tableTitleDisplay">WIN 2,000</span>
         </div>
         <div class="ls-gems-pill">
@@ -2814,117 +2864,69 @@
           <span class="ls-gems-count" id="inGameGemsCount">30</span>
           <button class="ls-plus-btn" onclick="switchNavTab('shop')">+</button>
         </div>
-        <button class="ls-icon-btn" onclick="switchNavTab('shop')" title="Shop">🛒</button>
+        <button class="ls-icon-btn" onclick="openDiceSkinModal()" title="Change 3D Dice Skin">🎲</button>
       </div>
 
-      <!-- GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER (Tappable to Roll) -->
-      <div class="ls-turn-announcement-banner" id="turnAnnouncementBanner" onclick="onDiceClick()" style="cursor: pointer;">
-        <span class="ls-turn-banner-dot" id="turnBannerDot">🔴</span>
-        <span class="ls-turn-banner-text" id="turnBannerText">YOUR TURN TO ROLL!</span>
-        <span class="ls-turn-banner-pill" id="turnBannerPill">TAP DICE 🎲</span>
-      </div>
-
-      <!-- 2. TOP OPPONENTS HUD ROW -->
+      <!-- 2. TOP CORNER PLAYERS (Aligned directly over Green Home & Yellow Home) -->
       <div class="ls-opponents-hud-row">
-        <!-- Player 2 (Green / Top-Left): Shivali Mahajan -->
-        <div class="ls-player-pod" id="hud-slot-1" onclick="openOpponentGiftLauncher(1)" style="cursor: pointer;" title="Tap to throw gifts!">
+        <!-- Player 2 (Green / Top-Left Home) -->
+        <div class="ls-player-pod" id="hud-slot-1" onclick="openOpponentGiftLauncher(1)" style="cursor: pointer;" title="Tap to send gift">
           <div class="ls-avatar-ring green">👩</div>
           <div class="ls-player-pod-meta">
             <div class="ls-player-pod-name" id="name-slot-1">Shivali Mahajan</div>
             <div class="ls-player-pod-tokens" id="tokens-slot-1">0/4 🏁</div>
           </div>
-          <div class="ls-player-dice-dock opp-dock" id="dice-dock-1" onclick="event.stopPropagation()">
+          <div class="ls-player-dice-dock" id="dice-dock-1" onclick="event.stopPropagation()">
             <span class="ls-dock-placeholder">🎲</span>
           </div>
-          <button class="ls-mini-gift-btn" onclick="event.stopPropagation(); showNotificationToast('🎁 Sent 100 free coins to Shivali!')">🎁</button>
           <div class="player-speech-bubble" id="bubble-1" style="display: none;"></div>
         </div>
 
-        <!-- Player 3 (Yellow / Top-Right): Sachin Kumar Sh -->
-        <div class="ls-player-pod" id="hud-slot-2" onclick="openOpponentGiftLauncher(2)" style="cursor: pointer;" title="Tap to throw gifts!">
-          <div class="ls-player-dice-dock opp-dock" id="dice-dock-2" onclick="event.stopPropagation()">
+        <!-- Player 3 (Yellow / Top-Right Home) -->
+        <div class="ls-player-pod" id="hud-slot-2" onclick="openOpponentGiftLauncher(2)" style="cursor: pointer;" title="Tap to send gift">
+          <div class="ls-player-dice-dock" id="dice-dock-2" onclick="event.stopPropagation()">
             <span class="ls-dock-placeholder">🎲</span>
           </div>
-          <div class="ls-avatar-ring yellow">🧔</div>
-          <div class="ls-player-pod-meta">
+          <div class="ls-player-pod-meta" style="text-align: right; margin-left: 0; margin-right: 4px;">
             <div class="ls-player-pod-name" id="name-slot-2">Sachin Kumar Sh</div>
             <div class="ls-player-pod-tokens" id="tokens-slot-2">0/4 🏁</div>
           </div>
+          <div class="ls-avatar-ring yellow">🧔</div>
           <div class="player-speech-bubble" id="bubble-2" style="display: none;"></div>
         </div>
       </div>
 
-      <!-- 3. CENTER 15x15 LUDO BOARD STAGE -->
+      <!-- 3. CENTER 15x15 LUDO BOARD STAGE (With Active Turn Profile Picture on Active Color Home!) -->
       <div class="ls-board-stage" id="boardWrapper">
         <svg class="ludo-star-svg" id="ludoSvg" viewBox="0 0 600 600"></svg>
+        <div class="ls-home-turn-badge home-seat-0" id="home-badge-0">😎</div>
+        <div class="ls-home-turn-badge home-seat-1" id="home-badge-1">👩</div>
+        <div class="ls-home-turn-badge home-seat-2" id="home-badge-2">🧔</div>
+        <div class="ls-home-turn-badge home-seat-3" id="home-badge-3">👱‍♂️</div>
       </div>
 
-      <!-- 3.5. 1-CLICK QUICK-MOVE ASSIST BAR -->
+      <!-- 3.5. 1-CLICK QUICK-MOVE ASSIST BAR (Only appears when choosing among multiple tokens) -->
       <div id="webQuickMoveBar" style="display: none; gap: 6px; justify-content: center; flex-wrap: wrap; padding: 2px 8px; z-index: 25;"></div>
 
-      <!-- 4. BOTTOM AREA: OPPONENT 4 + PLAYER HUD & MASTER DICE STATION -->
-      <div class="ls-in-game-bottom-area">
-        <!-- Bottom-Right Opponent (Blue / Thiago Rodrigues) -->
-        <div class="ls-bottom-opp-row">
-          <div class="ls-player-pod" id="hud-slot-3" onclick="openOpponentGiftLauncher(3)" style="cursor: pointer;" title="Tap to throw gifts!">
-            <div class="ls-player-dice-dock opp-dock" id="dice-dock-3" onclick="event.stopPropagation()">
-              <span class="ls-dock-placeholder">🎲</span>
-            </div>
-            <div class="ls-avatar-ring blue">👱‍♂️</div>
-            <div class="ls-player-pod-meta">
-              <div class="ls-player-pod-name" id="name-slot-3">Thiago Rodrigues</div>
-              <div class="ls-player-pod-tokens" id="tokens-slot-3">0/4 🏁</div>
-            </div>
-            <div class="player-speech-bubble" id="bubble-3" style="display: none;"></div>
+      <!-- 4. BOTTOM CORNER PLAYERS (Aligned directly under Red Home & Blue Home — Fixed Dice Size for All!) -->
+      <div class="ls-bottom-players-row">
+        <!-- Player 1 (Red / Bottom-Left Home — YOU) -->
+        <div class="ls-player-pod" id="hud-slot-0">
+          <div class="ls-avatar-with-timer">
+            <svg class="ls-timer-svg" viewBox="0 0 52 52">
+              <circle class="ls-timer-circle-bg" cx="26" cy="26" r="23" />
+              <circle class="ls-timer-circle-fg" id="timerRingCircle" cx="26" cy="26" r="23" />
+            </svg>
+            <div class="ls-player-avatar-circle">😎</div>
           </div>
-        </div>
-
-        <!-- Active Player Console: Player HUD & The Iconic Ludo Star Dice Station -->
-        <div class="ls-active-console-row">
-          <!-- Player Pod -->
-          <div class="ls-player-hud" id="hud-slot-0">
-            <!-- Speech Bubble -->
-            <div class="ls-speech-bubble-pop" id="bubble-0">👑</div>
-
-            <!-- Avatar with Animated Circular Turn Countdown Timer -->
-            <div class="ls-avatar-with-timer">
-              <svg class="ls-timer-svg" viewBox="0 0 52 52">
-                <circle class="ls-timer-circle-bg" cx="26" cy="26" r="23" />
-                <circle class="ls-timer-circle-fg" id="timerRingCircle" cx="26" cy="26" r="23" />
-              </svg>
-              <div class="ls-player-avatar-circle">😎</div>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-              <div class="ls-player-name-text" id="hudPlayerName">Uzair (You)</div>
-              <div class="ls-player-pod-tokens" id="tokens-slot-0" style="font-size: 9px; background: rgba(0,0,0,0.45); padding: 1px 5px; border-radius: 6px; color: #FFDF00; font-weight: 900;">0/4 🏁</div>
-              <div class="voice-mic-pill" onclick="toggleVoiceMic()" title="Voice Chat Status">
-                <span style="font-size: 10px;">🎙️</span>
-                <div class="voice-bars"><span class="vbar"></span><span class="vbar"></span><span class="vbar"></span></div>
-              </div>
-              <div id="homeKillStatusPill" style="font-size: 8px; font-weight: 900; background: #C0392B; color: #FFF; padding: 1px 5px; border-radius: 6px;">🔒 KILL NEEDED</div>
-            </div>
-
-            <!-- Action Buttons: DICE SKIN, AI HINT, SPEED, AUTO, EMOJI, CHAT & BOOSTERS (Swipeable on Mobile, Wrapped on Desktop) -->
-            <div class="ls-action-buttons-under">
-              <button class="ls-mini-action-pill" onclick="openDiceSkinModal()" style="background: #4A148C; border-color: #EA80FC; color: #FFDF00;" title="Change 3D Dice Skin">🎲 SKIN</button>
-              <button class="ls-mini-action-pill" onclick="triggerAiMoveHint()" style="background: #0B3B24; border-color: #2ECC71; color: #82E0AA;" title="Smart AI Tactical Move Hint">🧠 HINT</button>
-              <button class="ls-mini-action-pill" id="gameSpeedBtn" onclick="toggleGameSpeed()" style="background: #1B263B; border-color: #38BDF8; color: #38BDF8;" title="Toggle 1x / 2x Game Speed">⚡ 1X</button>
-              <button class="ls-mini-action-pill" id="autoPlayBtn" onclick="toggleAutoPlay()" style="background: #370A36; border-color: #A66606;">🤖 AUTO</button>
-              <button class="ls-mini-action-pill" onclick="toggleEmojiTray()">EMOJI</button>
-              <button class="ls-mini-action-pill" onclick="toggleChatTray()">CHAT</button>
-              <button class="ls-mini-action-pill" onclick="activateMagicSixBooster()" style="background: #1B4F72; border-color: #00E5FF; color: #00E5FF;" title="Guarantee a 6 on your turn (2 Gems)">🎯 6 (2💎)</button>
-              <button class="ls-mini-action-pill" onclick="activateShieldBooster()" style="background: #0E6251; border-color: #2ECC71; color: #2ECC71;" title="Shield leading pawn from capture (1 Gem)">🛡️ (1💎)</button>
-              <button class="ls-mini-action-pill" onclick="doubleMatchBet()" style="background: #7D4E00; border-color: #FFDF00; color: #FFDF00;">💰 2X</button>
-            </div>
+          <div class="ls-player-pod-meta">
+            <div class="ls-player-pod-name" id="hudPlayerName">Uzair (You)</div>
+            <div class="ls-player-pod-tokens" id="tokens-slot-0">0/4 🏁</div>
           </div>
-
-          <!-- THE LUDO STAR DICE STATION (Your Profile Dice Dock) -->
-          <div class="ls-dice-station-box">
-            <div class="ls-player-dice-dock main-dock active-dock" id="dice-dock-0" style="--dock-color: #E74C4C; --dock-glow: rgba(231, 76, 76, 0.7);">
-              <span class="ls-dock-placeholder">🎲</span>
-              <!-- Ultra-Advanced 3D Cube Dice (Flies smoothly to active player's profile dock!) -->
-              <div class="dice-3d-arena" id="diceBtn" onclick="onDiceClick()" title="Tap to Roll 3D Dice!">
+          <div class="ls-player-dice-dock active-dock" id="dice-dock-0" style="--dock-color: #E74C4C; --dock-glow: rgba(231, 76, 76, 0.7);">
+            <span class="ls-dock-placeholder">🎲</span>
+            <!-- Ultra-Advanced 3D Cube Dice (Fixed Size, Flies Smoothly to Active Player's Home!) -->
+            <div class="dice-3d-arena in-player-dock" id="diceBtn" onclick="onDiceClick()" title="Tap to Roll 3D Dice!">
               <!-- Authentic Ludo Star Bouncing Arrow (Directly on Upper Side of Dice, ONLY on Your Roll Turn) -->
               <div class="ls-bouncing-arrow-down" id="turnArrow">
                 <svg viewBox="0 0 40 40" width="34" height="34">
@@ -2981,15 +2983,30 @@
                 </div>
               </div>
             </div>
-            </div>
-
-            <!-- The Iconic Lucky Reroll Button (💎 3) -->
-            <div class="ls-lucky-reroll-badge-btn" id="rerollBtn" onclick="luckyReroll(event)" title="Spend 3 Gems to Reroll!">
-              <div class="ls-reroll-icon-spin">🔄</div>
-              <div class="ls-reroll-cost-pill">💎 3</div>
-            </div>
           </div>
+          <div class="player-speech-bubble" id="bubble-0" style="display: none;"></div>
         </div>
+
+        <!-- Player 4 (Blue / Bottom-Right Home) -->
+        <div class="ls-player-pod" id="hud-slot-3" onclick="openOpponentGiftLauncher(3)" style="cursor: pointer;" title="Tap to send gift">
+          <div class="ls-player-dice-dock" id="dice-dock-3" onclick="event.stopPropagation()">
+            <span class="ls-dock-placeholder">🎲</span>
+          </div>
+          <div class="ls-player-pod-meta" style="text-align: right; margin-left: 0; margin-right: 4px;">
+            <div class="ls-player-pod-name" id="name-slot-3">Thiago Rodrigues</div>
+            <div class="ls-player-pod-tokens" id="tokens-slot-3">0/4 🏁</div>
+          </div>
+          <div class="ls-avatar-ring blue">👱‍♂️</div>
+          <div class="player-speech-bubble" id="bubble-3" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- 5. MINIMALIST LUDO STAR BOTTOM UTILITY BAR (Clean & Uncluttered) -->
+      <div class="ls-clean-bottom-bar">
+        <button class="ls-clean-util-btn" onclick="toggleEmojiTray()">😊 Emoji</button>
+        <button class="ls-clean-util-btn" onclick="toggleChatTray()">💬 Chat</button>
+        <button class="ls-clean-util-btn" onclick="triggerAiMoveHint()">🧠 Hint</button>
+        <button class="ls-clean-util-btn" id="rerollBtn" onclick="luckyReroll(event)" style="border-color: #FFDF00; color: #FFDF00;">🔄 💎3</button>
       </div>
     </section>
 
@@ -5291,20 +5308,17 @@
         }
       }
 
-      const isOpp = seat !== 0;
-      const oppScale = window.innerWidth <= 430 ? 0.56 : 0.66;
-      const targetScale = isOpp ? oppScale : 1;
+      const uniformScale = window.innerWidth <= 430 ? 0.70 : (window.innerWidth >= 768 ? 0.86 : 0.75);
 
       // Already docked in this player's profile section
       if (diceArena.parentElement === targetDock) {
-        diceArena.classList.toggle('in-opp-dock', isOpp);
+        diceArena.classList.add('in-player-dock');
         return;
       }
 
-      // FLIP (First-Last-Invert-Play) smooth flight animation across the board
+      // FLIP (First-Last-Invert-Play) smooth flight animation across the board (Fixed Uniform Size!)
       const beforeRect = diceArena.getBoundingClientRect();
       const canAnimate = animate && beforeRect.width > 0 && beforeRect.height > 0;
-      const fromScale = diceArena.classList.contains('in-opp-dock') ? 0.66 : 1;
 
       if (diceFlightTimer) {
         clearTimeout(diceFlightTimer);
@@ -5314,7 +5328,7 @@
       // Move DOM node into the active player's profile dock
       diceArena.style.transition = 'none';
       diceArena.style.transform = '';
-      diceArena.classList.toggle('in-opp-dock', isOpp);
+      diceArena.classList.add('in-player-dock');
       targetDock.appendChild(diceArena);
 
       if (!canAnimate) return;
@@ -5328,19 +5342,19 @@
       // Invert: place dice visually back at the previous player's dock
       diceArena.classList.add('dice-in-flight');
       diceArena.style.transition = 'none';
-      diceArena.style.transform = `translate(${dx}px, ${dy}px) scale(${fromScale * 1.12}) rotate(-10deg)`;
+      diceArena.style.transform = `translate(${dx}px, ${dy}px) scale(${uniformScale * 1.1}) rotate(-8deg)`;
       void diceArena.offsetWidth; // Force reflow
 
-      // Play: glide smoothly with spring overshoot into the new player's profile section
-      diceArena.style.transition = 'transform 0.44s cubic-bezier(0.22, 1.22, 0.36, 1)';
-      diceArena.style.transform = `translate(0px, 0px) scale(${targetScale}) rotate(0deg)`;
+      // Play: glide smoothly with spring settle into the new player's profile section at the exact same fixed size
+      diceArena.style.transition = 'transform 0.42s cubic-bezier(0.22, 1.2, 0.36, 1)';
+      diceArena.style.transform = `translate(0px, 0px) scale(${uniformScale}) rotate(0deg)`;
 
       diceFlightTimer = setTimeout(() => {
         diceArena.classList.remove('dice-in-flight');
         diceArena.style.transition = '';
         diceArena.style.transform = '';
         diceFlightTimer = null;
-      }, 460);
+      }, 440);
     }
 
     function updateTurnHUD() {
@@ -5352,10 +5366,10 @@
       const colorNames = ['RED', 'GREEN', 'YELLOW', 'BLUE'];
       const activeColor = colors[seat];
 
-      // Smoothly animate the 3D dice to the active player's profile section (Ludo Star Style)
+      // Smoothly animate the fixed-size 3D dice to the active player's profile section (Ludo Star Style)
       moveDiceToPlayerDock(seat, true);
       
-      // Update Pod Highlighting and Inactive Player Dimming
+      // Update Pod Highlighting, Inactive Dimming & Active Home Corner Profile Picture
       for (let i = 0; i < 4; i++) {
         const pod = document.getElementById(`hud-slot-${i}`);
         if (pod) {
@@ -5370,6 +5384,10 @@
             pod.style.boxShadow = 'none';
             pod.classList.remove('active-turn');
           }
+        }
+        const homeBadge = document.getElementById(`home-badge-${i}`);
+        if (homeBadge) {
+          homeBadge.classList.toggle('visible', i === seat);
         }
       }
 

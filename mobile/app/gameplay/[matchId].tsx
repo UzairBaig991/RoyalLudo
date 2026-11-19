@@ -741,70 +741,7 @@ export default function LiveGameScreen() {
         </View>
       </View>
 
-      {/* 1.5. GIANT HIGH-VISIBILITY TURN ANNOUNCEMENT BANNER (Tappable to Roll!) */}
-      <TouchableOpacity
-        activeOpacity={canRollDice ? 0.75 : 1}
-        onPress={canRollDice ? handleRoll : undefined}
-        style={[
-          styles.turnAnnouncementBanner,
-          {
-            backgroundColor:
-              currentTurnSeat === 0
-                ? 'rgba(255, 107, 107, 0.18)'
-                : currentTurnSeat === 1
-                ? 'rgba(46, 213, 115, 0.18)'
-                : currentTurnSeat === 2
-                ? 'rgba(255, 215, 0, 0.18)'
-                : 'rgba(56, 103, 214, 0.18)',
-            borderColor:
-              currentTurnSeat === 0
-                ? NOVA_COLORS.coral
-                : currentTurnSeat === 1
-                ? NOVA_COLORS.mint
-                : currentTurnSeat === 2
-                ? NOVA_COLORS.gold
-                : NOVA_COLORS.blue,
-          },
-        ]}
-      >
-        <View style={styles.turnBannerInner}>
-          <View
-            style={[
-              styles.turnBannerPulsingDot,
-              {
-                backgroundColor:
-                  currentTurnSeat === 0
-                    ? NOVA_COLORS.coral
-                    : currentTurnSeat === 1
-                    ? NOVA_COLORS.mint
-                    : currentTurnSeat === 2
-                    ? NOVA_COLORS.gold
-                    : NOVA_COLORS.blue,
-              },
-            ]}
-          />
-          <Text style={styles.turnBannerMainText}>
-            {currentTurnSeat === 0
-              ? canRollDice
-                ? '🔴 YOUR TURN TO ROLL!'
-                : '🔴 YOUR TURN · MOVE TOKEN!'
-              : currentTurnSeat === 1
-              ? "🟢 GREEN PLAYER'S TURN"
-              : currentTurnSeat === 2
-              ? isTwoPlayerMode
-                ? "🟡 COMPANION'S TURN (YELLOW)"
-                : "🟡 YELLOW PLAYER'S TURN"
-              : "🔵 BLUE PLAYER'S TURN"}
-          </Text>
-          {isMyTurn && canRollDice && (
-            <View style={styles.turnBannerActionPill}>
-              <Text style={styles.turnBannerActionPillText}>TAP DICE 🎲</Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-
-      {/* 2. TOP OPPONENTS ROW */}
+      {/* 2. TOP OPPONENTS ROW (Aligned directly over Green Home & Yellow Home) */}
       <View style={styles.playersRow}>
         {/* Top-Left Slot: Green (Player 1 in 4P mode, Hidden spacer in 2P mode) */}
         {!isTwoPlayerMode ? (
@@ -823,7 +760,7 @@ export default function LiveGameScreen() {
         )}
       </View>
 
-      {/* 3. CENTER LUDO BOARD (With Non-Layout-Shifting Floating Toast Overlays) */}
+      {/* 3. CENTER LUDO BOARD (With Active Turn Profile Picture on Active Color Home & Floating Toasts) */}
       <View style={styles.boardWrapper}>
         <LudoBoardSvg
           size={BOARD_SIZE}
@@ -833,6 +770,47 @@ export default function LiveGameScreen() {
             handleSelectToken(seatIndex, tokenId);
           }}
         />
+
+        {/* ACTIVE PLAYER PROFILE BADGE ON MATCHING COLOR HOME CORNER (Ludo Star Style) */}
+        <View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              width: 30,
+              height: 30,
+              borderRadius: 15,
+              borderWidth: 2,
+              borderColor: '#FFFFFF',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 25,
+              elevation: 6,
+              backgroundColor:
+                currentTurnSeat === 0
+                  ? NOVA_COLORS.coral
+                  : currentTurnSeat === 1
+                  ? NOVA_COLORS.mint
+                  : currentTurnSeat === 2
+                  ? NOVA_COLORS.gold
+                  : NOVA_COLORS.blue,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.55,
+              shadowRadius: 5,
+            },
+            currentTurnSeat === 0 && { bottom: 8, left: 8 },
+            currentTurnSeat === 1 && { top: 8, left: 8 },
+            currentTurnSeat === 2 && { top: 8, right: 8 },
+            currentTurnSeat === 3 && { bottom: 8, right: 8 },
+          ]}
+        >
+          <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '900' }}>
+            {(activeSeatPlayer?.username || (currentTurnSeat === 0 ? profile?.username || 'Y' : 'P'))
+              .charAt(0)
+              .toUpperCase()}
+          </Text>
+        </View>
 
         {/* FLOATING NON-SHIFTING CELEBRATION & HINT BANNERS */}
         {(celebrateSix || captureBanner || tacticalHint || activeSpeech) && (
