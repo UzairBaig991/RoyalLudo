@@ -583,7 +583,11 @@ export default function LiveGameScreen() {
     const isMe = seatIndex === 0;
     const fullPlayer = gameState.players.find((p) => p.seatIndex === seatIndex);
     const isHumanSeat = fullPlayer ? !fullPlayer.isBot : isMe;
-    const displayName = isMe ? (profile?.username || player.username || 'You') : player.username;
+    const rawName = (isMe ? (profile?.username || player.username || 'You') : player.username)
+      .replace(/\s*\((You|Red|Green|Yellow|Blue)\)\s*/gi, '')
+      .trim();
+    const prettyColorName = colorName.charAt(0) + colorName.slice(1).toLowerCase();
+    const displayName = `${rawName} (${prettyColorName})`;
 
     return (
       <View style={[styles.playerCardContainer, { opacity: isThisTurn ? 1 : 0.42 }]}>

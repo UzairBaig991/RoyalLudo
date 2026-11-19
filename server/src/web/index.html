@@ -4803,7 +4803,11 @@
     }
 
     function applyRotatedSeatColorsToHUD() {
+      const prettyColor = { RED: 'Red', GREEN: 'Green', YELLOW: 'Yellow', BLUE: 'Blue' };
+      const nameElemIds = ['hudPlayerName', 'name-slot-1', 'name-slot-2', 'name-slot-3'];
       for (let seat = 0; seat < 4; seat++) {
+        const colorKey = getVisualColorNameForSeat(seat);
+        const colorLabel = prettyColor[colorKey] || 'Red';
         const hex = getVisualHexForSeat(seat);
         const pod = document.getElementById(`hud-slot-${seat}`);
         if (pod) {
@@ -4814,6 +4818,14 @@
         if (badge) {
           badge.style.background = hex;
           badge.style.setProperty('--home-glow', hex);
+        }
+        // Update displayed player name to match their current rotated home color
+        const nameEl = document.getElementById(nameElemIds[seat]);
+        if (nameEl && gameState.players[seat]) {
+          const baseName = (gameState.players[seat].name || (seat === 0 ? 'You' : `Player ${seat + 1}`))
+            .replace(/\s*\((You|Red|Green|Yellow|Blue|Opponent|Teammate)\)\s*/gi, '')
+            .trim();
+          nameEl.textContent = `${baseName} (${colorLabel})`;
         }
       }
     }
@@ -5049,6 +5061,27 @@
       const isHumanTurn = activePlayer && !activePlayer.isBot;
       const movableTokens = getMovableTokens(activeColor, gameState.currentRoll);
 
+      // Compute Best Tactical Move Suggestion automatically on human player's move turn
+      let bestSuggestedTokenId = null;
+      if (isHumanTurn && gameState.phase === 'SELECT_TOKEN' && movableTokens.length > 0) {
+        let topScore = -Infinity;
+        movableTokens.forEach(t => {
+          const nextStep = calculateTargetStep(t, gameState.currentRoll || 0);
+          let score = nextStep * 25;
+          if (nextStep === 56) score += 10000;
+          if (willMoveCaptureOpponent(t.color, nextStep)) score += 6000;
+          if (nextStep >= 0 && nextStep <= 50) {
+            const abs = (COLOR_START_INDEX[t.color] + nextStep) % 52;
+            if (SAFE_INDICES.includes(abs)) score += 2200;
+          }
+          if (t.step < 0 && nextStep === 0) score += 1800;
+          if (score > topScore) {
+            topScore = score;
+            bestSuggestedTokenId = t.id;
+          }
+        });
+      }
+
       // Draw stationary destination preview highlights for human player's movable tokens
       if (isHumanTurn && gameState.phase === 'SELECT_TOKEN' && movableTokens.length > 0) {
         movableTokens.forEach(t => {
@@ -5143,6 +5176,13 @@
           const isMovable = gameState.phase === 'SELECT_TOKEN' &&
             token.color === activeColor &&
             movableTokens.some(t => t.id === token.id);
+          const isBestMove = isHumanTurn && isMovable && token.id === bestSuggestedTokenId;
+
+          // Enlarge your movable tokens clearly on your turn so they are unmistakably yours to tap!
+          if (isHumanTurn && isMovable) {
+            rOuter = count > 1 && token.step >= 0 ? 15 : 19;
+            rInner = count > 1 && token.step >= 0 ? 12 : 15.5;
+          }
 
           if (isMovable) {
             group.setAttribute('class', 'token-group token-selectable');
@@ -5151,15 +5191,38 @@
               onTokenClick(token.color, token.id);
             };
 
-            // Static gold selection indicator ring (completely stationary)
+            // Crisp glowing selection ring (bright emerald-gold for BEST suggested move)
             const selectRing = document.createElementNS(SVG_NS, 'circle');
             selectRing.setAttribute('cx', cx);
             selectRing.setAttribute('cy', cy);
-            selectRing.setAttribute('r', rOuter + 4);
-            selectRing.setAttribute('fill', 'none');
-            selectRing.setAttribute('stroke', '#FFDF00');
-            selectRing.setAttribute('stroke-width', '2.5');
+            selectRing.setAttribute('r', rOuter + 4.5);
+            selectRing.setAttribute('fill', isBestMove ? 'rgba(46, 204, 113, 0.25)' : 'rgba(255, 223, 0, 0.18)');
+            selectRing.setAttribute('stroke', isBestMove ? '#2ECC71' : '#FFDF00');
+            selectRing.setAttribute('stroke-width', isBestMove ? '3.2' : '2.5');
             group.appendChild(selectRing);
+
+            if (isBestMove && movableTokens.length > 1) {
+              const badgeBg = document.createElementNS(SVG_NS, 'rect');
+              badgeBg.setAttribute('x', cx - 22);
+              badgeBg.setAttribute('y', cy - rOuter - 20);
+              badgeBg.setAttribute('width', '44');
+              badgeBg.setAttribute('height', '15');
+              badgeBg.setAttribute('rx', '7.5');
+              badgeBg.setAttribute('fill', '#2ECC71');
+              badgeBg.setAttribute('stroke', '#FFFFFF');
+              badgeBg.setAttribute('stroke-width', '1.4');
+              group.appendChild(badgeBg);
+
+              const badgeTxt = document.createElementNS(SVG_NS, 'text');
+              badgeTxt.setAttribute('x', cx);
+              badgeTxt.setAttribute('y', cy - rOuter - 9.5);
+              badgeTxt.setAttribute('text-anchor', 'middle');
+              badgeTxt.setAttribute('font-size', '9');
+              badgeTxt.setAttribute('font-weight', '900');
+              badgeTxt.setAttribute('fill', '#FFFFFF');
+              badgeTxt.textContent = '★ BEST';
+              group.appendChild(badgeTxt);
+            }
           }
 
           // Shielded Halo Ring

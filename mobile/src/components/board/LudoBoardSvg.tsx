@@ -411,6 +411,25 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
     if (!gameState) return null;
     const tokenElements: React.ReactNode[] = [];
 
+    // Compute Best Tactical Move Suggestion automatically for human turn when >1 valid moves exist
+    const activeTurnPlayer = gameState.players.find((p) => p.seatIndex === currentTurnSeat);
+    const isHumanTurn = activeTurnPlayer ? !activeTurnPlayer.isBot : currentTurnSeat === 0;
+    let bestValidTokenId: number | null = null;
+    if (isHumanTurn && validMoves.length > 0) {
+      let bestScore = -Infinity;
+      for (const m of validMoves) {
+        const score =
+          (m.isFinish ? 10000 : 0) +
+          (m.capturesToken ? 6000 : 0) +
+          (m.isEntry ? 1800 : 0) +
+          m.toStep * 25;
+        if (score > bestScore) {
+          bestScore = score;
+          bestValidTokenId = m.tokenId;
+        }
+      }
+    }
+
     // Group tokens by cell coordinate to display stacks cleanly
     const cellGroups: Record<string, { player: Player; token: Token; isValid: boolean }[]> = {};
 
@@ -460,6 +479,9 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
           hoppingToken.tokenId === token.id;
         const hopLiftY = isHoppingThis ? (hoppingToken.isMidAir ? -tileSize * 0.34 : -tileSize * 0.14) : 0;
 
+        const isBestSuggested =
+          isHumanTurn && isValid && validMoves.length > 1 && token.id === bestValidTokenId;
+
         tokenElements.push(
           <TouchableOpacity
             key={`token_${player.color}_${token.id}`}
@@ -477,7 +499,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
               styles.tokenContainer,
               {
                 left: cellX + (tileSize - tokenDiameter) / 2 + offset,
-                zIndex: isHoppingThis ? 99 : undefined,
+                zIndex: isHoppingThis ? 99 : isBestSuggested ? 65 : isValid ? 55 : undefined,
                 top: cellY + (tileSize - tokenDiameter) / 2 + offset,
                 width: tokenDiameter,
                 height: tokenDiameter,
@@ -487,13 +509,15 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
                   ? '#83e6c0'
                   : isCaptureMove
                   ? '#ff4757'
+                  : isBestSuggested
+                  ? '#2ECC71'
                   : isValid
                   ? ROYAL_COLORS.goldLight
                   : '#FFFFFF',
-                borderWidth: token.isShielded ? 3 : isValid ? 2.8 : 1.5,
+                borderWidth: token.isShielded ? 3 : isValid ? 3 : 1.5,
                 transform: [
                   { translateY: hopLiftY },
-                  { scale: isHoppingThis ? 1.18 : isValid ? 1.14 : 1 },
+                  { scale: isHoppingThis ? 1.18 : isValid && isHumanTurn ? 1.28 : isValid ? 1.14 : 1 },
                 ],
                 elevation: isValid ? 9 : 4,
                 shadowColor: token.isShielded
@@ -527,8 +551,24 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
               ) : null}
             </View>
 
-            {/* Action Badge for Playable Token */}
-            {isValid && (
+            {/* Action Badge / Smart ★ BEST Move Suggestion Pill for Playable Token */}
+            {isBestSuggested ? (
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  top: -15,
+                  backgroundColor: '#2ECC71',
+                  borderColor: '#FFFFFF',
+                  borderWidth: 1.2,
+                  borderRadius: 7,
+                  paddingHorizontal: 4,
+                  paddingVertical: 1,
+                }}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 7, fontWeight: '900' }}>★ BEST</Text>
+              </View>
+            ) : isValid ? (
               <View
                 style={[
                   styles.tokenActionBadge,
@@ -541,7 +581,7 @@ export const LudoBoardSvg: React.FC<LudoBoardSvgProps> = ({
                   {isCaptureMove ? '⚔️' : isFinishMove ? '👑' : isExitMove ? '🚀' : '•'}
                 </Text>
               </View>
-            )}
+            ) : null}
           </TouchableOpacity>
         );
       });
