@@ -10,7 +10,9 @@ import {
   Animated,
   TextInput,
   ScrollView,
+  Vibration,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -169,11 +171,24 @@ export default function LiveGameScreen() {
     }
   }, [firstTurnAnnouncement]);
 
-  // Animated Directional Dice Flight & Dock Arrival (Ludo Star Style)
+  // Animated Directional Dice Flight, Golden Six Shockwave & Capture Board Shake
   const diceFlyX = useRef(new Animated.Value(0)).current;
   const diceFlyY = useRef(new Animated.Value(0)).current;
   const diceFlyScale = useRef(new Animated.Value(1)).current;
   const dockPulseAnim = useRef(new Animated.Value(1)).current;
+  const sixWaveAnim = useRef(new Animated.Value(0)).current;
+  const boardShakeAnim = useRef(new Animated.Value(0)).current;
+
+  const triggerMobileBoardShake = () => {
+    boardShakeAnim.setValue(0);
+    Animated.sequence([
+      Animated.timing(boardShakeAnim, { toValue: -6, duration: 45, useNativeDriver: true }),
+      Animated.timing(boardShakeAnim, { toValue: 6, duration: 45, useNativeDriver: true }),
+      Animated.timing(boardShakeAnim, { toValue: -4, duration: 45, useNativeDriver: true }),
+      Animated.timing(boardShakeAnim, { toValue: 4, duration: 45, useNativeDriver: true }),
+      Animated.timing(boardShakeAnim, { toValue: 0, duration: 45, useNativeDriver: true }),
+    ]).start();
+  };
 
   useEffect(() => {
     const pulseLoop = Animated.loop(
@@ -433,20 +448,23 @@ export default function LiveGameScreen() {
     return () => clearInterval(interval);
   }, [currentTurnSeat, gameState?.turnPhase, isMyTurn, canRollDice, isAnyModalOpen]);
 
-  // Celebrate rolling a 6 with special sound and celebratory banner
+  // On rolling a 6: vibrate + expanding golden dock shockwave ONLY (no screen notification!)
   useEffect(() => {
     if (lastDiceRoll === 6 && !isRolling) {
-      setCelebrateSix(true);
+      setCelebrateSix(false);
       if (isMyTurn) {
         sfxEngine.playRollSix();
-        triggerReaction('🎲');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        try {
+          Vibration.vibrate([0, 35, 28, 55]);
+        } catch {}
       }
-      const timer = setTimeout(() => {
-        setCelebrateSix(false);
-      }, 2600);
-      return () => clearTimeout(timer);
-    } else {
-      setCelebrateSix(false);
+      sixWaveAnim.setValue(0);
+      Animated.timing(sixWaveAnim, {
+        toValue: 1,
+        duration: 560,
+        useNativeDriver: true,
+      }).start();
     }
   }, [lastDiceRoll, isRolling, isMyTurn]);
 
@@ -491,6 +509,8 @@ export default function LiveGameScreen() {
       if (move) {
         if (move.capturesToken) {
           sfxEngine.playCapture();
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+          triggerMobileBoardShake();
           triggerReaction('💥');
           setCaptureBanner('⚔️ SMASH! Opponent Captured! +1 Free Turn!');
           setTimeout(() => setCaptureBanner(null), 2800);
@@ -663,6 +683,33 @@ export default function LiveGameScreen() {
                     isHumanSeat && canRollDice && styles.activeDieWrapClickable,
                   ]}
                 >
+                  {/* EXPANDING GOLDEN SHOCKWAVE RING ON ROLLING A 6 (Zero Notification Banner!) */}
+                  <Animated.View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      top: -4,
+                      left: -4,
+                      right: -4,
+                      bottom: -4,
+                      borderRadius: 16,
+                      borderWidth: 2.5,
+                      borderColor: '#FFDF00',
+                      opacity: sixWaveAnim.interpolate({
+                        inputRange: [0, 0.2, 1],
+                        outputRange: [0, 0.95, 0],
+                      }),
+                      transform: [
+                        {
+                          scale: sixWaveAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.9, 1.65],
+                          }),
+                        },
+                      ],
+                    }}
+                  />
+
                   {/* AUTHENTIC LUDO STAR BOUNCING ARROW: Directly on Upper Side of Dice, ONLY on Your Roll Turn */}
                   {isHumanSeat && canRollDice && !isRolling && (
                     <Animated.View
@@ -775,8 +822,13 @@ export default function LiveGameScreen() {
         )}
       </View>
 
-      {/* 3. CENTER LUDO BOARD (With Dynamic Rotated Home Colors & Active Profile Badge) */}
-      <View style={styles.boardWrapper}>
+      {/* 3. CENTER LUDO BOARD (With Dynamic Rotated Home Colors, Capture Shake & Active Profile Badge) */}
+      <Animated.View
+        style={[
+          styles.boardWrapper,
+          { transform: [{ translateX: boardShakeAnim }] },
+        ]}
+      >
         <LudoBoardSvg
           size={BOARD_SIZE}
           gameState={gameState}
@@ -822,8 +874,8 @@ export default function LiveGameScreen() {
           </Text>
         </View>
 
-        {/* FLOATING NON-SHIFTING CELEBRATION & HINT BANNERS */}
-        {(celebrateSix || captureBanner || tacticalHint || activeSpeech) && (
+        {/* FLOATING NON-SHIFTING CAPTURE & HINT BANNERS (No Six Banner — Vibrates Only!) */}
+        {(captureBanner || tacticalHint || activeSpeech) && (
           <View
             pointerEvents="none"
             style={{
@@ -836,11 +888,6 @@ export default function LiveGameScreen() {
               gap: 4,
             }}
           >
-            {celebrateSix && (
-              <View style={[styles.celebrationBanner, { backgroundColor: 'rgba(13, 16, 30, 0.92)' }]}>
-                <Text style={styles.celebrationBannerText}>🎉 SIX! Roll again! ⚡</Text>
-              </View>
-            )}
             {captureBanner && (
               <View style={[styles.captureBanner, { backgroundColor: 'rgba(13, 16, 30, 0.92)' }]}>
                 <Text style={styles.captureBannerText}>{captureBanner}</Text>
@@ -858,7 +905,7 @@ export default function LiveGameScreen() {
             )}
           </View>
         )}
-      </View>
+      </Animated.View>
 
       {/* 4. BOTTOM OPPONENTS ROW */}
       <View style={styles.playersRow}>

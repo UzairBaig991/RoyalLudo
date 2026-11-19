@@ -1436,6 +1436,31 @@
       100% { transform: translate(-50%, -44px) scale(0.92); opacity: 0; }
     }
 
+    /* ADVANCED LUDO STAR ANIMATIONS: SIX SHOCKWAVE, TILE RIPPLE & SMOOTH PAWN BOB */
+    .ls-dock-six-wave {
+      position: absolute;
+      inset: -4px;
+      border-radius: 18px;
+      border: 3px solid #FFDF00;
+      box-shadow: 0 0 18px rgba(255, 223, 0, 0.9);
+      pointer-events: none;
+      z-index: 50;
+      animation: dockSixWaveExpand 0.62s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes dockSixWaveExpand {
+      0%   { transform: scale(0.88); opacity: 1; }
+      100% { transform: scale(1.65); opacity: 0; }
+    }
+
+    .token-selectable {
+      cursor: pointer;
+      animation: tokenSelectableBob 0.85s infinite alternate ease-in-out;
+    }
+    @keyframes tokenSelectableBob {
+      0%   { transform: translateY(0px); }
+      100% { transform: translateY(-3.5px); }
+    }
+
     /* MINIMALIST LUDO STAR BOTTOM UTILITY BAR (4 Clean Buttons, Zero Clutter) */
     .ls-clean-bottom-bar {
       display: flex;
@@ -4873,6 +4898,95 @@
       }
     }
 
+    function triggerSixVibrationAndWave(seat) {
+      // Tactile double-pulse vibration on rolling 6 (no screen notification!)
+      try {
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          navigator.vibrate([38, 28, 60]);
+        }
+      } catch (e) {}
+
+      // Expanding golden shockwave ring directly around the active dice dock
+      const dock = document.getElementById(`dice-dock-${seat}`);
+      if (dock) {
+        const wave = document.createElement('div');
+        wave.className = 'ls-dock-six-wave';
+        dock.appendChild(wave);
+        setTimeout(() => wave.remove(), 650);
+      }
+    }
+
+    function spawnTileRipple(col, row, colorHex = '#FFDF00', maxR = 26) {
+      const svg = document.getElementById('ludoSvg');
+      if (!svg) return;
+      const cx = col * CELL_SIZE + CELL_SIZE / 2;
+      const cy = row * CELL_SIZE + CELL_SIZE / 2;
+      const ring = document.createElementNS(SVG_NS, 'circle');
+      ring.setAttribute('cx', cx);
+      ring.setAttribute('cy', cy);
+      ring.setAttribute('r', '8');
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', colorHex);
+      ring.setAttribute('stroke-width', '3');
+      ring.setAttribute('opacity', '0.95');
+      ring.style.pointerEvents = 'none';
+      svg.appendChild(ring);
+
+      const start = performance.now();
+      const dur = 380;
+      function step(now) {
+        const t = Math.min(1, (now - start) / dur);
+        const ease = 1 - Math.pow(1 - t, 3);
+        ring.setAttribute('r', (8 + (maxR - 8) * ease).toFixed(1));
+        ring.setAttribute('stroke-width', (3 * (1 - t * 0.7)).toFixed(2));
+        ring.setAttribute('opacity', (0.95 * (1 - t)).toFixed(2));
+        if (t < 1) requestAnimationFrame(step);
+        else ring.remove();
+      }
+      requestAnimationFrame(step);
+    }
+
+    function animateCapturedTokenReturn(capturedColor, capturedId, fromCoord) {
+      const svg = document.getElementById('ludoSvg');
+      if (!svg || !fromCoord) return;
+      const toCoord = BASE_SLOTS[capturedColor]?.[capturedId];
+      if (!toCoord) return;
+
+      const x0 = fromCoord.col * CELL_SIZE + CELL_SIZE / 2;
+      const y0 = fromCoord.row * CELL_SIZE + CELL_SIZE / 2;
+      const x1 = toCoord.col * CELL_SIZE + CELL_SIZE / 2;
+      const y1 = toCoord.row * CELL_SIZE + CELL_SIZE / 2;
+
+      const ghost = document.createElementNS(SVG_NS, 'circle');
+      ghost.setAttribute('cx', x0);
+      ghost.setAttribute('cy', y0);
+      ghost.setAttribute('r', '14');
+      ghost.setAttribute('fill', getVisualHexForEngineColor(capturedColor));
+      ghost.setAttribute('stroke', '#FFFFFF');
+      ghost.setAttribute('stroke-width', '2.5');
+      ghost.style.pointerEvents = 'none';
+      svg.appendChild(ghost);
+
+      const start = performance.now();
+      const dur = 420;
+      function fly(now) {
+        const t = Math.min(1, (now - start) / dur);
+        const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const cx = x0 + (x1 - x0) * ease;
+        const cy = y0 + (y1 - y0) * ease - Math.sin(Math.PI * t) * 44;
+        ghost.setAttribute('cx', cx.toFixed(1));
+        ghost.setAttribute('cy', cy.toFixed(1));
+        ghost.setAttribute('r', (14 * (1 - t * 0.25)).toFixed(1));
+        ghost.setAttribute('opacity', (1 - t * 0.35).toFixed(2));
+        if (t < 1) requestAnimationFrame(fly);
+        else {
+          ghost.remove();
+          spawnTileRipple(toCoord.col, toCoord.row, getVisualHexForEngineColor(capturedColor), 28);
+        }
+      }
+      requestAnimationFrame(fly);
+    }
+
     function renderBoard() {
       const svg = document.getElementById('ludoSvg');
       if (!svg) return;
@@ -5440,22 +5554,18 @@
 
         if (roll === 6) {
           playSixSound();
+          triggerSixVibrationAndWave(gameState.currentTurnSeat);
           if (typeof incrementMissionProgress === 'function' && gameState.currentTurnSeat === 0) {
             incrementMissionProgress('sixesRolled', 1);
           }
           gameState.consecutiveSixes++;
-          if (gameState.consecutiveSixes === 1) {
-            showComboAnnouncer('🎲 LUCKY SIX! ROLL AGAIN!');
-          } else if (gameState.consecutiveSixes === 2) {
-            showComboAnnouncer('🔥 DOUBLE SIX! ON FIRE!');
-          }
         } else {
           gameState.consecutiveSixes = 0;
         }
 
         if (gameState.consecutiveSixes === 3) {
           gameState.consecutiveSixes = 0;
-          showComboAnnouncer('⚠️ 3 CONSECUTIVE 6s! TURN LOST!');
+          try { if (navigator.vibrate) navigator.vibrate([70, 35, 70]); } catch (e) {}
           setTimeout(passTurn, Math.round(450 / speedDiv));
           return;
         }
@@ -5575,11 +5685,16 @@
       const finalizeTokenMove = () => {
         token.step = nextStep;
 
-        // Safe star chime
+        // Safe star chime & golden ripple
+        const landedCoord = getTokenCoord({ color: token.color, id: token.id, step: nextStep });
+        if (landedCoord) {
+          spawnTileRipple(landedCoord.col, landedCoord.row, getVisualHexForEngineColor(color), 24);
+        }
         if (nextStep >= 0 && nextStep <= 50) {
           const abs = (COLOR_START_INDEX[color] + nextStep) % 52;
           if (SAFE_INDICES.includes(abs)) {
             playStarSound();
+            if (landedCoord) spawnTileRipple(landedCoord.col, landedCoord.row, '#FFDF00', 34);
           }
         }
 
@@ -5593,13 +5708,19 @@
                 return;
               }
               if (o.color !== color && o.step >= 0 && o.step <= 50 && (COLOR_START_INDEX[o.color] + o.step) % 52 === abs) {
+                const capturedOrigin = getTokenCoord(o);
                 o.step = -1;
                 activePlayer.hasKilledOpponent = true;
                 if (typeof incrementMissionProgress === 'function' && gameState.currentTurnSeat === 0) {
                   incrementMissionProgress('captures', 1);
                 }
                 playCaptureSound();
+                try { if (navigator.vibrate) navigator.vibrate([50, 30, 80]); } catch (e) {}
                 triggerBoardShake();
+                if (capturedOrigin) {
+                  spawnTileRipple(capturedOrigin.col, capturedOrigin.row, '#FF4757', 42);
+                  animateCapturedTokenReturn(o.color, o.id, capturedOrigin);
+                }
                 if (gameState.currentTurnSeat === 0) {
                   gameState.gold += 150;
                   updateCurrencyDisplay();
