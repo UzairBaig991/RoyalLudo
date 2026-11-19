@@ -200,24 +200,28 @@ function runTests() {
   }
   assert(simulationTurns > 0, `Simulation completed ${simulationTurns} turns smoothly without deadlocks`);
 
-  // TEST SUITE 10: Authentic Ludo Star Rules & Kill Requirement
+  // TEST SUITE 10: Authentic Ludo Star Rules & Kill Requirement (Stop at Home Gate until Kill)
   console.log('\nTest Suite 10: Authentic Ludo Star Kill Requirement');
   const lsRules = RuleSetFactory.getRules('classic', 2);
   const lsGame = new LudoGame('match_ls_rules', [players[0], players[2]], lsRules);
   const lsState = (lsGame as any).state;
-  // Red token 0 placed at step 49 (near home stretch 51)
+  // Red token 0 placed at step 49 (1 tile before home entrance gate step 50)
   lsState.players[0].tokens[0].position = LudoBoard.createTokenPosition('RED', 0, 49);
   lsState.players[0].hasKilledOpponent = false;
   lsState.currentTurnSeat = 0;
   lsState.turnPhase = 'ROLL_DICE';
 
-  // Rolling 4 would reach 53 (home stretch), but player has 0 kills!
-  const rollRes = lsGame.rollDice(0, 4);
-  const token0Move = rollRes.validMoves.find((m) => m.tokenId === 0);
-  assert(token0Move !== undefined, 'Token 0 has valid move');
-  assert(token0Move?.toStep === 1, 'Without kill, token loops around perimeter track to step 1 (49+4 % 52)');
+  // Rolling 4 from step 49 would pass step 50 (home gate), so without a kill it is BLOCKED!
+  const blockedMoves = MoveValidator.getValidMoves(lsState.players[0], 4, lsState.players, lsRules);
+  const blockedToken0 = blockedMoves.find((m) => m.tokenId === 0);
+  assert(blockedToken0 === undefined, 'Without kill, token cannot move past home gate (step 50)');
 
-  // Now player gets a kill
+  // Rolling 1 from step 49 moves onto the home gate (step 50) and stops there
+  const gateMoves = MoveValidator.getValidMoves(lsState.players[0], 1, lsState.players, lsRules);
+  const gateToken0 = gateMoves.find((m) => m.tokenId === 0);
+  assert(gateToken0?.toStep === 50, 'Without kill, token can advance up to home gate (step 50) and stops');
+
+  // Now player gets a kill -> home lane unlocks!
   lsState.players[0].hasKilledOpponent = true;
   const lsMovesAfterKill = MoveValidator.getValidMoves(
     lsState.players[0],

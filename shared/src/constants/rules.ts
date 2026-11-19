@@ -13,7 +13,7 @@ export const DEFAULT_RULES: Record<GameMode, GameRules> = {
     captureBonus: true,
     safeCellCoexistence: true,
     mustKillToEnterHome: true,
-    loopIfNoKill: true,
+    loopIfNoKill: false,
   },
   master: {
     mode: 'master',
@@ -27,7 +27,7 @@ export const DEFAULT_RULES: Record<GameMode, GameRules> = {
     captureBonus: true,
     safeCellCoexistence: true,
     mustKillToEnterHome: true,
-    loopIfNoKill: true,
+    loopIfNoKill: false,
   },
   quick: {
     mode: 'quick',

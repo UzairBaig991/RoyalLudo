@@ -5004,10 +5004,13 @@
         }
       });
 
-      // Home corridors (Dynamically rotated colors!)
-      COLORS.forEach(color => {
+      // Home corridors (Dynamically rotated colors + 🔒 Lock Gate until player achieves a kill!)
+      const killRuleActive = gameState.selectedVariation === 'classic' || gameState.selectedVariation === 'master';
+      COLORS.forEach((color, seatIdx) => {
         const visualHex = getVisualHexForEngineColor(color);
-        HOME_STRETCH_COORDS[color].forEach(coord => {
+        const seatPlayer = gameState.players[seatIdx];
+        const isLaneLocked = killRuleActive && seatPlayer && !seatPlayer.hasKilledOpponent;
+        HOME_STRETCH_COORDS[color].forEach((coord, laneIdx) => {
           const tile = document.createElementNS(SVG_NS, 'rect');
           tile.setAttribute('x', coord.col * CELL_SIZE);
           tile.setAttribute('y', coord.row * CELL_SIZE);
@@ -5017,6 +5020,18 @@
           tile.setAttribute('stroke', '#333');
           tile.setAttribute('stroke-width', '1');
           svg.appendChild(tile);
+
+          // Show crisp 🔒 Home Gate lock on entrance tile (step 51) until player scores a kill
+          if (laneIdx === 0 && isLaneLocked) {
+            const lockTxt = document.createElementNS(SVG_NS, 'text');
+            lockTxt.setAttribute('x', coord.col * CELL_SIZE + CELL_SIZE / 2);
+            lockTxt.setAttribute('y', coord.row * CELL_SIZE + CELL_SIZE / 2 + 5);
+            lockTxt.setAttribute('text-anchor', 'middle');
+            lockTxt.setAttribute('font-size', '14');
+            lockTxt.setAttribute('opacity', '0.9');
+            lockTxt.textContent = '🔒';
+            svg.appendChild(lockTxt);
+          }
         });
       });
 
@@ -5465,10 +5480,14 @@
     }
 
     function getMovableTokens(color, roll) {
+      const player = gameState.players.find(p => p.color === color);
+      const needsKill = (gameState.selectedVariation === 'classic' || gameState.selectedVariation === 'master') && player && !player.hasKilledOpponent;
       return gameState.tokens.filter(t => {
         if (t.color !== color) return false;
         if (t.step === 56) return false;
         if (t.step < 0) return roll === 6;
+        // Realistic Ludo Gate: Without a kill, token stops at step 50 and cannot advance into home lane (51..56)
+        if (needsKill && t.step + roll > 50) return false;
         return t.step + roll <= 56;
       });
     }
@@ -5479,7 +5498,13 @@
       const speedDiv = gameState.gameSpeed === 2 ? 2 : 1;
 
       if (movable.length === 0) {
-        setTimeout(passTurn, Math.round(360 / speedDiv));
+        const activePlayer = gameState.players[gameState.currentTurnSeat];
+        const needsKill = (gameState.selectedVariation === 'classic' || gameState.selectedVariation === 'master') && activePlayer && !activePlayer.hasKilledOpponent;
+        const blockedAtHomeGate = needsKill && gameState.tokens.some(t => t.color === activeColor && t.step >= 0 && t.step <= 50 && t.step + roll > 50);
+        if (blockedAtHomeGate && !activePlayer.isBot) {
+          showNotificationToast('🔒 Home Locked! Kill an opponent to enter your Home Lane.');
+        }
+        setTimeout(passTurn, Math.round(420 / speedDiv));
         return;
       }
 
@@ -5510,13 +5535,11 @@
       const roll = gameState.currentRoll;
       let nextStep = token.step < 0 ? 0 : token.step + roll;
 
-      // Authentic Ludo Star Kill Requirement:
-      // If player has not killed an opponent, they cannot enter the colored home lane (step 51..56).
+      // Realistic Ludo Gate: Without a kill, token cannot advance past step 50 into home stretch (51..56)
       if ((gameState.selectedVariation === 'classic' || gameState.selectedVariation === 'master') && !activePlayer.hasKilledOpponent) {
         if (token.step >= 0 && nextStep > 50) {
-          // Token loops around the perimeter track to hunt opponents!
-          nextStep = (token.step + roll) % 52;
-          showNotificationToast('⚔️ Kill required to enter home! Looping around the track to hunt.');
+          showNotificationToast('🔒 Home Locked! Kill an opponent to advance past the Home Gate.');
+          return;
         }
       }
 
@@ -7532,12 +7555,10 @@
     function calculateTargetStep(token, roll) {
       if (!token || !roll) return -1;
       if (token.step < 0) return roll === 6 ? 0 : -1;
-      let nextStep = token.step + roll;
+      const nextStep = token.step + roll;
       const player = gameState.players.find(p => p.color === token.color);
       if ((gameState.selectedVariation === 'classic' || gameState.selectedVariation === 'master') && player && !player.hasKilledOpponent) {
-        if (nextStep > 50) {
-          nextStep = (token.step + roll) % 52;
-        }
+        if (nextStep > 50) return -1; // Locked at home entrance gate (step 50) until player gets a kill
       }
       if (nextStep > 56) return -1;
       return nextStep;
