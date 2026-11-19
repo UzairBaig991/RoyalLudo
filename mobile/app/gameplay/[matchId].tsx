@@ -516,25 +516,6 @@ export default function LiveGameScreen() {
 
     return (
       <View style={[styles.playerCardContainer, { opacity: isThisTurn ? 1 : 0.42 }]}>
-        {/* BOUNCING TURN INDICATOR ARROW (Ludo Star Style) */}
-        {isThisTurn && (
-          <Animated.View
-            style={[
-              styles.turnArrowContainer,
-              {
-                transform: [{ translateY: arrowBounceAnim }],
-              },
-            ]}
-          >
-            <View style={[styles.turnArrowBadge, { backgroundColor: colorHex }]}>
-              <Ionicons name="caret-down" size={12} color="#0d101e" />
-              <Text style={styles.turnArrowText}>
-                {isHumanSeat ? (canRollDice ? 'ROLL! 👇' : 'YOUR TURN') : `${colorName} 👇`}
-              </Text>
-            </View>
-          </Animated.View>
-        )}
-
         {/* PLAYER CARD WITH MOVING DICE POD */}
         <View
           style={[
@@ -586,6 +567,23 @@ export default function LiveGameScreen() {
                   isHumanSeat && canRollDice && styles.activeDieWrapClickable,
                 ]}
               >
+                {/* AUTHENTIC LUDO STAR BOUNCING ARROW: Directly on Upper Side of Dice, ONLY on Your Roll Turn */}
+                {isHumanSeat && canRollDice && !isRolling && (
+                  <Animated.View
+                    pointerEvents="none"
+                    style={[
+                      styles.diceTopArrowWrap,
+                      {
+                        transform: [{ translateY: arrowBounceAnim }],
+                      },
+                    ]}
+                  >
+                    <View style={styles.diceTopArrowCircle}>
+                      <Ionicons name="arrow-down" size={16} color="#FFFFFF" />
+                    </View>
+                  </Animated.View>
+                )}
+
                 <NovaDie
                   value={lastDiceRoll || 6}
                   size={42}
@@ -1813,6 +1811,27 @@ const styles = StyleSheet.create({
   },
   activeDieWrapClickable: {
     transform: [{ scale: 1.05 }],
+  },
+  diceTopArrowWrap: {
+    position: 'absolute',
+    top: -28,
+    alignSelf: 'center',
+    zIndex: 40,
+  },
+  diceTopArrowCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#2ECC71',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2ECC71',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.85,
+    shadowRadius: 5,
+    elevation: 8,
   },
   tapPillOverlay: {
     position: 'absolute',
