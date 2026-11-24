@@ -3,6 +3,7 @@ import { EconomyService } from '../services/economyService';
 import { RoomService } from '../services/roomService';
 import { SocialService } from '../services/socialService';
 import { DataStore } from '../services/store';
+import { DatabaseService } from '../services/databaseService';
 import { DICE_CATALOG, BOARD_SKINS, LEAGUE_TIERS } from '../../../shared/src/constants/economy';
 import type { UserProfile } from '../../../shared/src/types';
 
@@ -237,4 +238,41 @@ apiRouter.get('/leaderboards', (_req, res) => {
     tiers: LEAGUE_TIERS,
     leaderboard: sorted,
   });
+});
+
+// ================= REAL PERSISTENT PLAYER DATABASE =================
+apiRouter.get('/api/db/player', (req, res) => {
+  try {
+    const playerId = (req.query.playerId as string) || 'default_player';
+    const record = DatabaseService.getOrCreatePlayer(playerId);
+    res.json({ success: true, player: record });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post('/api/db/player/save', (req, res) => {
+  try {
+    const playerId = (req.body?.playerId as string) || 'default_player';
+    const record = DatabaseService.updatePlayer(playerId, req.body || {});
+    res.json({ success: true, player: record });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post('/api/db/player/history', (req, res) => {
+  try {
+    const playerId = (req.body?.playerId as string) || 'default_player';
+    const record = DatabaseService.appendMatchHistory(playerId, {
+      mode: req.body?.mode || 'CLASSIC',
+      playerCount: Number(req.body?.playerCount) || 2,
+      result: req.body?.result === 'WIN' ? 'WIN' : 'LOSS',
+      coinsDelta: Number(req.body?.coinsDelta) || 0,
+      captures: Number(req.body?.captures) || 0,
+    });
+    res.json({ success: true, player: record });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });

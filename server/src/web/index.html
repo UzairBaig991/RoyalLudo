@@ -3055,47 +3055,28 @@
       --ls-text-sub: #FDA4AF;
     }
 
-    /* Animated Breathing Aurora Background Overlay */
+    /* Smooth Static Ambient Glow (No heavy full-screen animated gradient — keeps 60fps silky smooth!) */
     body::before {
       content: '';
       position: fixed;
-      inset: -20%;
+      inset: 0;
       background:
-        radial-gradient(circle at 20% 20%, rgba(255, 223, 0, 0.11) 0%, transparent 45%),
-        radial-gradient(circle at 80% 75%, rgba(0, 229, 255, 0.1) 0%, transparent 48%);
+        radial-gradient(circle at 18% 18%, rgba(255, 223, 0, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 82% 78%, rgba(0, 229, 255, 0.07) 0%, transparent 48%);
       pointer-events: none;
       z-index: 0;
-      animation: auroraDrift 14s infinite alternate ease-in-out;
-    }
-    @keyframes auroraDrift {
-      0%   { transform: translate(-2%, -2%) scale(1); }
-      100% { transform: translate(3%, 3%) scale(1.08); }
     }
 
-    /* Royal Command Center Dashboard Hero Banner */
+    /* Royal Command Center Dashboard Hero Banner (GPU-light, zero blur lag!) */
     .royal-dashboard-hero {
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, rgba(255, 223, 0, 0.14) 0%, rgba(82, 19, 80, 0.65) 55%, rgba(0, 229, 255, 0.12) 100%);
+      background: linear-gradient(135deg, rgba(64, 14, 62, 0.92) 0%, rgba(36, 7, 38, 0.96) 100%);
       border: 1.5px solid rgba(255, 223, 0, 0.45);
       border-radius: 20px;
       padding: 12px 14px;
       margin-bottom: 14px;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(8px);
-      animation: fadeIn 0.35s ease-out;
-    }
-    .royal-dashboard-hero::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -60%;
-      width: 45%;
-      height: 200%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-      transform: rotate(22deg);
-      animation: cardGlossSweep 5.5s infinite ease-in-out;
-      pointer-events: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     }
     .royal-dash-top {
       display: flex;
@@ -3205,63 +3186,24 @@
       box-shadow: 0 4px 0 #32128A, 0 6px 14px rgba(0, 180, 216, 0.4);
     }
 
-    /* ULTRA-ANIMATED MODE CARDS (Holographic Gloss Sweep + 3D Icon Levitation + Stagger Pop) */
+    /* SMOOTH GPU-ACCELERATED MODE CARDS (60fps hover/press, zero idle lag!) */
     .animated-game-card {
       position: relative;
       overflow: hidden;
-      transition: transform 0.26s cubic-bezier(0.22, 1.25, 0.36, 1), box-shadow 0.26s ease, border-color 0.26s ease !important;
-      animation: cardCascadeIn 0.45s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+      will-change: transform;
+      transition: transform 0.2s cubic-bezier(0.22, 1.2, 0.36, 1), border-color 0.2s ease !important;
     }
-    .animated-game-card:nth-child(1) { animation-delay: 0.04s; }
-    .animated-game-card:nth-child(2) { animation-delay: 0.10s; }
-    .animated-game-card:nth-child(3) { animation-delay: 0.16s; }
-    .animated-game-card:nth-child(4) { animation-delay: 0.22s; }
-    .animated-game-card:nth-child(5) { animation-delay: 0.28s; }
-    .animated-game-card:nth-child(6) { animation-delay: 0.34s; }
-
-    @keyframes cardCascadeIn {
-      from { opacity: 0; transform: translateY(18px) scale(0.94); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .animated-game-card::before {
-      content: '';
-      position: absolute;
-      top: -60%;
-      left: -80%;
-      width: 55%;
-      height: 220%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
-      transform: rotate(24deg);
-      animation: cardGlossSweep 4.2s infinite ease-in-out;
-      pointer-events: none;
-      z-index: 2;
-    }
-    .animated-game-card:nth-child(even)::before {
-      animation-delay: 1.8s;
-    }
-    @keyframes cardGlossSweep {
-      0%, 58%  { left: -85%; }
-      100%     { left: 145%; }
-    }
-
     .animated-game-card:hover {
-      transform: translateY(-6px) scale(1.035) !important;
-      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.55), 0 0 22px rgba(255, 223, 0, 0.45) !important;
+      transform: translateY(-5px) scale(1.025) !important;
     }
     .animated-game-card:active {
       transform: translateY(1px) scale(0.97) !important;
     }
-
     .card-center-icon-area svg {
-      animation: cardIconFloat 2.8s infinite alternate ease-in-out;
+      transition: transform 0.22s ease;
     }
-    .animated-game-card:nth-child(even) .card-center-icon-area svg {
-      animation-delay: 0.9s;
-    }
-    @keyframes cardIconFloat {
-      0%   { transform: translateY(0px) scale(1); }
-      100% { transform: translateY(-6px) scale(1.05); }
+    .animated-game-card:hover .card-center-icon-area svg {
+      transform: translateY(-4px) scale(1.06);
     }
 
     .small-mode-card {
@@ -3292,26 +3234,26 @@
 
   <div class="app-viewport">
     
-    <!-- TOP STATUS BAR -->
+    <!-- TOP STATUS BAR (ALL FRESH ZERO START — REAL DATABASE SYNCED) -->
     <header class="top-bar">
       <!-- XP STAR -->
       <div class="currency-pill" onclick="openLevelInfoModal()" style="cursor: pointer;" title="View Level & Rank Progress">
         <span style="font-size: 15px;">⭐</span>
-        <span id="xpDisplay">240/500</span>
+        <span id="xpDisplay">0/500</span>
         <span style="font-size: 13px;">⚡</span>
       </div>
 
       <!-- GOLD COINS -->
       <div class="currency-pill">
         <span style="font-size: 15px;">🪙</span>
-        <span id="goldDisplay">259.8K</span>
+        <span id="goldDisplay">0</span>
         <div class="plus-badge" onclick="openShopModal()">+</div>
       </div>
 
       <!-- GEMS -->
       <div class="currency-pill">
         <span style="font-size: 15px;">💎</span>
-        <span id="gemsDisplay">30</span>
+        <span id="gemsDisplay">0</span>
         <div class="plus-badge" onclick="openShopModal()">+</div>
       </div>
 
@@ -3323,14 +3265,17 @@
 
     <!-- PROFILE & EVENT BADGES HEADER -->
     <div class="header-sub">
-      <!-- PROFILE CARD -->
+      <!-- PROFILE CARD (Tap to View History / Change Name) -->
       <div class="profile-card" onclick="openProfileModal()">
-        <div class="profile-avatar">👨‍💼</div>
+        <div class="profile-avatar">😎</div>
         <div>
-          <div class="profile-name" id="userName">Uzair</div>
+          <div style="display:flex; align-items:center; gap:5px;">
+            <div class="profile-name" id="userName">Player</div>
+            <span onclick="event.stopPropagation(); openEditProfileModal();" title="Change Name" style="font-size:11px; background:rgba(255,223,0,0.2); border:1px solid #FFDF00; border-radius:6px; padding:1px 4px; cursor:pointer;">✏️</span>
+          </div>
           <div class="profile-level">
-            <span id="userFlag">🇮🇳</span>
-            <span>Level 9</span>
+            <span id="userFlag">🇵🇰</span>
+            <span id="userLevelLabel">Level 1</span>
           </div>
         </div>
       </div>
@@ -3392,23 +3337,24 @@
         </div>
 
         <div class="royal-dash-stats">
-          <div class="royal-stat-chip">
-            <div class="royal-stat-val" id="dashWinsCount">142</div>
+          <div class="royal-stat-chip" onclick="openProfileModal()" style="cursor:pointer;" title="View Full Match History">
+            <div class="royal-stat-val" id="dashWinsCount">0</div>
             <div class="royal-stat-lbl">🏆 Wins</div>
           </div>
-          <div class="royal-stat-chip">
-            <div class="royal-stat-val" style="color: #FFDF00;">GOLD III</div>
-            <div class="royal-stat-lbl">🛡️ League</div>
+          <div class="royal-stat-chip" onclick="openProfileModal()" style="cursor:pointer;" title="View Full Match History">
+            <div class="royal-stat-val" id="dashMatchesCount" style="color: #FFDF00;">0</div>
+            <div class="royal-stat-lbl">📜 Matches</div>
           </div>
-          <div class="royal-stat-chip">
-            <div class="royal-stat-val" style="color: #2ECC71;">🔥 5x</div>
+          <div class="royal-stat-chip" onclick="openEditProfileModal()" style="cursor:pointer;" title="Change Your Name">
+            <div class="royal-stat-val" id="dashStreakCount" style="color: #2ECC71;">0</div>
             <div class="royal-stat-lbl">⚡ Streak</div>
           </div>
         </div>
 
         <div class="royal-dash-actions">
           <button class="royal-quick-cta primary" onclick="openBetModal(2)">⚡ QUICK DUEL</button>
-          <button class="royal-quick-cta friends" onclick="openPrivateTableModal()">🌐 PLAY WITH FRIENDS</button>
+          <button class="royal-quick-cta friends" onclick="openPrivateTableModal()">🌐 FRIENDS</button>
+          <button class="royal-quick-cta" style="flex:0.75; background:rgba(255,223,0,0.16); border:1.5px solid #FFDF00; color:#FFDF00;" onclick="openProfileModal()">📜 HISTORY</button>
         </div>
       </div>
 
@@ -5355,17 +5301,24 @@
       phase: 'ROLL_DICE',
       consecutiveSixes: 0,
       activePlayerCount: 2,
-      selectedBet: 500,
+      selectedBet: 0,
       selectedVariation: 'classic',
       botDifficulty: 'medium',
-      gold: 259800,
-      gems: 30,
-      xp: 240,
-      wins: 142,
+      gold: 0,
+      gems: 0,
+      xp: 0,
+      level: 1,
+      wins: 0,
+      losses: 0,
+      matchesPlayed: 0,
+      captures: 0,
+      streak: 0,
+      matchCaptures: 0,
+      matchHistory: [],
       equippedDice: 'classic',
-      unlockedDice: ['classic', 'ruby', 'sapphire', 'emerald'],
+      unlockedDice: ['classic'],
       equippedPawn: 'crown',
-      unlockedPawns: ['crown', 'dragon'],
+      unlockedPawns: ['crown'],
       isTeamMode: false,
       partnerJoined: false
     };
@@ -6086,44 +6039,75 @@
 
     let diceTotalRotX = 0;
     let diceTotalRotY = 0;
+    let diceRollRafId = null;
 
     function render3dDiceRoll(val, isAnimated = true) {
       const cube = document.getElementById('diceCube');
       const shadow = document.getElementById('diceShadow');
       if (!cube) return;
 
+      if (diceRollRafId) {
+        cancelAnimationFrame(diceRollRafId);
+        diceRollRafId = null;
+      }
+
       const target = DICE_3D_TARGETS[val] || DICE_3D_TARGETS[1];
       const speedDiv = (typeof gameState !== 'undefined' && gameState.gameSpeed === 2) ? 2 : 1;
-      const rollDurationMs = Math.round(440 / speedDiv);
+      const rollDurationMs = Math.round(520 / speedDiv);
 
       if (isAnimated) {
-        // Ensure the browser starts from the current rotation before spinning 2 full 3D revolutions
-        cube.style.transition = `transform ${rollDurationMs}ms cubic-bezier(0.18, 0.92, 0.28, 1.06)`;
-        void cube.offsetWidth;
+        // 60fps Physics-Driven Realistic 3D Dice Tumble + 2 Physical Table Bounces!
+        cube.style.transition = 'none';
+        const startX = diceTotalRotX;
+        const startY = diceTotalRotY;
+        const spinsX = 720 + (Math.random() > 0.5 ? 360 : 0);
+        const spinsY = 720 + (Math.random() > 0.5 ? 360 : 0);
+        const endX = Math.floor(startX / 360) * 360 + spinsX + target.x;
+        const endY = Math.floor(startY / 360) * 360 + spinsY + target.y;
+        const wobbleZDir = Math.random() > 0.5 ? 1 : -1;
 
-        diceTotalRotX += 720;
-        diceTotalRotY += 720;
+        diceTotalRotX = endX;
+        diceTotalRotY = endY;
 
-        if (shadow) {
-          shadow.style.transform = 'scale(0.45)';
-          shadow.style.opacity = '0.28';
-        }
+        const startTime = performance.now();
+        function stepPhysics(now) {
+          const t = Math.min(1, (now - startTime) / rollDurationMs);
+          // Smooth physical friction deceleration (cubic ease-out)
+          const ease = 1 - Math.pow(1 - t, 3);
+          const curX = startX + (endX - startX) * ease;
+          const curY = startY + (endY - startY) * ease;
+          // Subtle Z-axis tumble wobble that settles to 0deg cleanly
+          const curZ = Math.sin(Math.PI * t * 2) * (1 - t) * 28 * wobbleZDir;
+          // 2 physical damped table bounces (high toss -> bounce 1 -> bounce 2 -> settle)
+          const bounceArc = Math.abs(Math.sin(Math.PI * t * 2.0)) * (1 - t) * 26;
+          const airScale = 1 + (bounceArc / 26) * 0.22;
 
-        cube.style.transform = `translateY(-10px) scale(1.14) rotateX(${diceTotalRotX + target.x}deg) rotateY(${diceTotalRotY + target.y}deg) rotateZ(0deg)`;
+          cube.style.transform = `translateY(${(-bounceArc).toFixed(2)}px) scale(${airScale.toFixed(3)}) rotateX(${curX.toFixed(1)}deg) rotateY(${curY.toFixed(1)}deg) rotateZ(${curZ.toFixed(1)}deg)`;
 
-        // Crisp mid-air land & settle onto the exact rolled face
-        setTimeout(() => {
-          cube.style.transition = `transform ${Math.round(110 / speedDiv)}ms ease-out`;
-          cube.style.transform = `translateY(0px) scale(1) rotateX(${diceTotalRotX + target.x}deg) rotateY(${diceTotalRotY + target.y}deg) rotateZ(0deg)`;
           if (shadow) {
-            shadow.style.transform = 'scale(1.15)';
-            shadow.style.opacity = '0.9';
-            setTimeout(() => { shadow.style.transform = 'scale(1)'; shadow.style.opacity = '0.75'; }, 100);
+            const sScale = 1.08 - (bounceArc / 26) * 0.52;
+            const sAlpha = 0.85 - (bounceArc / 26) * 0.55;
+            shadow.style.transform = `scale(${sScale.toFixed(2)})`;
+            shadow.style.opacity = sAlpha.toFixed(2);
           }
-        }, Math.max(120, rollDurationMs - 80));
+
+          if (t < 1) {
+            diceRollRafId = requestAnimationFrame(stepPhysics);
+          } else {
+            diceRollRafId = null;
+            cube.style.transform = `translateY(0px) scale(1) rotateX(${endX}deg) rotateY(${endY}deg) rotateZ(0deg)`;
+            if (shadow) {
+              shadow.style.transform = 'scale(1)';
+              shadow.style.opacity = '0.78';
+            }
+          }
+        }
+        diceRollRafId = requestAnimationFrame(stepPhysics);
       } else {
         cube.style.transition = 'none';
-        cube.style.transform = `translateY(0px) scale(1) rotateX(${diceTotalRotX + target.x}deg) rotateY(${diceTotalRotY + target.y}deg) rotateZ(0deg)`;
+        diceTotalRotX = target.x;
+        diceTotalRotY = target.y;
+        cube.style.transform = `translateY(0px) scale(1) rotateX(${target.x}deg) rotateY(${target.y}deg) rotateZ(0deg)`;
       }
     }
 
@@ -6226,7 +6210,7 @@
         }
 
         handlePostRoll(roll);
-      }, Math.round(460 / speedDiv));
+      }, Math.round(540 / speedDiv));
     }
 
     function luckyReroll(e) {
@@ -6396,6 +6380,7 @@
                 }
                 if (gameState.currentTurnSeat === 0) {
                   gameState.gold += 150;
+                  gameState.matchCaptures = (gameState.matchCaptures || 0) + 1;
                   updateCurrencyDisplay();
                   if (typeof addOverdriveCharge === 'function') addOverdriveCharge(50);
                   if (typeof flyCoinsToWallet === 'function') flyCoinsToWallet(6);
@@ -6874,13 +6859,27 @@
       setTimeout(() => playTone(659.25, 'triangle', 0.2, 0.2), 100);
       setTimeout(() => playTone(783.99, 'triangle', 0.4, 0.25), 200);
 
-      const wonCoins = (gameState.selectedBet || 500) * (gameState.activePlayerCount || 4);
+      const wonCoins = (gameState.selectedBet > 0 ? gameState.selectedBet : 250) * (gameState.activePlayerCount || 2);
       const isUserWin = winnerColor === 'RED';
       if (isUserWin) {
         gameState.gold += wonCoins;
         gameState.wins++;
+        gameState.streak = (gameState.streak || 0) + 1;
+        gameState.xp += 100;
+      } else {
+        gameState.losses = (gameState.losses || 0) + 1;
+        gameState.streak = 0;
+        gameState.xp += 25;
       }
-      gameState.xp += 100;
+      gameState.matchesPlayed = (gameState.matchesPlayed || 0) + 1;
+      gameState.level = Math.max(1, 1 + Math.floor(gameState.xp / 500));
+      if (typeof recordMatchToDatabase === 'function') {
+        recordMatchToDatabase(
+          isUserWin ? 'WIN' : 'LOSS',
+          isUserWin ? wonCoins : -(gameState.selectedBet || 0),
+          gameState.matchCaptures || 0
+        );
+      }
       updateCurrencyDisplay();
 
       if (typeof saveMatchToFirebase === 'function') {
@@ -7035,12 +7034,15 @@
     }
 
     function confirmAndStartMatch() {
-      if (gameState.gold < gameState.selectedBet) {
-        openShopModal();
-        showNotificationToast("❌ Not enough coins! Visit Shop to claim or buy gold.");
-        return;
+      const entryCost = gameState.selectedBet || 0;
+      if (entryCost > 0 && gameState.gold >= entryCost) {
+        gameState.gold -= entryCost;
+      } else if (entryCost > 0 && gameState.gold < entryCost) {
+        // Fresh 0-coin players can always play Free Starter Tables and earn real coins!
+        gameState.selectedBet = 0;
+        showNotificationToast('🎁 Free Starter Table active — win to earn your first +500 🪙!');
       }
-      gameState.gold -= gameState.selectedBet;
+      gameState.matchCaptures = 0;
       updateCurrencyDisplay();
       closeModals();
 
@@ -7476,17 +7478,7 @@
     }
 
     function initAmbientStardust() {
-      const container = document.getElementById('ambientStardust');
-      if (!container || container.childElementCount > 0) return;
-      for (let i = 0; i < 14; i++) {
-        const mote = document.createElement('div');
-        mote.className = 'ls-stardust-mote';
-        mote.style.left = `${Math.round(Math.random() * 96)}%`;
-        mote.style.top = `${Math.round(15 + Math.random() * 80)}%`;
-        mote.style.animationDelay = `${(Math.random() * 5).toFixed(2)}s`;
-        mote.style.animationDuration = `${(4.5 + Math.random() * 3.5).toFixed(2)}s`;
-        container.appendChild(mote);
-      }
+      // Disabled continuous background DOM particle loop for silky-smooth 60fps performance
     }
 
     function spawnHopCometTrail(cx, cy, colorHex) {
@@ -7904,19 +7896,20 @@
     }
 
     
-    // REAL PERSISTENT USER PROFILE (NO FAKE ID)
+    // REAL PERSISTENT USER PROFILE (STARTS AT ZERO — BACKED BY REAL SERVER DATABASE)
     let userProfile = {
-      name: 'Uzair',
-      avatar: '👑',
+      name: 'Player',
+      avatar: '😎',
       flag: '🇵🇰',
-      title: 'GRAND MASTER',
+      title: 'ROOKIE',
       frame: 'gold',
-      level: 12,
-      wins: 158,
-      winRate: '72%',
-      totalMatches: 219,
-      trophies: 2480,
-      bestRoll: 'Triple 6s'
+      level: 1,
+      wins: 0,
+      losses: 0,
+      winRate: '0%',
+      totalMatches: 0,
+      trophies: 0,
+      bestRoll: 'None yet'
     };
 
     const AVATAR_OPTIONS = ['👑', '👸', '🦁', '🐯', '🥷', '🧙‍♂️', '🏴‍☠️', '🚀', '💎', '🐉', '⚔️', '🦅'];
@@ -7925,23 +7918,156 @@
     let tempSelectedAvatar = userProfile.avatar;
     let tempSelectedFlag = userProfile.flag;
 
-    function loadUserProfileFromStorage() {
+    function getOrCreateLocalPlayerId() {
+      let id = localStorage.getItem('royalLudo_player_id');
+      if (!id) {
+        id = 'plr_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+        localStorage.setItem('royalLudo_player_id', id);
+      }
+      return id;
+    }
+
+    function applyDatabaseRecordToClient(rec) {
+      if (!rec) return;
+      userProfile.name = rec.name || 'Player';
+      userProfile.avatar = rec.avatar || '😎';
+      userProfile.flag = rec.flag || '🇵🇰';
+      userProfile.wins = rec.wins || 0;
+      userProfile.losses = rec.losses || 0;
+      userProfile.totalMatches = rec.matchesPlayed || 0;
+      userProfile.level = rec.level || 1;
+      userProfile.winRate =
+        userProfile.totalMatches > 0
+          ? `${Math.round((userProfile.wins / userProfile.totalMatches) * 100)}%`
+          : '0%';
+
+      gameState.gold = rec.gold || 0;
+      gameState.gems = rec.gems || 0;
+      gameState.xp = rec.xp || 0;
+      gameState.level = rec.level || 1;
+      gameState.wins = rec.wins || 0;
+      gameState.losses = rec.losses || 0;
+      gameState.matchesPlayed = rec.matchesPlayed || 0;
+      gameState.captures = rec.captures || 0;
+      gameState.streak = rec.streak || 0;
+      gameState.matchHistory = Array.isArray(rec.matchHistory) ? rec.matchHistory : [];
+      if (rec.equippedDice) gameState.equippedDice = rec.equippedDice;
+      if (Array.isArray(rec.unlockedDice) && rec.unlockedDice.length > 0) gameState.unlockedDice = rec.unlockedDice;
+      if (rec.equippedPawn) gameState.equippedPawn = rec.equippedPawn;
+      if (Array.isArray(rec.unlockedPawns) && rec.unlockedPawns.length > 0) gameState.unlockedPawns = rec.unlockedPawns;
+
+      localStorage.setItem('royal_ludo_username', userProfile.name);
+      applyUserProfileToDom();
+      updateCurrencyDisplay(true);
+      renderMatchHistoryList();
+      if (typeof updateEquippedDiceSkinOn3dCube === 'function') updateEquippedDiceSkinOn3dCube();
+    }
+
+    async function syncPlayerFromDatabase() {
+      const playerId = getOrCreateLocalPlayerId();
       try {
-        const saved = localStorage.getItem('royalLudo_user_profile');
-        if (saved) {
-          userProfile = { ...userProfile, ...JSON.parse(saved) };
-        }
-        const dicePrefs = localStorage.getItem('royalLudo_dice_prefs');
-        if (dicePrefs) {
-          const parsedDice = JSON.parse(dicePrefs);
-          if (parsedDice.equippedDice) gameState.equippedDice = parsedDice.equippedDice;
-          if (Array.isArray(parsedDice.unlockedDice)) gameState.unlockedDice = parsedDice.unlockedDice;
+        const res = await fetch(`/api/db/player?playerId=${encodeURIComponent(playerId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.player) {
+            applyDatabaseRecordToClient(data.player);
+            return;
+          }
         }
       } catch (e) {}
+    }
+
+    let dbSaveTimer = null;
+    function savePlayerToDatabase() {
+      if (dbSaveTimer) clearTimeout(dbSaveTimer);
+      dbSaveTimer = setTimeout(async () => {
+        const playerId = getOrCreateLocalPlayerId();
+        const payload = {
+          playerId,
+          name: userProfile.name,
+          avatar: userProfile.avatar,
+          flag: userProfile.flag,
+          gold: gameState.gold,
+          gems: gameState.gems,
+          xp: gameState.xp,
+          level: gameState.level || 1,
+          wins: gameState.wins || 0,
+          losses: gameState.losses || 0,
+          matchesPlayed: gameState.matchesPlayed || 0,
+          captures: gameState.captures || 0,
+          streak: gameState.streak || 0,
+          equippedDice: gameState.equippedDice,
+          unlockedDice: gameState.unlockedDice,
+          equippedPawn: gameState.equippedPawn,
+          unlockedPawns: gameState.unlockedPawns,
+        };
+        try {
+          localStorage.setItem('royalLudo_db_backup', JSON.stringify({ ...payload, matchHistory: gameState.matchHistory || [] }));
+          await fetch('/api/db/player/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        } catch (e) {}
+      }, 250);
+    }
+
+    async function recordMatchToDatabase(result, coinsDelta, captures) {
+      const playerId = getOrCreateLocalPlayerId();
+      const entry = {
+        mode: `${(gameState.selectedVariation || 'classic').toUpperCase()} ${gameState.activePlayerCount || 2}P`,
+        playerCount: gameState.activePlayerCount || 2,
+        result,
+        coinsDelta,
+        captures,
+        playedAt: new Date().toISOString(),
+      };
+      gameState.matchHistory = [entry, ...(gameState.matchHistory || [])].slice(0, 50);
+      renderMatchHistoryList();
       applyUserProfileToDom();
-      if (typeof updateEquippedDiceSkinOn3dCube === 'function') {
-        updateEquippedDiceSkinOn3dCube();
-      }
+      try {
+        localStorage.setItem('royalLudo_db_backup', JSON.stringify({
+          playerId,
+          name: userProfile.name,
+          avatar: userProfile.avatar,
+          flag: userProfile.flag,
+          gold: gameState.gold,
+          gems: gameState.gems,
+          xp: gameState.xp,
+          level: gameState.level || 1,
+          wins: gameState.wins || 0,
+          losses: gameState.losses || 0,
+          matchesPlayed: gameState.matchesPlayed || 0,
+          captures: gameState.captures || 0,
+          streak: gameState.streak || 0,
+          matchHistory: gameState.matchHistory,
+        }));
+        const res = await fetch('/api/db/player/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ playerId, ...entry }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.player) {
+            applyDatabaseRecordToClient(data.player);
+          }
+        }
+      } catch (e) {}
+    }
+
+    function loadUserProfileFromStorage() {
+      try {
+        const backup = localStorage.getItem('royalLudo_db_backup');
+        if (backup) {
+          applyDatabaseRecordToClient(JSON.parse(backup));
+        } else {
+          applyUserProfileToDom();
+          updateCurrencyDisplay(true);
+        }
+      } catch (e) {}
+      // Hydrate from real persistent backend database
+      syncPlayerFromDatabase();
     }
 
     function applyUserProfileToDom() {
@@ -7967,10 +8093,22 @@
       if (modalName) modalName.textContent = userProfile.name;
 
       const modalWins = document.getElementById('statWins');
-      if (modalWins) modalWins.textContent = userProfile.wins;
+      if (modalWins) modalWins.textContent = String(gameState.wins || 0);
 
       const modalRate = document.getElementById('statRate');
-      if (modalRate) modalRate.textContent = userProfile.winRate;
+      const totalM = gameState.matchesPlayed || 0;
+      const winRateStr = totalM > 0 ? `${Math.round(((gameState.wins || 0) / totalM) * 100)}%` : '0%';
+      if (modalRate) modalRate.textContent = winRateStr;
+
+      const lvlEl = document.getElementById('userLevelLabel');
+      if (lvlEl) lvlEl.textContent = `Level ${gameState.level || 1}`;
+
+      const dashWins = document.getElementById('dashWinsCount');
+      if (dashWins) dashWins.textContent = String(gameState.wins || 0);
+      const dashMatches = document.getElementById('dashMatchesCount');
+      if (dashMatches) dashMatches.textContent = String(gameState.matchesPlayed || 0);
+      const dashStreak = document.getElementById('dashStreakCount');
+      if (dashStreak) dashStreak.textContent = String(gameState.streak || 0);
     }
 
     function openEditProfileModal() {
@@ -8038,9 +8176,11 @@
 
       try {
         localStorage.setItem('royalLudo_user_profile', JSON.stringify(userProfile));
+        localStorage.setItem('royal_ludo_username', userProfile.name);
       } catch (e) {}
 
       applyUserProfileToDom();
+      savePlayerToDatabase();
       if (typeof syncProfileToFirebase === 'function') {
         syncProfileToFirebase(userProfile);
       }
@@ -8050,6 +8190,8 @@
     }
 
     function openProfileModal() {
+      applyUserProfileToDom();
+      renderMatchHistoryList();
       document.getElementById('profileModal').classList.add('open');
     }
 
@@ -8195,9 +8337,22 @@
       }
     }
 
-    function updateCurrencyDisplay() {
-      document.getElementById('goldDisplay').textContent = (gameState.gold / 1000).toFixed(1) + 'K';
-      document.getElementById('gemsDisplay').textContent = gameState.gems;
+    function updateCurrencyDisplay(skipDbSave = false) {
+      const goldEl = document.getElementById('goldDisplay');
+      if (goldEl) {
+        goldEl.textContent = gameState.gold >= 1000
+          ? (gameState.gold / 1000).toFixed(1) + 'K'
+          : String(gameState.gold || 0);
+      }
+      const gemsEl = document.getElementById('gemsDisplay');
+      if (gemsEl) gemsEl.textContent = String(gameState.gems || 0);
+      const inGameGems = document.getElementById('inGameGemsCount');
+      if (inGameGems) inGameGems.textContent = String(gameState.gems || 0);
+      const xpEl = document.getElementById('xpDisplay');
+      if (xpEl) xpEl.textContent = `${(gameState.xp || 0) % 500}/500`;
+      if (!skipDbSave && typeof savePlayerToDatabase === 'function') {
+        savePlayerToDatabase();
+      }
     }
 
     // ==========================================================
@@ -9331,17 +9486,29 @@
     function renderMatchHistoryList() {
       const container = document.getElementById('matchHistoryListContainer');
       if (!container) return;
-      const history = [
-        { mode: 'CLASSIC 2P', res: 'WIN', delta: '+1,000 🪙 (Rs. 100)' },
-        { mode: 'ROYAL 4P', res: 'WIN', delta: '+4,000 🪙 (Rs. 400)' },
-        { mode: 'QUICK RUSH', res: 'WIN', delta: '+2,000 🪙 (Rs. 200)' }
-      ];
-      container.innerHTML = history.map(h => `
-        <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
-          <span>⚔️ ${h.mode} (${h.res})</span>
-          <span style="color: #2ECC71; font-weight: 800;">${h.delta}</span>
-        </div>
-      `).join('');
+      const history = Array.isArray(gameState.matchHistory) ? gameState.matchHistory : [];
+      if (history.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding: 14px 8px; color: #D9A0D7; font-size: 11px; font-weight: 700;">
+            📜 No matches played yet (0 Matches).<br>Play your first match to record your real history!
+          </div>
+        `;
+        return;
+      }
+      container.innerHTML = history.map(h => {
+        const isWin = h.result === 'WIN';
+        const deltaStr = h.coinsDelta >= 0 ? `+${h.coinsDelta.toLocaleString()} 🪙` : `${h.coinsDelta.toLocaleString()} 🪙`;
+        const timeStr = h.playedAt ? new Date(h.playedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 11px;">
+            <div>
+              <div style="font-weight: 800; color: #FFF;">${isWin ? '🏆' : '⚔️'} ${h.mode} (${h.result})</div>
+              <div style="font-size: 9px; color: #D9A0D7;">${h.captures || 0} Kills ${timeStr ? '• ' + timeStr : ''}</div>
+            </div>
+            <span style="color: ${isWin ? '#2ECC71' : '#E74C3C'}; font-weight: 900;">${deltaStr}</span>
+          </div>
+        `;
+      }).join('');
     }
 
   </script>
