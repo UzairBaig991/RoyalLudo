@@ -1667,6 +1667,52 @@
       100% { transform: translate(var(--sway), -125px) scale(0.75) rotate(10deg); opacity: 0; }
     }
 
+    /* LIVE RACE-TO-CROWN PROGRESS STRIP ON EVERY PLAYER POD, DANGER HALO & TURN BEAM */
+    .ls-pod-race-bar {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 2px;
+      height: 3px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .ls-pod-race-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      background: var(--race-color, #FFDF00);
+      box-shadow: 0 0 6px var(--race-color, #FFDF00);
+      transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes dangerPulseRing {
+      0%   { opacity: 0.35; stroke-width: 2; }
+      100% { opacity: 0.95; stroke-width: 3.5; }
+    }
+    .ls-danger-halo {
+      animation: dangerPulseRing 0.55s infinite alternate ease-in-out;
+      pointer-events: none;
+    }
+    .ls-home-finish-beam {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 64px;
+      height: 180px;
+      transform: translate(-50%, -50%) scaleY(0.2);
+      background: radial-gradient(ellipse at center, rgba(255, 223, 0, 0.95) 0%, rgba(255, 223, 0, 0.35) 45%, rgba(255, 223, 0, 0) 75%);
+      pointer-events: none;
+      z-index: 55;
+      animation: finishBeamFlash 0.78s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes finishBeamFlash {
+      0%   { transform: translate(-50%, -50%) scale(0.3, 0.2); opacity: 0; }
+      30%  { transform: translate(-50%, -50%) scale(1.25, 1.15); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1.7, 0.5); opacity: 0; }
+    }
+
     /* MINIMALIST LUDO STAR BOTTOM UTILITY BAR (4 Clean Buttons, Zero Clutter) */
     .ls-clean-bottom-bar {
       display: flex;
@@ -5652,6 +5698,17 @@
             shieldRing.setAttribute('stroke-width', '2.5');
             shieldRing.setAttribute('stroke-dasharray', '4,2');
             group.appendChild(shieldRing);
+          } else if (token.color === 'RED' && token.step >= 0 && token.step <= 50 && typeof isTokenInCaptureDanger === 'function' && isTokenInCaptureDanger(token)) {
+            // Pulsing crimson threat halo when an opponent is 1-6 steps behind your vulnerable token!
+            const dangerRing = document.createElementNS(SVG_NS, 'circle');
+            dangerRing.setAttribute('class', 'ls-danger-halo');
+            dangerRing.setAttribute('cx', cx);
+            dangerRing.setAttribute('cy', cy);
+            dangerRing.setAttribute('r', rOuter + 5);
+            dangerRing.setAttribute('fill', 'rgba(255, 71, 87, 0.16)');
+            dangerRing.setAttribute('stroke', '#FF4757');
+            dangerRing.setAttribute('stroke-dasharray', '5,3');
+            group.appendChild(dangerRing);
           }
 
           // Shadow
@@ -6048,6 +6105,7 @@
                   updateCurrencyDisplay();
                   if (typeof addOverdriveCharge === 'function') addOverdriveCharge(50);
                   if (typeof flyCoinsToWallet === 'function') flyCoinsToWallet(6);
+                  if (typeof triggerSmartBotBanter === 'function') triggerSmartBotBanter('captured', COLORS.indexOf(o.color));
                   triggerBoardJuice('⚔️ SMASH! +150 🪙', true);
                 } else {
                   triggerBoardJuice('⚔️ CAPTURED!', true);
@@ -6064,17 +6122,20 @@
         if (nextStep === 56) {
           earnedExtra = true;
           playSixSound();
+          if (typeof spawnHomeFinishBeam === 'function') spawnHomeFinishBeam();
           if (gameState.currentTurnSeat === 0) {
             gameState.gold += 250;
             updateCurrencyDisplay();
             if (typeof addOverdriveCharge === 'function') addOverdriveCharge(40);
             if (typeof flyCoinsToWallet === 'function') flyCoinsToWallet(8);
+            if (typeof triggerSmartBotBanter === 'function') triggerSmartBotBanter('user_home');
             triggerBoardJuice('🏁 HOME! +250 🪙', false);
           } else {
             triggerBoardJuice('🏁 TOKEN HOME!', false);
           }
         }
 
+        if (typeof updateRaceProgressBars === 'function') updateRaceProgressBars();
         renderBoard();
 
         // Check finish
@@ -6285,6 +6346,7 @@
         boardWrap.style.borderColor = activeColor;
         boardWrap.style.boxShadow = `0 8px 30px rgba(0,0,0,0.7), 0 0 24px ${activeColor}66, inset 0 0 18px rgba(0,0,0,0.5)`;
       }
+      if (typeof updateRaceProgressBars === 'function') updateRaceProgressBars();
       
       // Update Pod Highlighting, Inactive Dimming & Active Home Corner Profile Picture
       for (let i = 0; i < 4; i++) {
@@ -7313,6 +7375,64 @@
           setTimeout(() => avatar.classList.remove('ls-avatar-on-fire'), 6500);
         }
       }
+    }
+
+    function isTokenInCaptureDanger(token) {
+      if (!token || token.step < 0 || token.step > 50 || token.isShielded) return false;
+      const myAbs = (COLOR_START_INDEX[token.color] + token.step) % 52;
+      if (SAFE_INDICES.includes(myAbs)) return false;
+      return gameState.tokens.some(o => {
+        if (o.color === token.color || o.step < 0 || o.step > 50) return false;
+        if (gameState.isTeamMode && ((token.color === 'RED' && o.color === 'YELLOW') || (token.color === 'YELLOW' && o.color === 'RED'))) return false;
+        const oppAbs = (COLOR_START_INDEX[o.color] + o.step) % 52;
+        const dist = (myAbs - oppAbs + 52) % 52;
+        return dist >= 1 && dist <= 6;
+      });
+    }
+
+    function updateRaceProgressBars() {
+      for (let seat = 0; seat < 4; seat++) {
+        const pod = document.getElementById(`hud-slot-${seat}`);
+        if (!pod) continue;
+        let bar = pod.querySelector('.ls-pod-race-bar');
+        if (!bar) {
+          bar = document.createElement('div');
+          bar.className = 'ls-pod-race-bar';
+          bar.innerHTML = '<div class="ls-pod-race-fill"></div>';
+          pod.appendChild(bar);
+        }
+        const fill = bar.querySelector('.ls-pod-race-fill');
+        const color = COLORS[seat];
+        const seatTokens = gameState.tokens.filter(t => t.color === color);
+        const totalSteps = seatTokens.reduce((sum, t) => sum + Math.max(0, t.step), 0);
+        const pct = Math.min(100, Math.round((totalSteps / (4 * 56)) * 100));
+        if (fill) {
+          fill.style.width = `${pct}%`;
+          fill.style.setProperty('--race-color', getVisualHexForSeat(seat));
+        }
+      }
+    }
+
+    function spawnHomeFinishBeam() {
+      const wrapper = document.getElementById('boardWrapper');
+      if (!wrapper) return;
+      const beam = document.createElement('div');
+      beam.className = 'ls-home-finish-beam';
+      wrapper.appendChild(beam);
+      setTimeout(() => beam.remove(), 800);
+    }
+
+    function triggerSmartBotBanter(eventType, specificSeat) {
+      if (typeof onlineMatch !== 'undefined' && onlineMatch.active) return;
+      const banter = {
+        captured: ['Nooo! My pawn! 😱', 'Revenge is coming! ⚔️', 'Good shot! 😅', 'Ouch!! 💥'],
+        user_home: ['Too fast! 👑', 'Whoa, nice play! 🔥', 'I need a 6 now! 🎲'],
+      };
+      const pool = banter[eventType];
+      if (!pool) return;
+      const targetSeat = typeof specificSeat === 'number' && specificSeat > 0 ? specificSeat : 2;
+      const line = pool[Math.floor(Math.random() * pool.length)];
+      setTimeout(() => showSpeechBubble(targetSeat, line), 350);
     }
 
     function closeModals() {
