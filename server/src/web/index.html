@@ -1635,6 +1635,38 @@
       animation: centerMedallionSpin 18s linear infinite;
     }
 
+    /* MARCHING PATH PREVIEW, HOT-STREAK AVATAR FLAME & BUOYANT EMOJI FLOAT */
+    @keyframes marchingPathFlow {
+      to { stroke-dashoffset: -24; }
+    }
+    .ls-preview-path-line {
+      stroke-dasharray: 6, 6;
+      animation: marchingPathFlow 0.7s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes streakFlamePulse {
+      0%   { box-shadow: 0 0 8px #FF9800, 0 0 16px rgba(255, 87, 34, 0.7); }
+      100% { box-shadow: 0 0 16px #FFDF00, 0 0 28px rgba(255, 152, 0, 0.95); }
+    }
+    .ls-avatar-on-fire {
+      border-color: #FFDF00 !important;
+      animation: streakFlamePulse 0.65s infinite alternate ease-in-out;
+    }
+    .ls-arena-emoji-float {
+      position: absolute;
+      font-size: 28px;
+      pointer-events: none;
+      z-index: 85;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
+      animation: arenaEmojiDrift 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes arenaEmojiDrift {
+      0%   { transform: translate(0, 12px) scale(0.4) rotate(-12deg); opacity: 0; }
+      20%  { transform: translate(var(--sway), -18px) scale(1.2) rotate(8deg); opacity: 1; }
+      75%  { transform: translate(calc(var(--sway) * -0.6), -80px) scale(1.05) rotate(-6deg); opacity: 0.95; }
+      100% { transform: translate(var(--sway), -125px) scale(0.75) rotate(10deg); opacity: 0; }
+    }
+
     /* MINIMALIST LUDO STAR BOTTOM UTILITY BAR (4 Clean Buttons, Zero Clutter) */
     .ls-clean-bottom-bar {
       display: flex;
@@ -5459,6 +5491,27 @@
             const strokeCol = willCapture ? '#FF4757' : isFinish ? '#FFDF00' : '#2ECC71';
             const fillCol = willCapture ? 'rgba(255, 71, 87, 0.38)' : isFinish ? 'rgba(255, 223, 0, 0.38)' : 'rgba(46, 204, 113, 0.35)';
 
+            // Draw animated marching-dots path preview for the Best Suggested Move!
+            if (t.id === bestSuggestedTokenId && t.step >= 0 && nextStep > t.step) {
+              const pts = [];
+              for (let s = t.step; s <= nextStep; s++) {
+                const c = getTokenCoord({ color: t.color, id: t.id, step: s });
+                pts.push(`${c.col * CELL_SIZE + CELL_SIZE / 2},${c.row * CELL_SIZE + CELL_SIZE / 2}`);
+              }
+              if (pts.length > 1) {
+                const pathLine = document.createElementNS(SVG_NS, 'polyline');
+                pathLine.setAttribute('class', 'dest-preview ls-preview-path-line');
+                pathLine.setAttribute('points', pts.join(' '));
+                pathLine.setAttribute('fill', 'none');
+                pathLine.setAttribute('stroke', strokeCol);
+                pathLine.setAttribute('stroke-width', '4');
+                pathLine.setAttribute('stroke-linecap', 'round');
+                pathLine.setAttribute('stroke-linejoin', 'round');
+                pathLine.setAttribute('opacity', '0.85');
+                svg.appendChild(pathLine);
+              }
+            }
+
             const destGroup = document.createElementNS(SVG_NS, 'g');
             destGroup.setAttribute('class', 'dest-preview');
             destGroup.style.cursor = 'pointer';
@@ -5972,6 +6025,7 @@
               }
               if (o.color !== color && o.step >= 0 && o.step <= 50 && (COLOR_START_INDEX[o.color] + o.step) % 52 === abs) {
                 const capturedOrigin = getTokenCoord(o);
+                const wasHomeLocked = !activePlayer.hasKilledOpponent;
                 o.step = -1;
                 activePlayer.hasKilledOpponent = true;
                 if (typeof incrementMissionProgress === 'function' && gameState.currentTurnSeat === 0) {
@@ -5980,9 +6034,14 @@
                 playCaptureSound();
                 try { if (navigator.vibrate) navigator.vibrate([50, 30, 80]); } catch (e) {}
                 triggerBoardShake();
+                if (typeof setPlayerStreakFlame === 'function') setPlayerStreakFlame(gameState.currentTurnSeat, true);
                 if (capturedOrigin) {
                   spawnTileRipple(capturedOrigin.col, capturedOrigin.row, '#FF4757', 42);
+                  if (typeof spawnCaptureLightning === 'function') spawnCaptureLightning(capturedOrigin.col, capturedOrigin.row);
                   animateCapturedTokenReturn(o.color, o.id, capturedOrigin);
+                }
+                if (wasHomeLocked && typeof spawnHomeUnlockBurst === 'function') {
+                  spawnHomeUnlockBurst(color);
                 }
                 if (gameState.currentTurnSeat === 0) {
                   gameState.gold += 150;
@@ -7209,6 +7268,53 @@
       showNotificationToast(`🎨 Arena Theme: ${next.label}`);
     }
 
+    function spawnCaptureLightning(col, row) {
+      const svg = document.getElementById('ludoSvg');
+      if (!svg) return;
+      const cx = col * CELL_SIZE + CELL_SIZE / 2;
+      const cy = row * CELL_SIZE + CELL_SIZE / 2;
+
+      // Crisp SVG lightning bolt striking the capture tile
+      const bolt = document.createElementNS(SVG_NS, 'path');
+      bolt.setAttribute(
+        'd',
+        `M${cx + 8},${cy - 44} L${cx - 6},${cy - 12} L${cx + 5},${cy - 10} L${cx - 10},${cy + 20} L${cx + 14},${cy - 4} L${cx + 2},${cy - 6} Z`
+      );
+      bolt.setAttribute('fill', '#FFDF00');
+      bolt.setAttribute('stroke', '#FF4757');
+      bolt.setAttribute('stroke-width', '2');
+      bolt.style.pointerEvents = 'none';
+      svg.appendChild(bolt);
+
+      const start = performance.now();
+      function flash(now) {
+        const t = Math.min(1, (now - start) / 340);
+        bolt.setAttribute('opacity', (1 - t).toFixed(2));
+        if (t < 1) requestAnimationFrame(flash);
+        else bolt.remove();
+      }
+      requestAnimationFrame(flash);
+    }
+
+    function spawnHomeUnlockBurst(color) {
+      const gateCoord = HOME_STRETCH_COORDS[color]?.[0];
+      if (!gateCoord) return;
+      spawnTileRipple(gateCoord.col, gateCoord.row, '#2ECC71', 44);
+      spawnSafeStarSparkles(gateCoord.col, gateCoord.row);
+    }
+
+    function setPlayerStreakFlame(seat, active) {
+      const pod = document.getElementById(`hud-slot-${seat}`);
+      if (!pod) return;
+      const avatar = pod.querySelector('.ls-avatar-ring, .ls-player-avatar-circle');
+      if (avatar) {
+        avatar.classList.toggle('ls-avatar-on-fire', !!active);
+        if (active) {
+          setTimeout(() => avatar.classList.remove('ls-avatar-on-fire'), 6500);
+        }
+      }
+    }
+
     function closeModals() {
       document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
     }
@@ -7597,20 +7703,34 @@
 
     function sendChatMsg(msg) {
       closeModals();
+      if (typeof onlineMatch !== 'undefined' && onlineMatch.active && onlineMatch.socket) {
+        onlineMatch.socket.emit('game:chat', { message: msg });
+        return;
+      }
       showSpeechBubble(0, msg);
     }
 
     function sendEmojiReaction(emoji) {
       closeModals();
+      if (typeof onlineMatch !== 'undefined' && onlineMatch.active && onlineMatch.socket) {
+        onlineMatch.socket.emit('game:emoji', { emojiId: emoji });
+      }
       const board = document.getElementById('boardWrapper');
-      const burst = document.createElement('div');
-      burst.className = 'floating-burst-emoji';
-      burst.textContent = emoji;
-      burst.style.left = `${35 + Math.random() * 30}%`;
-      burst.style.top = `${40 + Math.random() * 20}%`;
-      board.appendChild(burst);
-      playTone(440, 'sine', 0.1, 0.2);
-      setTimeout(() => burst.remove(), 1800);
+      if (!board) return;
+      // Launch 3 buoyant animated emojis floating gracefully across the arena
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          const burst = document.createElement('div');
+          burst.className = 'ls-arena-emoji-float';
+          burst.textContent = emoji;
+          burst.style.left = `${28 + Math.random() * 44}%`;
+          burst.style.top = `${52 + Math.random() * 18}%`;
+          burst.style.setProperty('--sway', `${Math.round((Math.random() - 0.5) * 34)}px`);
+          board.appendChild(burst);
+          setTimeout(() => burst.remove(), 1650);
+        }, i * 110);
+      }
+      playTone(520, 'sine', 0.09, 0.18);
     }
 
     function showSpeechBubble(seat, text) {
