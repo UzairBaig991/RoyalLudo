@@ -184,6 +184,7 @@
       renderFriendsList();
       renderLeagueGroup();
       if (typeof initAmbientStardust === 'function') initAmbientStardust();
+      if (typeof loadSavedGlobalTheme === 'function') loadSavedGlobalTheme();
       // Auto-join friend's online room if opened via ?room=RLXXXX invite link
       try {
         const urlRoom = new URLSearchParams(window.location.search).get('room');
@@ -3022,6 +3023,263 @@
       100% { height: 10px; }
     }
 
+    /* ========================================================
+       NEXT-GEN ANIMATED DASHBOARD, GLOBAL LUXURY THEMES & CARDS
+       ======================================================== */
+    /* 4 Global Luxury App Themes */
+    body.theme-cosmic {
+      --ls-bg-top: #0B132B;
+      --ls-bg-mid: #16213E;
+      --ls-bg-bottom: #070B19;
+      --ls-purple-card: #1B2A4A;
+      --ls-purple-dark: #0F172A;
+      --ls-purple-border: #38BDF8;
+      --ls-text-sub: #93C5FD;
+    }
+    body.theme-emerald {
+      --ls-bg-top: #063722;
+      --ls-bg-mid: #042416;
+      --ls-bg-bottom: #02140C;
+      --ls-purple-card: #0E4D31;
+      --ls-purple-dark: #08301E;
+      --ls-purple-border: #2ECC71;
+      --ls-text-sub: #82E0AA;
+    }
+    body.theme-crimson {
+      --ls-bg-top: #3B0816;
+      --ls-bg-mid: #22040D;
+      --ls-bg-bottom: #100206;
+      --ls-purple-card: #581024;
+      --ls-purple-dark: #330814;
+      --ls-purple-border: #FF4757;
+      --ls-text-sub: #FDA4AF;
+    }
+
+    /* Animated Breathing Aurora Background Overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: -20%;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255, 223, 0, 0.11) 0%, transparent 45%),
+        radial-gradient(circle at 80% 75%, rgba(0, 229, 255, 0.1) 0%, transparent 48%);
+      pointer-events: none;
+      z-index: 0;
+      animation: auroraDrift 14s infinite alternate ease-in-out;
+    }
+    @keyframes auroraDrift {
+      0%   { transform: translate(-2%, -2%) scale(1); }
+      100% { transform: translate(3%, 3%) scale(1.08); }
+    }
+
+    /* Royal Command Center Dashboard Hero Banner */
+    .royal-dashboard-hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(255, 223, 0, 0.14) 0%, rgba(82, 19, 80, 0.65) 55%, rgba(0, 229, 255, 0.12) 100%);
+      border: 1.5px solid rgba(255, 223, 0, 0.45);
+      border-radius: 20px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 0.35s ease-out;
+    }
+    .royal-dashboard-hero::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -60%;
+      width: 45%;
+      height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+      transform: rotate(22deg);
+      animation: cardGlossSweep 5.5s infinite ease-in-out;
+      pointer-events: none;
+    }
+    .royal-dash-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .royal-dash-title {
+      font-family: 'Fredoka', cursive;
+      font-size: 16px;
+      font-weight: 900;
+      color: #FFDF00;
+      letter-spacing: 0.6px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    }
+    .royal-dash-sub {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--ls-text-sub);
+    }
+    .royal-theme-dots {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .royal-theme-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .royal-theme-dot:hover {
+      transform: scale(1.16);
+    }
+    .royal-theme-dot.active {
+      border-color: #FFDF00;
+      box-shadow: 0 0 12px rgba(255, 223, 0, 0.9);
+      transform: scale(1.14);
+    }
+    .royal-dash-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .royal-stat-chip {
+      background: rgba(15, 2, 18, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      padding: 6px 4px;
+      text-align: center;
+    }
+    .royal-stat-val {
+      font-family: 'Fredoka', cursive;
+      font-size: 13px;
+      font-weight: 900;
+      color: #FFFFFF;
+    }
+    .royal-stat-lbl {
+      font-size: 8.5px;
+      font-weight: 800;
+      color: var(--ls-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .royal-dash-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .royal-quick-cta {
+      flex: 1;
+      border: none;
+      border-radius: 13px;
+      padding: 9px 8px;
+      font-family: 'Fredoka', cursive;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
+    }
+    .royal-quick-cta:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+    .royal-quick-cta:active {
+      transform: scale(0.95);
+    }
+    .royal-quick-cta.primary {
+      background: linear-gradient(135deg, #2ECC71 0%, #1E8449 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 0 #145A32, 0 6px 14px rgba(46, 204, 113, 0.4);
+    }
+    .royal-quick-cta.friends {
+      background: linear-gradient(135deg, #00B4D8 0%, #5E2BFF 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 0 #32128A, 0 6px 14px rgba(0, 180, 216, 0.4);
+    }
+
+    /* ULTRA-ANIMATED MODE CARDS (Holographic Gloss Sweep + 3D Icon Levitation + Stagger Pop) */
+    .animated-game-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.26s cubic-bezier(0.22, 1.25, 0.36, 1), box-shadow 0.26s ease, border-color 0.26s ease !important;
+      animation: cardCascadeIn 0.45s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+    }
+    .animated-game-card:nth-child(1) { animation-delay: 0.04s; }
+    .animated-game-card:nth-child(2) { animation-delay: 0.10s; }
+    .animated-game-card:nth-child(3) { animation-delay: 0.16s; }
+    .animated-game-card:nth-child(4) { animation-delay: 0.22s; }
+    .animated-game-card:nth-child(5) { animation-delay: 0.28s; }
+    .animated-game-card:nth-child(6) { animation-delay: 0.34s; }
+
+    @keyframes cardCascadeIn {
+      from { opacity: 0; transform: translateY(18px) scale(0.94); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .animated-game-card::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      left: -80%;
+      width: 55%;
+      height: 220%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+      transform: rotate(24deg);
+      animation: cardGlossSweep 4.2s infinite ease-in-out;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .animated-game-card:nth-child(even)::before {
+      animation-delay: 1.8s;
+    }
+    @keyframes cardGlossSweep {
+      0%, 58%  { left: -85%; }
+      100%     { left: 145%; }
+    }
+
+    .animated-game-card:hover {
+      transform: translateY(-6px) scale(1.035) !important;
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.55), 0 0 22px rgba(255, 223, 0, 0.45) !important;
+    }
+    .animated-game-card:active {
+      transform: translateY(1px) scale(0.97) !important;
+    }
+
+    .card-center-icon-area svg {
+      animation: cardIconFloat 2.8s infinite alternate ease-in-out;
+    }
+    .animated-game-card:nth-child(even) .card-center-icon-area svg {
+      animation-delay: 0.9s;
+    }
+    @keyframes cardIconFloat {
+      0%   { transform: translateY(0px) scale(1); }
+      100% { transform: translateY(-6px) scale(1.05); }
+    }
+
+    .small-mode-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.22s cubic-bezier(0.22, 1.25, 0.36, 1), border-color 0.22s ease, box-shadow 0.22s ease !important;
+    }
+    .small-mode-card:hover {
+      transform: translateY(-4px) scale(1.05) !important;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45), 0 0 14px rgba(255, 223, 0, 0.4) !important;
+    }
+    .small-mode-card .small-mode-icon {
+      transition: transform 0.25s ease;
+    }
+    .small-mode-card:hover .small-mode-icon {
+      transform: scale(1.18) rotate(-6deg);
+    }
+
 </style>
 </head>
 <body>
@@ -3029,7 +3287,7 @@
   <!-- BACKGROUND WATERMARK -->
   <div class="bg-watermark">
     <div class="wm-crown">👑</div>
-    <div class="wm-text">LUDO<br>STAR</div>
+    <div class="wm-text">ROYAL<br>LUDO</div>
   </div>
 
   <div class="app-viewport">
@@ -3118,6 +3376,42 @@
          SCREEN 1: LUDO STAR PREMIER HOME SCREEN WITH ALL MODES
          ======================================================== -->
     <section class="screen-view active" id="view-home">
+      <!-- ROYAL COMMAND CENTER DASHBOARD HERO -->
+      <div class="royal-dashboard-hero">
+        <div class="royal-dash-top">
+          <div>
+            <div class="royal-dash-title">👑 ROYAL LUDO ARENA</div>
+            <div class="royal-dash-sub">Live Multiplayer • Overdrive Power • 24 3D Dice</div>
+          </div>
+          <div class="royal-theme-dots" title="Switch App Theme">
+            <button class="royal-theme-dot active" id="themeBtn-royal" style="background: #521350;" onclick="setGlobalAppTheme('royal')" title="Royal Velvet Theme">👑</button>
+            <button class="royal-theme-dot" id="themeBtn-cosmic" style="background: #16213E;" onclick="setGlobalAppTheme('cosmic')" title="Cosmic Nova Theme">🌌</button>
+            <button class="royal-theme-dot" id="themeBtn-emerald" style="background: #0E4D31;" onclick="setGlobalAppTheme('emerald')" title="Emerald Sultan Theme">💎</button>
+            <button class="royal-theme-dot" id="themeBtn-crimson" style="background: #581024;" onclick="setGlobalAppTheme('crimson')" title="Obsidian Crimson Theme">🔥</button>
+          </div>
+        </div>
+
+        <div class="royal-dash-stats">
+          <div class="royal-stat-chip">
+            <div class="royal-stat-val" id="dashWinsCount">142</div>
+            <div class="royal-stat-lbl">🏆 Wins</div>
+          </div>
+          <div class="royal-stat-chip">
+            <div class="royal-stat-val" style="color: #FFDF00;">GOLD III</div>
+            <div class="royal-stat-lbl">🛡️ League</div>
+          </div>
+          <div class="royal-stat-chip">
+            <div class="royal-stat-val" style="color: #2ECC71;">🔥 5x</div>
+            <div class="royal-stat-lbl">⚡ Streak</div>
+          </div>
+        </div>
+
+        <div class="royal-dash-actions">
+          <button class="royal-quick-cta primary" onclick="openBetModal(2)">⚡ QUICK DUEL</button>
+          <button class="royal-quick-cta friends" onclick="openPrivateTableModal()">🌐 PLAY WITH FRIENDS</button>
+        </div>
+      </div>
+
       <!-- 6 PREMIER ANIMATED GAME MODE CARDS -->
       <div class="hero-modes-grid">
         <!-- MODE 1: 2 PLAYER (1 ON 1) -->
@@ -7433,6 +7727,44 @@
       const targetSeat = typeof specificSeat === 'number' && specificSeat > 0 ? specificSeat : 2;
       const line = pool[Math.floor(Math.random() * pool.length)];
       setTimeout(() => showSpeechBubble(targetSeat, line), 350);
+    }
+
+    function setGlobalAppTheme(themeId) {
+      document.body.classList.remove('theme-cosmic', 'theme-emerald', 'theme-crimson');
+      if (themeId && themeId !== 'royal') {
+        document.body.classList.add(`theme-${themeId}`);
+      }
+      localStorage.setItem('royal_ludo_global_theme', themeId || 'royal');
+      // Sync board theme with global app theme for unified luxury look!
+      const boardMap = { royal: 'classic', cosmic: 'cosmic', emerald: 'emerald', crimson: 'ruby' };
+      currentBoardTheme = boardMap[themeId] || 'classic';
+      renderBoard();
+      ['royal', 'cosmic', 'emerald', 'crimson'].forEach(id => {
+        const btn = document.getElementById(`themeBtn-${id}`);
+        if (btn) btn.classList.toggle('active', id === (themeId || 'royal'));
+      });
+      const labels = {
+        royal: '👑 Royal Velvet',
+        cosmic: '🌌 Cosmic Nova',
+        emerald: '💎 Emerald Sultan',
+        crimson: '🔥 Obsidian Crimson'
+      };
+      if (typeof playTone === 'function') playTone(680, 'sine', 0.08, 0.14);
+      if (typeof showNotificationToast === 'function') {
+        showNotificationToast(`🎨 Theme Switched: ${labels[themeId] || labels.royal}`);
+      }
+    }
+
+    function loadSavedGlobalTheme() {
+      const saved = localStorage.getItem('royal_ludo_global_theme') || 'royal';
+      document.body.classList.remove('theme-cosmic', 'theme-emerald', 'theme-crimson');
+      if (saved !== 'royal') document.body.classList.add(`theme-${saved}`);
+      ['royal', 'cosmic', 'emerald', 'crimson'].forEach(id => {
+        const btn = document.getElementById(`themeBtn-${id}`);
+        if (btn) btn.classList.toggle('active', id === saved);
+      });
+      const winsEl = document.getElementById('dashWinsCount');
+      if (winsEl && typeof gameState !== 'undefined') winsEl.textContent = String(gameState.wins || 142);
     }
 
     function closeModals() {
