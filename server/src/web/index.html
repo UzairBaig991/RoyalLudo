@@ -116,6 +116,8 @@
       const name3 = document.getElementById('name-slot-3');
       if (name3) name3.textContent = gameState.players[3].name;
 
+      // Royal Overdrive & Ambient Stardust helpers
+      if (typeof resetRoyalOverdrive === 'function') resetRoyalOverdrive();
       if (typeof rotateBoardColorForNewMatch === 'function') rotateBoardColorForNewMatch();
       renderBoard();
       renderDicePips(6);
@@ -181,6 +183,20 @@
       if (typeof renderMatchHistoryList === 'function') renderMatchHistoryList();
       renderFriendsList();
       renderLeagueGroup();
+      if (typeof initAmbientStardust === 'function') initAmbientStardust();
+      // Auto-join friend's online room if opened via ?room=RLXXXX invite link
+      try {
+        const urlRoom = new URLSearchParams(window.location.search).get('room');
+        if (urlRoom && urlRoom.trim().length >= 4) {
+          setTimeout(() => {
+            openPrivateTableModal();
+            showJoinInput();
+            const inp = document.getElementById('privateCodeInput');
+            if (inp) inp.value = urlRoom.trim().toUpperCase();
+            joinPrivateRoom();
+          }, 500);
+        }
+      } catch (e) {}
     });
   </script>
   <style>
@@ -1459,6 +1475,120 @@
     @keyframes tokenSelectableBob {
       0%   { transform: translateY(0px); }
       100% { transform: translateY(-3.5px); }
+    }
+
+    /* ========================================================
+       ROYAL OVERDRIVE METER, AMBIENT STARDUST & FIREWORKS
+       (Signature Next-Gen Features Distinct from Ludo Star!)
+       ======================================================== */
+    .ls-overdrive-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto 2px auto;
+      padding: 2px 6px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .ls-overdrive-track {
+      flex: 1;
+      height: 7px;
+      border-radius: 99px;
+      background: rgba(15, 2, 18, 0.75);
+      border: 1px solid rgba(255, 223, 0, 0.28);
+      overflow: hidden;
+      position: relative;
+    }
+    .ls-overdrive-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #00E5FF 0%, #EA80FC 55%, #FFDF00 100%);
+      transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.75);
+    }
+    .ls-overdrive-label {
+      font-family: 'Fredoka', cursive;
+      font-size: 9px;
+      font-weight: 900;
+      color: #00E5FF;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .ls-overdrive-strip.ready .ls-overdrive-label {
+      color: #FFDF00;
+      animation: pulseTap 0.75s infinite alternate ease-in-out;
+    }
+    .ls-clean-util-btn.overdrive-ready {
+      border-color: #00E5FF !important;
+      background: linear-gradient(135deg, #00B4D8 0%, #7B2CBF 100%) !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 0 16px rgba(0, 229, 255, 0.85) !important;
+      animation: pulseTap 0.7s infinite alternate ease-in-out;
+    }
+    .ls-online-live-pill {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      background: rgba(46, 204, 113, 0.2);
+      border: 1px solid #2ECC71;
+      color: #82E0AA;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px 7px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+    .ls-ambient-stardust {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .ls-stardust-mote {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #FFDF00;
+      opacity: 0;
+      box-shadow: 0 0 8px #FFDF00;
+      animation: stardustFloat 6s infinite ease-in-out;
+    }
+    @keyframes stardustFloat {
+      0%   { transform: translateY(20px) scale(0.4); opacity: 0; }
+      30%  { opacity: 0.55; }
+      70%  { opacity: 0.35; }
+      100% { transform: translateY(-90px) scale(1.1); opacity: 0; }
+    }
+    .ls-firework-spark {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      animation: fireworkBurst 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fireworkBurst {
+      0%   { transform: translate(0, 0) scale(1.2); opacity: 1; }
+      100% { transform: translate(var(--fx), var(--fy)) scale(0.15); opacity: 0; }
+    }
+    .online-room-seat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(25, 4, 28, 0.82);
+      border: 1.5px solid #6B216A;
+      border-radius: 12px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #FFF;
     }
 
     /* MINIMALIST LUDO STAR BOTTOM UTILITY BAR (4 Clean Buttons, Zero Clutter) */
@@ -3014,6 +3144,9 @@
          SCREEN 2: ADVANCED LUDO STAR IN-GAME BOARD (SINGLE PAGE)
          ======================================================== -->
     <section class="screen-view" id="view-game">
+      <!-- Ambient Floating Royal Stardust Layer -->
+      <div class="ls-ambient-stardust" id="ambientStardust"></div>
+
       <!-- 1. CLEAN LUDO STAR TOP HEADER -->
       <div class="ls-in-game-header">
         <button class="ls-icon-btn" onclick="openInGameMenu()" title="Match Menu">☰</button>
@@ -3021,12 +3154,21 @@
           <span style="font-size: 14px; margin-right: 4px;">🏆</span>
           <span class="ls-win-text" id="tableTitleDisplay">WIN 2,000</span>
         </div>
+        <div class="ls-online-live-pill" id="onlineRoomBadge">🟢 LIVE</div>
         <div class="ls-gems-pill">
           <span style="font-size: 13px;">💎</span>
           <span class="ls-gems-count" id="inGameGemsCount">30</span>
           <button class="ls-plus-btn" onclick="switchNavTab('shop')">+</button>
         </div>
         <button class="ls-icon-btn" onclick="openDiceSkinModal()" title="Change 3D Dice Skin">🎲</button>
+      </div>
+
+      <!-- 1.5. SIGNATURE ROYAL OVERDRIVE ENERGY BAR (Charges on 6s, Stars & Kills!) -->
+      <div class="ls-overdrive-strip" id="overdriveStrip">
+        <span class="ls-overdrive-label" id="overdriveLabel">⚡ OVERDRIVE 0%</span>
+        <div class="ls-overdrive-track">
+          <div class="ls-overdrive-fill" id="overdriveFill"></div>
+        </div>
       </div>
 
       <!-- 2. TOP CORNER PLAYERS (Aligned directly over Green Home & Yellow Home) -->
@@ -3163,11 +3305,11 @@
         </div>
       </div>
 
-      <!-- 5. MINIMALIST LUDO STAR BOTTOM UTILITY BAR (Clean & Uncluttered) -->
+      <!-- 5. MINIMALIST ROYAL LUDO BOTTOM UTILITY BAR -->
       <div class="ls-clean-bottom-bar">
         <button class="ls-clean-util-btn" onclick="toggleEmojiTray()">😊 Emoji</button>
         <button class="ls-clean-util-btn" onclick="toggleChatTray()">💬 Chat</button>
-        <button class="ls-clean-util-btn" onclick="triggerAiMoveHint()">🧠 Hint</button>
+        <button class="ls-clean-util-btn" id="overdriveActionBtn" onclick="activateRoyalOverdrive()" title="Charge to 100% for a FREE Royal Shield + Precision 6!">⚡ Power</button>
         <button class="ls-clean-util-btn" id="rerollBtn" onclick="luckyReroll(event)" style="border-color: #FFDF00; color: #FFDF00;">🔄 💎3</button>
       </div>
     </section>
@@ -3538,32 +3680,49 @@
     </div>
   </div>
 
-  <!-- MODAL: PRIVATE TABLE (CREATE / JOIN) -->
+  <!-- MODAL: PLAY WITH FRIENDS ONLINE (REAL-TIME SOCKET.IO MULTIPLAYER ROOMS) -->
   <div class="modal-overlay" id="privateModal" onclick="if(event.target===this)closeModals()">
-    <div class="league-modal-box" style="padding: 20px;">
-      <div style="font-family: 'Fredoka', cursive; font-size: 22px; font-weight: 800; color: #FFDF00; text-align: center; margin-bottom: 12px;">
-        👑 PRIVATE TABLE
+    <div class="league-modal-box" style="padding: 18px; max-width: 420px;">
+      <div style="font-family: 'Fredoka', cursive; font-size: 20px; font-weight: 800; color: #FFDF00; text-align: center; margin-bottom: 4px;">
+        🌐 PLAY WITH FRIENDS ONLINE
       </div>
-      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-        <button class="ls-btn-gold" style="flex: 1; padding: 10px;" onclick="createPrivateRoom()">CREATE TABLE</button>
-        <button class="side-control-btn" style="flex: 1; justify-content: center;" onclick="showJoinInput()">JOIN TABLE</button>
-      </div>
-
-      <div id="joinTableGroup" style="display: none; margin-bottom: 16px;">
-        <input type="text" id="privateCodeInput" placeholder="Enter 6-Digit Room Code" maxlength="6" 
-          style="width: 100%; padding: 12px; border-radius: 12px; background: rgba(20, 2, 20, 0.8); border: 2px solid var(--ls-purple-border); color: #FFF; font-size: 18px; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 2px;">
-        <button class="ls-btn-green" style="width: 100%; margin-top: 10px;" onclick="joinPrivateRoom()">JOIN ROOM</button>
+      <div id="onlineSocketStatus" style="font-size: 10px; font-weight: 800; text-align: center; color: #82E0AA; margin-bottom: 12px;">
+        🟢 Connecting to Live Multiplayer Server...
       </div>
 
-      <div id="createdTableNotice" style="display: none; text-align: center; margin-bottom: 16px;">
-        <div style="font-size: 12px; color: #D9A0D7;">SHARE YOUR ROOM CODE:</div>
-        <div style="font-family: 'Fredoka', cursive; font-size: 28px; font-weight: 800; color: #FFDF00; letter-spacing: 3px;" id="createdCodeText">RL9482</div>
-        <button class="ls-btn-gold" style="width: 100%; margin-top: 10px;" onclick="startConfiguredPrivateGame()">START MATCH</button>
+      <!-- Mode & Players Config -->
+      <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+        <button id="onlineP2Btn" class="ls-btn-gold" style="flex: 1; padding: 7px 0; font-size: 11px;" onclick="setOnlineRoomPlayers(2)">2P DUEL</button>
+        <button id="onlineP4Btn" class="side-control-btn" style="flex: 1; justify-content: center; padding: 7px 0; font-size: 11px;" onclick="setOnlineRoomPlayers(4)">4P ROYAL</button>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+        <button class="ls-btn-gold" style="flex: 1; padding: 10px; font-size: 12px;" onclick="createPrivateRoom()">➕ CREATE ROOM</button>
+        <button class="side-control-btn" style="flex: 1; justify-content: center; font-size: 12px;" onclick="showJoinInput()">🔑 JOIN BY CODE</button>
+      </div>
+
+      <div id="joinTableGroup" style="display: none; margin-bottom: 14px;">
+        <input type="text" id="privateCodeInput" placeholder="ENTER 6-DIGIT CODE (e.g. RL482A)" maxlength="6"
+          style="width: 100%; padding: 11px; border-radius: 12px; background: rgba(20, 2, 20, 0.85); border: 2px solid var(--ls-purple-border); color: #FFF; font-size: 17px; font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: 2px;">
+        <button class="ls-btn-green" style="width: 100%; margin-top: 8px; padding: 10px;" onclick="joinPrivateRoom()">🚀 JOIN LIVE ROOM</button>
+      </div>
+
+      <div id="createdTableNotice" style="display: none; text-align: center; margin-bottom: 14px;">
+        <div style="font-size: 11px; color: #D9A0D7; font-weight: 800;">SHARE THIS ROOM CODE OR LINK WITH FRIENDS:</div>
+        <div style="font-family: 'Fredoka', cursive; font-size: 30px; font-weight: 900; color: #FFDF00; letter-spacing: 4px; margin: 4px 0;" id="createdCodeText">RL9482</div>
+        <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+          <button class="side-control-btn" style="flex: 1; justify-content: center; font-size: 11px; padding: 7px;" onclick="copyOnlineRoomCode()">📋 COPY CODE</button>
+          <button class="side-control-btn" style="flex: 1; justify-content: center; font-size: 11px; padding: 7px; border-color: #00E5FF; color: #00E5FF;" onclick="copyOnlineInviteLink()">🔗 COPY INVITE LINK</button>
+        </div>
+        <div style="text-align: left; margin-bottom: 10px;">
+          <div style="font-size: 10px; font-weight: 900; color: #D9A0D7; margin-bottom: 5px;">CONNECTED PLAYERS:</div>
+          <div id="onlineRoomRoster"></div>
+        </div>
+        <button id="startOnlineMatchBtn" class="ls-btn-gold" style="width: 100%; padding: 11px; font-size: 13px;" onclick="startConfiguredPrivateGame()">START ONLINE MATCH ⚔️</button>
       </div>
 
       <div style="display: flex; gap: 8px; width: 100%;">
-        <button class="ls-btn-gold" style="flex: 1; padding: 10px 0; font-size: 13px;" onclick="openEditProfileModal()">✏️ EDIT PROFILE</button>
-        <button class="side-control-btn" style="flex: 1; justify-content: center;" onclick="closeModals()">CLOSE</button>
+        <button class="side-control-btn" style="flex: 1; justify-content: center; font-size: 11px;" onclick="leaveOnlineRoom(); closeModals()">CLOSE</button>
       </div>
     </div>
   </div>
@@ -5526,6 +5685,17 @@
     }
 
     function onDiceClick() {
+      if (onlineMatch.active) {
+        if (gameState.phase !== 'ROLL_DICE') return;
+        if (gameState.currentTurnSeat !== onlineMatch.mySeat) {
+          showNotificationToast('⏳ Wait for your friend to finish their turn!');
+          return;
+        }
+        gameState.phase = 'ANIMATING';
+        updateTurnHUD();
+        onlineMatch.socket.emit('game:roll_dice');
+        return;
+      }
       const activePlayer = gameState.players[gameState.currentTurnSeat];
       if (gameState.phase !== 'ROLL_DICE') return;
       if (activePlayer.isBot) return;
@@ -5555,6 +5725,9 @@
         if (roll === 6) {
           playSixSound();
           triggerSixVibrationAndWave(gameState.currentTurnSeat);
+          if (gameState.currentTurnSeat === 0 && typeof addOverdriveCharge === 'function') {
+            addOverdriveCharge(35);
+          }
           if (typeof incrementMissionProgress === 'function' && gameState.currentTurnSeat === 0) {
             incrementMissionProgress('sixesRolled', 1);
           }
@@ -5635,6 +5808,14 @@
     }
 
     function onTokenClick(color, tokenId) {
+      if (onlineMatch.active) {
+        if (gameState.phase !== 'SELECT_TOKEN') return;
+        if (gameState.currentTurnSeat !== onlineMatch.mySeat) return;
+        if (color !== COLORS[onlineMatch.mySeat]) return;
+        gameState.phase = 'ANIMATING';
+        onlineMatch.socket.emit('game:move_token', { tokenId });
+        return;
+      }
       if (gameState.phase !== 'SELECT_TOKEN') return;
       if (color !== COLORS[gameState.currentTurnSeat]) return;
 
@@ -5695,6 +5876,7 @@
           if (SAFE_INDICES.includes(abs)) {
             playStarSound();
             if (landedCoord) spawnTileRipple(landedCoord.col, landedCoord.row, '#FFDF00', 34);
+            if (gameState.currentTurnSeat === 0 && typeof addOverdriveCharge === 'function') addOverdriveCharge(30);
           }
         }
 
@@ -5724,6 +5906,7 @@
                 if (gameState.currentTurnSeat === 0) {
                   gameState.gold += 150;
                   updateCurrencyDisplay();
+                  if (typeof addOverdriveCharge === 'function') addOverdriveCharge(50);
                   triggerBoardJuice('⚔️ SMASH! +150 🪙', true);
                 } else {
                   triggerBoardJuice('⚔️ CAPTURED!', true);
@@ -5809,12 +5992,22 @@
         const startTime = performance.now();
         const peakHeight = prevStep < 0 && hopIndex === 0 ? 22 : 16;
 
+        const hopTrailHex = getVisualHexForEngineColor(token.color);
+        let lastTrailT = 0;
+
         function animateFrame(now) {
           const t = Math.min(1, (now - startTime) / hopDuration);
           const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
           const curX = dx * ease;
           const curY = dy * ease - Math.sin(Math.PI * t) * peakHeight;
           tokenEl.setAttribute('transform', `translate(${curX.toFixed(2)}, ${curY.toFixed(2)})`);
+
+          if (t - lastTrailT >= 0.32 && t < 0.92 && typeof spawnHopCometTrail === 'function') {
+            lastTrailT = t;
+            const originPxX = fromCoord.col * CELL_SIZE + CELL_SIZE / 2;
+            const originPxY = fromCoord.row * CELL_SIZE + CELL_SIZE / 2;
+            spawnHopCometTrail(originPxX + curX, originPxY + curY, hopTrailHex);
+          }
 
           if (t < 1) {
             requestAnimationFrame(animateFrame);
@@ -5930,9 +6123,13 @@
 
     function updateTurnHUD() {
       const seat = gameState.currentTurnSeat;
-      const isMyTurn = seat === 0;
+      const isMyTurn = typeof onlineMatch !== 'undefined' && onlineMatch.active
+        ? seat === onlineMatch.mySeat
+        : seat === 0;
       const activePlayerObj = gameState.players[seat];
-      const isHumanTurn = activePlayerObj ? !activePlayerObj.isBot : isMyTurn;
+      const isHumanTurn = typeof onlineMatch !== 'undefined' && onlineMatch.active
+        ? isMyTurn
+        : (activePlayerObj ? !activePlayerObj.isBot : isMyTurn);
       const colorNames = ['RED', 'GREEN', 'YELLOW', 'BLUE'];
       const activeColor = getVisualHexForSeat(seat);
 
@@ -6166,6 +6363,7 @@
 
     function handleMatchVictory(winnerColor) {
       triggerVictoryConfetti();
+      if (typeof launchVictoryFireworks === 'function') launchVictoryFireworks();
       playTone(523.25, 'triangle', 0.2, 0.2);
       setTimeout(() => playTone(659.25, 'triangle', 0.2, 0.2), 100);
       setTimeout(() => playTone(783.99, 'triangle', 0.4, 0.25), 200);
@@ -6374,17 +6572,268 @@
       document.getElementById('leagueModal').classList.add('open');
     }
 
+    // ========================================================
+    // LIVE ONLINE PLAY WITH FRIENDS (REAL SOCKET.IO ENGINE)
+    // ========================================================
+    const onlineMatch = {
+      socket: null,
+      active: false,
+      room: null,
+      mySeat: 0,
+      isHost: false,
+      playerCount: 2,
+    };
+
+    function setOnlineRoomPlayers(count) {
+      onlineMatch.playerCount = count;
+      const b2 = document.getElementById('onlineP2Btn');
+      const b4 = document.getElementById('onlineP4Btn');
+      if (b2) b2.className = count === 2 ? 'ls-btn-gold' : 'side-control-btn';
+      if (b4) b4.className = count === 4 ? 'ls-btn-gold' : 'side-control-btn';
+    }
+
+    function ensureOnlineSocket() {
+      if (onlineMatch.socket && onlineMatch.socket.connected) return onlineMatch.socket;
+      const statusEl = document.getElementById('onlineSocketStatus');
+      if (typeof io === 'undefined') {
+        if (statusEl) {
+          statusEl.textContent = '⚠️ Offline Mode (Start server with npm run start:server for live friends)';
+          statusEl.style.color = '#FFDF00';
+        }
+        return null;
+      }
+      if (!onlineMatch.socket) {
+        const myName = localStorage.getItem('royal_ludo_username') || 'Player';
+        onlineMatch.socket = io({ auth: { username: myName } });
+
+        onlineMatch.socket.on('connect', () => {
+          if (statusEl) {
+            statusEl.textContent = `🟢 Online Multiplayer Live · Connected as ${myName}`;
+            statusEl.style.color = '#82E0AA';
+          }
+        });
+
+        onlineMatch.socket.on('disconnect', () => {
+          if (statusEl) {
+            statusEl.textContent = '🟡 Reconnecting to Live Server...';
+            statusEl.style.color = '#FFDF00';
+          }
+        });
+
+        onlineMatch.socket.on('room:updated', (room) => {
+          onlineMatch.room = room;
+          renderOnlineRoomRoster(room);
+        });
+
+        onlineMatch.socket.on('room:started', ({ state }) => {
+          closeModals();
+          startSyncedOnlineMatch(state);
+        });
+
+        onlineMatch.socket.on('game:dice_rolled', ({ seatIndex, diceValue, validMoves }) => {
+          if (!onlineMatch.active) return;
+          gameState.currentTurnSeat = seatIndex;
+          gameState.currentRoll = diceValue;
+          gameState.phase = 'ANIMATING';
+          updateTurnHUD();
+          const diceBox = document.getElementById('diceBtn');
+          if (diceBox) diceBox.classList.add('rolling');
+          render3dDiceRoll(diceValue, true);
+          playDiceSound();
+          setTimeout(() => {
+            if (diceBox) diceBox.classList.remove('rolling');
+            if (diceValue === 6) {
+              playSixSound();
+              triggerSixVibrationAndWave(seatIndex);
+              if (seatIndex === onlineMatch.mySeat) addOverdriveCharge(35);
+            }
+            if (validMoves && validMoves.length > 0) {
+              gameState.phase = 'SELECT_TOKEN';
+              updateTurnHUD();
+              renderTokens();
+              // Auto-move if only 1 distinct option on my turn
+              if (seatIndex === onlineMatch.mySeat && validMoves.length === 1) {
+                setTimeout(() => {
+                  if (onlineMatch.active && gameState.phase === 'SELECT_TOKEN') {
+                    onlineMatch.socket.emit('game:move_token', { tokenId: validMoves[0].tokenId });
+                  }
+                }, 200);
+              }
+            }
+          }, 460);
+        });
+
+        onlineMatch.socket.on('game:token_moved', ({ seatIndex, tokenId, fromStep, toStep, capturesToken }) => {
+          if (!onlineMatch.active) return;
+          const color = COLORS[seatIndex];
+          const token = gameState.tokens.find(t => t.color === color && t.id === tokenId);
+          if (!token) return;
+          token.step = toStep;
+          playStepHopSound(2);
+          const landed = getTokenCoord(token);
+          if (landed) spawnTileRipple(landed.col, landed.row, getVisualHexForEngineColor(color), 26);
+          if (capturesToken) {
+            const victim = gameState.tokens.find(t => t.color === capturesToken.color && t.id === capturesToken.tokenId);
+            if (victim) {
+              const victimCoord = getTokenCoord(victim);
+              victim.step = -1;
+              playCaptureSound();
+              triggerBoardShake();
+              if (victimCoord) animateCapturedTokenReturn(victim.color, victim.id, victimCoord);
+              if (seatIndex === onlineMatch.mySeat) {
+                addOverdriveCharge(50);
+                triggerBoardJuice('⚔️ SMASH! +150 🪙', true);
+              }
+            }
+          }
+          renderBoard();
+        });
+
+        onlineMatch.socket.on('game:turn_change', ({ currentSeat }) => {
+          if (!onlineMatch.active) return;
+          gameState.currentTurnSeat = currentSeat;
+          gameState.phase = 'ROLL_DICE';
+          startTurnTimer();
+          updateTurnHUD();
+          renderTokens();
+        });
+
+        onlineMatch.socket.on('game:emoji_reaction', ({ seatIndex, emojiId }) => {
+          if (!onlineMatch.active) return;
+          showSpeechBubble(seatIndex, emojiId);
+        });
+
+        onlineMatch.socket.on('game:chat_message', ({ seatIndex, message }) => {
+          if (!onlineMatch.active) return;
+          showSpeechBubble(seatIndex, message);
+        });
+
+        onlineMatch.socket.on('game:finished', ({ rankings }) => {
+          if (!onlineMatch.active) return;
+          onlineMatch.active = false;
+          const badge = document.getElementById('onlineRoomBadge');
+          if (badge) badge.style.display = 'none';
+          const winnerSeat = rankings?.[0]?.seatIndex ?? 0;
+          handleMatchVictory(COLORS[winnerSeat]);
+        });
+
+        onlineMatch.socket.on('error:message', ({ message }) => {
+          showNotificationToast(`⚠️ ${message}`);
+        });
+      }
+      return onlineMatch.socket;
+    }
+
+    function renderOnlineRoomRoster(room) {
+      const roster = document.getElementById('onlineRoomRoster');
+      const startBtn = document.getElementById('startOnlineMatchBtn');
+      if (!roster || !room) return;
+      const myName = localStorage.getItem('royal_ludo_username') || 'Player';
+      const seatColors = ['🔴', '🟢', '🟡', '🔵'];
+      roster.innerHTML = room.participants.map(p => `
+        <div class="online-room-seat-row">
+          <span>${seatColors[p.seatIndex] || '🎲'} ${p.username} ${p.isHost ? '👑' : ''}</span>
+          <span style="font-size:10px; color:#82E0AA;">● READY</span>
+        </div>
+      `).join('');
+      const waitingSlots = Math.max(0, room.playerCount - room.participants.length);
+      for (let i = 0; i < waitingSlots; i++) {
+        roster.innerHTML += `
+          <div class="online-room-seat-row" style="opacity:0.55; border-style:dashed;">
+            <span>⏳ Waiting for friend (or AI Bot)...</span>
+            <span style="font-size:10px; color:#D9A0D7;">OPEN</span>
+          </div>
+        `;
+      }
+      if (startBtn) {
+        startBtn.style.display = onlineMatch.isHost ? 'block' : 'none';
+        if (!onlineMatch.isHost) {
+          roster.innerHTML += `<div style="text-align:center; font-size:11px; color:#FFDF00; font-weight:800; margin-top:6px;">⏳ Waiting for host to start the online match...</div>`;
+        }
+      }
+    }
+
+    function startSyncedOnlineMatch(serverState) {
+      onlineMatch.active = true;
+      const myName = localStorage.getItem('royal_ludo_username') || 'Player';
+      const foundMe = serverState.players.find(p => p.username === myName && !p.isBot);
+      onlineMatch.mySeat = foundMe ? foundMe.seatIndex : (onlineMatch.isHost ? 0 : 2);
+      gameState.activePlayerCount = serverState.rules.playerCount || 4;
+      gameState.selectedVariation = serverState.rules.mode || 'classic';
+      gameState.currentTurnSeat = serverState.currentTurnSeat;
+      gameState.phase = 'ROLL_DICE';
+      gameState.boardColorOffset = 0;
+
+      // Sync players & tokens from authoritative server state
+      for (let i = 0; i < 4; i++) {
+        const sp = serverState.players.find(p => p.seatIndex === i);
+        if (sp) {
+          gameState.players[i].name = sp.username;
+          gameState.players[i].isBot = sp.isBot;
+          gameState.players[i].hasKilledOpponent = !!sp.hasKilledOpponent;
+        } else {
+          gameState.players[i].isBot = true;
+        }
+      }
+      gameState.tokens.forEach(t => { t.step = -1; });
+
+      // Show game view & live badge
+      document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
+      document.getElementById('view-game').classList.add('active');
+      document.querySelector('.top-bar').style.display = 'none';
+      document.querySelector('.bottom-nav').style.display = 'none';
+      const badge = document.getElementById('onlineRoomBadge');
+      if (badge) {
+        badge.style.display = 'inline-flex';
+        badge.textContent = `🟢 LIVE · ${onlineMatch.room?.code || 'ONLINE'}`;
+      }
+
+      const count = gameState.activePlayerCount;
+      const hud1 = document.getElementById('hud-slot-1');
+      if (hud1) { hud1.style.display = 'flex'; hud1.style.visibility = count === 2 ? 'hidden' : 'visible'; }
+      const hud3 = document.getElementById('hud-slot-3');
+      if (hud3) { hud3.style.display = 'flex'; hud3.style.visibility = count === 2 ? 'hidden' : 'visible'; }
+
+      resetRoyalOverdrive();
+      applyRotatedSeatColorsToHUD();
+      renderBoard();
+      renderDicePips(6);
+      updateTurnHUD();
+      showNotificationToast(`🌐 Live Online Match Started! You are ${COLORS[onlineMatch.mySeat]}!`);
+    }
+
     function openPrivateTableModal() {
       document.getElementById('privateModal').classList.add('open');
       document.getElementById('joinTableGroup').style.display = 'none';
       document.getElementById('createdTableNotice').style.display = 'none';
+      ensureOnlineSocket();
     }
 
     function createPrivateRoom() {
-      const code = 'RL' + Math.floor(1000 + Math.random() * 9000);
-      document.getElementById('createdCodeText').textContent = code;
-      document.getElementById('createdTableNotice').style.display = 'block';
-      document.getElementById('joinTableGroup').style.display = 'none';
+      const sock = ensureOnlineSocket();
+      if (!sock) {
+        const code = 'RL' + Math.floor(1000 + Math.random() * 9000);
+        document.getElementById('createdCodeText').textContent = code;
+        document.getElementById('createdTableNotice').style.display = 'block';
+        document.getElementById('joinTableGroup').style.display = 'none';
+        return;
+      }
+      sock.emit('room:create', {
+        mode: gameState.selectedVariation || 'classic',
+        playerCount: onlineMatch.playerCount || 2,
+        entryFee: gameState.selectedBet || 500,
+      }, (res) => {
+        if (!res || !res.success) {
+          showNotificationToast(`⚠️ ${res?.error || 'Could not create online room'}`);
+          return;
+        }
+        onlineMatch.isHost = true;
+        onlineMatch.room = res.room;
+        document.getElementById('createdCodeText').textContent = res.room.code;
+        document.getElementById('createdTableNotice').style.display = 'block';
+        document.getElementById('joinTableGroup').style.display = 'none';
+        renderOnlineRoomRoster(res.room);
+      });
     }
 
     function showJoinInput() {
@@ -6393,20 +6842,191 @@
     }
 
     function joinPrivateRoom() {
-      const code = document.getElementById('privateCodeInput').value.trim();
+      const code = document.getElementById('privateCodeInput').value.trim().toUpperCase();
       if (!code) {
-        alert('Please enter room code.');
+        showNotificationToast('⚠️ Please enter a 6-digit room code.');
         return;
       }
-      closeModals();
-      gameState.activePlayerCount = 4;
-      confirmAndStartMatch();
+      const sock = ensureOnlineSocket();
+      if (!sock) {
+        closeModals();
+        gameState.activePlayerCount = onlineMatch.playerCount || 4;
+        confirmAndStartMatch();
+        return;
+      }
+      sock.emit('room:join', { roomCode: code }, (res) => {
+        if (!res || !res.success) {
+          showNotificationToast(`⚠️ ${res?.error || 'Room not found!'}`);
+          return;
+        }
+        onlineMatch.isHost = false;
+        onlineMatch.room = res.room;
+        document.getElementById('createdCodeText').textContent = res.room.code;
+        document.getElementById('createdTableNotice').style.display = 'block';
+        document.getElementById('joinTableGroup').style.display = 'none';
+        renderOnlineRoomRoster(res.room);
+        showNotificationToast(`✅ Joined Room ${res.room.code}!`);
+      });
+    }
+
+    function copyOnlineRoomCode() {
+      const code = document.getElementById('createdCodeText')?.textContent?.trim() || '';
+      if (code && navigator.clipboard) {
+        navigator.clipboard.writeText(code).catch(() => {});
+        showNotificationToast(`📋 Room Code ${code} Copied!`);
+      }
+    }
+
+    function copyOnlineInviteLink() {
+      const code = document.getElementById('createdCodeText')?.textContent?.trim() || '';
+      const link = `${window.location.origin}${window.location.pathname}?room=${code}`;
+      if (navigator.share) {
+        navigator.share({ title: 'Join my Royal Ludo match!', text: `Play Royal Ludo with me! Room Code: ${code}`, url: link }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).catch(() => {});
+        showNotificationToast('🔗 Invite Link Copied! Send it to your friend!');
+      }
+    }
+
+    function leaveOnlineRoom() {
+      if (onlineMatch.socket && onlineMatch.room) {
+        onlineMatch.socket.emit('room:leave');
+      }
+      onlineMatch.room = null;
+      onlineMatch.active = false;
     }
 
     function startConfiguredPrivateGame() {
+      if (onlineMatch.socket && onlineMatch.room && onlineMatch.isHost) {
+        onlineMatch.socket.emit('room:start');
+        return;
+      }
       closeModals();
-      gameState.activePlayerCount = 4;
+      gameState.activePlayerCount = onlineMatch.playerCount || 4;
       confirmAndStartMatch();
+    }
+
+    // ========================================================
+    // SIGNATURE NEXT-GEN FEATURES: ROYAL OVERDRIVE, COMET TRAILS,
+    // AMBIENT STARDUST & VICTORY FIREWORKS
+    // ========================================================
+    let royalOverdriveCharge = 0;
+
+    function resetRoyalOverdrive() {
+      royalOverdriveCharge = 0;
+      updateOverdriveUI();
+    }
+
+    function addOverdriveCharge(amount) {
+      royalOverdriveCharge = Math.min(100, royalOverdriveCharge + amount);
+      updateOverdriveUI();
+    }
+
+    function updateOverdriveUI() {
+      const fill = document.getElementById('overdriveFill');
+      const label = document.getElementById('overdriveLabel');
+      const strip = document.getElementById('overdriveStrip');
+      const btn = document.getElementById('overdriveActionBtn');
+      const isReady = royalOverdriveCharge >= 100;
+      if (fill) fill.style.width = `${royalOverdriveCharge}%`;
+      if (label) label.textContent = isReady ? '⚡ OVERDRIVE READY!' : `⚡ OVERDRIVE ${royalOverdriveCharge}%`;
+      if (strip) strip.classList.toggle('ready', isReady);
+      if (btn) {
+        btn.classList.toggle('overdrive-ready', isReady);
+        btn.textContent = isReady ? '⚡ UNLEASH!' : `⚡ ${royalOverdriveCharge}%`;
+      }
+    }
+
+    function activateRoyalOverdrive() {
+      if (royalOverdriveCharge < 100) {
+        showNotificationToast(`⚡ Charge Royal Overdrive to 100% by rolling 6s, landing on Stars, or Capturing! (${royalOverdriveCharge}%)`);
+        return;
+      }
+      if (onlineMatch.active) {
+        showNotificationToast('⚡ Overdrive Shield activated locally for visual aura!');
+        royalOverdriveCharge = 0;
+        updateOverdriveUI();
+        return;
+      }
+      if (gameState.currentTurnSeat !== 0) {
+        showNotificationToast('⏳ Activate Royal Overdrive on your turn!');
+        return;
+      }
+      royalOverdriveCharge = 0;
+      updateOverdriveUI();
+      playStarSound();
+      try { if (navigator.vibrate) navigator.vibrate([45, 30, 75]); } catch (e) {}
+
+      // Shield leading token + grant free bonus coins & golden overdrive shockwave!
+      const myActiveTokens = gameState.tokens.filter(t => t.color === 'RED' && t.step >= 0 && t.step < 56);
+      if (myActiveTokens.length > 0) {
+        myActiveTokens.sort((a, b) => b.step - a.step)[0].isShielded = true;
+      }
+      gameState.gold += 300;
+      updateCurrencyDisplay();
+      triggerBoardJuice('⚡ ROYAL OVERDRIVE! 🛡️ +300 🪙', true);
+      renderTokens();
+    }
+
+    function initAmbientStardust() {
+      const container = document.getElementById('ambientStardust');
+      if (!container || container.childElementCount > 0) return;
+      for (let i = 0; i < 14; i++) {
+        const mote = document.createElement('div');
+        mote.className = 'ls-stardust-mote';
+        mote.style.left = `${Math.round(Math.random() * 96)}%`;
+        mote.style.top = `${Math.round(15 + Math.random() * 80)}%`;
+        mote.style.animationDelay = `${(Math.random() * 5).toFixed(2)}s`;
+        mote.style.animationDuration = `${(4.5 + Math.random() * 3.5).toFixed(2)}s`;
+        container.appendChild(mote);
+      }
+    }
+
+    function spawnHopCometTrail(cx, cy, colorHex) {
+      const svg = document.getElementById('ludoSvg');
+      if (!svg) return;
+      const dot = document.createElementNS(SVG_NS, 'circle');
+      dot.setAttribute('cx', cx.toFixed(1));
+      dot.setAttribute('cy', cy.toFixed(1));
+      dot.setAttribute('r', '9');
+      dot.setAttribute('fill', colorHex);
+      dot.setAttribute('opacity', '0.55');
+      dot.style.pointerEvents = 'none';
+      svg.appendChild(dot);
+
+      const start = performance.now();
+      function fade(now) {
+        const t = Math.min(1, (now - start) / 240);
+        dot.setAttribute('r', (9 * (1 - t * 0.65)).toFixed(1));
+        dot.setAttribute('opacity', (0.55 * (1 - t)).toFixed(2));
+        if (t < 1) requestAnimationFrame(fade);
+        else dot.remove();
+      }
+      requestAnimationFrame(fade);
+    }
+
+    function launchVictoryFireworks() {
+      const colors = ['#FFDF00', '#2ECC71', '#00E5FF', '#EA80FC', '#FF4757', '#FFFFFF'];
+      for (let burst = 0; burst < 3; burst++) {
+        setTimeout(() => {
+          const ox = 25 + Math.random() * 50;
+          const oy = 20 + Math.random() * 35;
+          for (let i = 0; i < 18; i++) {
+            const spark = document.createElement('div');
+            spark.className = 'ls-firework-spark';
+            const angle = (Math.PI * 2 * i) / 18;
+            const dist = 60 + Math.random() * 110;
+            spark.style.left = `${ox}vw`;
+            spark.style.top = `${oy}vh`;
+            spark.style.background = colors[(i + burst) % colors.length];
+            spark.style.boxShadow = `0 0 10px ${colors[(i + burst) % colors.length]}`;
+            spark.style.setProperty('--fx', `${Math.round(Math.cos(angle) * dist)}px`);
+            spark.style.setProperty('--fy', `${Math.round(Math.sin(angle) * dist)}px`);
+            document.body.appendChild(spark);
+            setTimeout(() => spark.remove(), 1100);
+          }
+        }, burst * 360);
+      }
     }
 
     function closeModals() {

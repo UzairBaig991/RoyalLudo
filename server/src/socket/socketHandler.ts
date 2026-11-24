@@ -10,9 +10,13 @@ export class SocketHandler {
   public static init(io: Server<ClientToServerEvents, ServerToClientEvents>): void {
     io.use((socket, next) => {
       const token = socket.handshake.auth?.token || socket.handshake.query?.token;
+      const requestedUsername =
+        typeof socket.handshake.auth?.username === 'string'
+          ? socket.handshake.auth.username.trim().slice(0, 24)
+          : '';
       if (!token || typeof token !== 'string') {
-        // Allow anonymous guest handshake
-        const guest = AuthService.guestLogin();
+        // Allow anonymous guest handshake with optional chosen display name
+        const guest = AuthService.guestLogin(requestedUsername || undefined);
         (socket as any).userId = guest.user.id;
         return next();
       }
@@ -20,11 +24,15 @@ export class SocketHandler {
       const verified = AuthService.verifyToken(token);
       if (verified) {
         (socket as any).userId = verified.userId;
+        if (requestedUsername) {
+          const prof = DataStore.profiles.get(verified.userId);
+          if (prof) prof.username = requestedUsername;
+        }
         return next();
       }
 
       // Fallback to guest if token expired
-      const fallbackGuest = AuthService.guestLogin();
+      const fallbackGuest = AuthService.guestLogin(requestedUsername || undefined);
       (socket as any).userId = fallbackGuest.user.id;
       next();
     });
