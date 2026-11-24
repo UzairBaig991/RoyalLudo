@@ -1591,6 +1591,50 @@
       color: #FFF;
     }
 
+    /* DYNAMIC TURN-COLORED BOARD AURA, ROLL NUMBER POP, FLYING COINS & ROTATING CENTER MEDALLION */
+    .ls-board-stage {
+      transition: box-shadow 0.45s ease, border-color 0.45s ease;
+    }
+    .ls-roll-pop-num {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Fredoka', cursive;
+      font-size: 18px;
+      font-weight: 900;
+      color: #FFFFFF;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85), 0 0 12px rgba(255, 223, 0, 0.9);
+      pointer-events: none;
+      z-index: 80;
+      animation: rollNumFloat 0.68s cubic-bezier(0.18, 0.9, 0.28, 1) forwards;
+    }
+    .ls-roll-pop-num.is-six {
+      font-size: 22px;
+      color: #FFDF00;
+    }
+    @keyframes rollNumFloat {
+      0%   { transform: translate(-50%, 6px) scale(0.5); opacity: 0; }
+      25%  { transform: translate(-50%, -14px) scale(1.22); opacity: 1; }
+      100% { transform: translate(-50%, -34px) scale(0.9); opacity: 0; }
+    }
+    .ls-flying-coin {
+      position: fixed;
+      font-size: 18px;
+      pointer-events: none;
+      z-index: 9998;
+      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6));
+      transition: transform 0.62s cubic-bezier(0.22, 0.95, 0.36, 1), opacity 0.62s ease;
+    }
+    @keyframes centerMedallionSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    .ls-center-crown-ring {
+      transform-origin: 300px 300px;
+      animation: centerMedallionSpin 18s linear infinite;
+    }
+
     /* MINIMALIST LUDO STAR BOTTOM UTILITY BAR (4 Clean Buttons, Zero Clutter) */
     .ls-clean-bottom-bar {
       display: flex;
@@ -3160,6 +3204,7 @@
           <span class="ls-gems-count" id="inGameGemsCount">30</span>
           <button class="ls-plus-btn" onclick="switchNavTab('shop')">+</button>
         </div>
+        <button class="ls-icon-btn" onclick="cycleLiveBoardTheme()" title="Switch Live Board Theme">🎨</button>
         <button class="ls-icon-btn" onclick="openDiceSkinModal()" title="Change 3D Dice Skin">🎲</button>
       </div>
 
@@ -5325,6 +5370,36 @@
         svg.appendChild(tri);
       });
 
+      // Luxury Animated Rotating Royal Crown Medallion in Board Center
+      const medOuter = document.createElementNS(SVG_NS, 'circle');
+      medOuter.setAttribute('cx', '300');
+      medOuter.setAttribute('cy', '300');
+      medOuter.setAttribute('r', '26');
+      medOuter.setAttribute('fill', '#1A041C');
+      medOuter.setAttribute('stroke', '#FFDF00');
+      medOuter.setAttribute('stroke-width', '2.5');
+      svg.appendChild(medOuter);
+
+      const medSpin = document.createElementNS(SVG_NS, 'circle');
+      medSpin.setAttribute('class', 'ls-center-crown-ring');
+      medSpin.setAttribute('cx', '300');
+      medSpin.setAttribute('cy', '300');
+      medSpin.setAttribute('r', '21');
+      medSpin.setAttribute('fill', 'none');
+      medSpin.setAttribute('stroke', '#FFDF00');
+      medSpin.setAttribute('stroke-width', '1.8');
+      medSpin.setAttribute('stroke-dasharray', '6,5');
+      medSpin.setAttribute('opacity', '0.85');
+      svg.appendChild(medSpin);
+
+      const medCrown = document.createElementNS(SVG_NS, 'text');
+      medCrown.setAttribute('x', '300');
+      medCrown.setAttribute('y', '307');
+      medCrown.setAttribute('text-anchor', 'middle');
+      medCrown.setAttribute('font-size', '20');
+      medCrown.textContent = '👑';
+      svg.appendChild(medCrown);
+
       renderTokens();
     }
 
@@ -5721,6 +5796,9 @@
 
       setTimeout(() => {
         if (diceBox) diceBox.classList.remove('rolling');
+        if (typeof spawnRollNumberPop === 'function') {
+          spawnRollNumberPop(gameState.currentTurnSeat, roll);
+        }
 
         if (roll === 6) {
           playSixSound();
@@ -5866,16 +5944,19 @@
       const finalizeTokenMove = () => {
         token.step = nextStep;
 
-        // Safe star chime & golden ripple
+        // Safe star chime, golden starburst & base-exit warp portal ripple
         const landedCoord = getTokenCoord({ color: token.color, id: token.id, step: nextStep });
         if (landedCoord) {
-          spawnTileRipple(landedCoord.col, landedCoord.row, getVisualHexForEngineColor(color), 24);
+          spawnTileRipple(landedCoord.col, landedCoord.row, getVisualHexForEngineColor(color), prevStep < 0 ? 34 : 24);
         }
         if (nextStep >= 0 && nextStep <= 50) {
           const abs = (COLOR_START_INDEX[color] + nextStep) % 52;
           if (SAFE_INDICES.includes(abs)) {
             playStarSound();
-            if (landedCoord) spawnTileRipple(landedCoord.col, landedCoord.row, '#FFDF00', 34);
+            if (landedCoord) {
+              spawnTileRipple(landedCoord.col, landedCoord.row, '#FFDF00', 36);
+              if (typeof spawnSafeStarSparkles === 'function') spawnSafeStarSparkles(landedCoord.col, landedCoord.row);
+            }
             if (gameState.currentTurnSeat === 0 && typeof addOverdriveCharge === 'function') addOverdriveCharge(30);
           }
         }
@@ -5907,6 +5988,7 @@
                   gameState.gold += 150;
                   updateCurrencyDisplay();
                   if (typeof addOverdriveCharge === 'function') addOverdriveCharge(50);
+                  if (typeof flyCoinsToWallet === 'function') flyCoinsToWallet(6);
                   triggerBoardJuice('⚔️ SMASH! +150 🪙', true);
                 } else {
                   triggerBoardJuice('⚔️ CAPTURED!', true);
@@ -5926,6 +6008,8 @@
           if (gameState.currentTurnSeat === 0) {
             gameState.gold += 250;
             updateCurrencyDisplay();
+            if (typeof addOverdriveCharge === 'function') addOverdriveCharge(40);
+            if (typeof flyCoinsToWallet === 'function') flyCoinsToWallet(8);
             triggerBoardJuice('🏁 HOME! +250 🪙', false);
           } else {
             triggerBoardJuice('🏁 TOKEN HOME!', false);
@@ -6135,6 +6219,13 @@
 
       // Smoothly animate the fixed-size 3D dice to the active player's profile section (Ludo Star Style)
       moveDiceToPlayerDock(seat, true);
+
+      // Shift the board's ambient neon aura to match the active player's current color!
+      const boardWrap = document.getElementById('boardWrapper');
+      if (boardWrap) {
+        boardWrap.style.borderColor = activeColor;
+        boardWrap.style.boxShadow = `0 8px 30px rgba(0,0,0,0.7), 0 0 24px ${activeColor}66, inset 0 0 18px rgba(0,0,0,0.5)`;
+      }
       
       // Update Pod Highlighting, Inactive Dimming & Active Home Corner Profile Picture
       for (let i = 0; i < 4; i++) {
@@ -6964,6 +7055,7 @@
       }
       gameState.gold += 300;
       updateCurrencyDisplay();
+      if (typeof flyCoinsToWallet === 'function') flyCoinsToWallet(8);
       triggerBoardJuice('⚡ ROYAL OVERDRIVE! 🛡️ +300 🪙', true);
       renderTokens();
     }
@@ -7027,6 +7119,94 @@
           }
         }, burst * 360);
       }
+    }
+
+    function spawnRollNumberPop(seat, roll) {
+      const dock = document.getElementById(`dice-dock-${seat}`);
+      if (!dock) return;
+      const pop = document.createElement('div');
+      pop.className = 'ls-roll-pop-num' + (roll === 6 ? ' is-six' : '');
+      pop.textContent = roll === 6 ? '★ 6!' : `+${roll}`;
+      dock.appendChild(pop);
+      setTimeout(() => pop.remove(), 700);
+    }
+
+    function flyCoinsToWallet(coinCount = 6) {
+      const board = document.getElementById('boardWrapper');
+      const target = document.getElementById('tableTitleDisplay') || document.querySelector('.ls-win-pill');
+      if (!board || !target) return;
+      const bRect = board.getBoundingClientRect();
+      const tRect = target.getBoundingClientRect();
+      const startX = bRect.left + bRect.width / 2;
+      const startY = bRect.top + bRect.height / 2;
+      const endX = tRect.left + tRect.width / 2;
+      const endY = tRect.top + tRect.height / 2;
+
+      for (let i = 0; i < coinCount; i++) {
+        setTimeout(() => {
+          const coin = document.createElement('div');
+          coin.className = 'ls-flying-coin';
+          coin.textContent = '🪙';
+          const jx = (Math.random() - 0.5) * 44;
+          const jy = (Math.random() - 0.5) * 44;
+          coin.style.left = `${startX + jx}px`;
+          coin.style.top = `${startY + jy}px`;
+          coin.style.transform = 'translate(-50%, -50%) scale(0.7)';
+          document.body.appendChild(coin);
+          void coin.offsetWidth;
+          coin.style.transform = `translate(${Math.round(endX - (startX + jx))}px, ${Math.round(endY - (startY + jy))}px) scale(0.45) rotate(360deg)`;
+          coin.style.opacity = '0.2';
+          setTimeout(() => coin.remove(), 650);
+        }, i * 55);
+      }
+      playCoinSound();
+    }
+
+    function spawnSafeStarSparkles(col, row) {
+      const svg = document.getElementById('ludoSvg');
+      if (!svg) return;
+      const cx = col * CELL_SIZE + CELL_SIZE / 2;
+      const cy = row * CELL_SIZE + CELL_SIZE / 2;
+      for (let i = 0; i < 6; i++) {
+        const angle = (Math.PI * 2 * i) / 6;
+        const star = document.createElementNS(SVG_NS, 'text');
+        star.setAttribute('x', cx);
+        star.setAttribute('y', cy);
+        star.setAttribute('text-anchor', 'middle');
+        star.setAttribute('font-size', '12');
+        star.setAttribute('fill', '#FFDF00');
+        star.textContent = '✦';
+        star.style.pointerEvents = 'none';
+        svg.appendChild(star);
+
+        const start = performance.now();
+        function anim(now) {
+          const t = Math.min(1, (now - start) / 450);
+          const d = 26 * (1 - Math.pow(1 - t, 3));
+          star.setAttribute('x', (cx + Math.cos(angle) * d).toFixed(1));
+          star.setAttribute('y', (cy + Math.sin(angle) * d).toFixed(1));
+          star.setAttribute('opacity', (1 - t).toFixed(2));
+          if (t < 1) requestAnimationFrame(anim);
+          else star.remove();
+        }
+        requestAnimationFrame(anim);
+      }
+    }
+
+    function cycleLiveBoardTheme() {
+      const themes = [
+        { id: 'classic', label: '🏛️ Classic Royal' },
+        { id: 'cosmic', label: '🌌 Cosmic Galaxy' },
+        { id: 'emerald', label: '💎 Emerald Palace' },
+        { id: 'ruby', label: '🔥 Ruby Throne' },
+        { id: 'cyber', label: '⚡ Cyber Neon' }
+      ];
+      const curIdx = themes.findIndex(t => t.id === (currentBoardTheme || 'classic'));
+      const next = themes[(curIdx + 1) % themes.length];
+      currentBoardTheme = next.id;
+      renderBoard();
+      playTone(660, 'sine', 0.09, 0.16);
+      showNotificationToast(`🎨 Arena Theme: ${next.label}`);
     }
 
     function closeModals() {
