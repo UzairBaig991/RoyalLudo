@@ -145,6 +145,7 @@ export const NovaDie: React.FC<NovaDieProps> = ({
 }) => {
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const bounceAnim = useRef(new Animated.Value(0)).current;
   const [displayValue, setDisplayValue] = useState<number>(value);
 
   useEffect(() => {
@@ -153,14 +154,15 @@ export const NovaDie: React.FC<NovaDieProps> = ({
     if (rolling) {
       faceInterval = setInterval(() => {
         setDisplayValue(Math.floor(Math.random() * 6) + 1);
-      }, 55);
+      }, 48);
 
+      bounceAnim.setValue(0);
       Animated.parallel([
         Animated.loop(
           Animated.sequence([
             Animated.timing(rotateAnim, {
               toValue: 1,
-              duration: 190,
+              duration: 185,
               easing: Easing.out(Easing.quad),
               useNativeDriver: true,
             }),
@@ -171,9 +173,36 @@ export const NovaDie: React.FC<NovaDieProps> = ({
             }),
           ])
         ),
+        // Realistic 2-bounce physical toss arc!
+        Animated.sequence([
+          Animated.timing(bounceAnim, {
+            toValue: -14,
+            duration: 90,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceAnim, {
+            toValue: 0,
+            duration: 85,
+            easing: Easing.in(Easing.quad),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceAnim, {
+            toValue: -6,
+            duration: 60,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bounceAnim, {
+            toValue: 0,
+            duration: 55,
+            easing: Easing.in(Easing.quad),
+            useNativeDriver: true,
+          }),
+        ]),
         Animated.timing(scaleAnim, {
-          toValue: 1.12,
-          duration: 100,
+          toValue: 1.18,
+          duration: 95,
           easing: Easing.out(Easing.ease),
           useNativeDriver: true,
         }),
@@ -182,10 +211,12 @@ export const NovaDie: React.FC<NovaDieProps> = ({
       setDisplayValue(value);
       rotateAnim.stopAnimation();
       rotateAnim.setValue(0);
+      bounceAnim.stopAnimation();
+      bounceAnim.setValue(0);
       Animated.spring(scaleAnim, {
         toValue: 1,
         friction: 5,
-        tension: 180,
+        tension: 190,
         useNativeDriver: true,
       }).start();
     }
@@ -325,7 +356,7 @@ export const NovaDie: React.FC<NovaDieProps> = ({
           backgroundColor: palette.bg,
           borderColor: palette.border,
           shadowColor: palette.glow,
-          transform: [{ rotate: spin }, { scale: scaleAnim }],
+          transform: [{ translateY: bounceAnim }, { rotate: spin }, { scale: scaleAnim }],
         },
         style,
       ]}

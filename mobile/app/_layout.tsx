@@ -7,7 +7,7 @@ import { NOVA_COLORS } from '../src/theme/colors';
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" backgroundColor={NOVA_COLORS.bg} />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerShown: false,

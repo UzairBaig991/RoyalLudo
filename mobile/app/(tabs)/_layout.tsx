@@ -24,7 +24,7 @@ export default function TabsLayout() {
             <Ionicons
               name={focused ? 'game-controller' : 'game-controller-outline'}
               size={22}
-              color={color}
+              color={String(color || NOVA_COLORS.textSecondary)}
             />
           ),
         }}
@@ -39,7 +39,7 @@ export default function TabsLayout() {
             <Ionicons
               name={focused ? 'people' : 'people-outline'}
               size={22}
-              color={color}
+              color={String(color || NOVA_COLORS.textSecondary)}
             />
           ),
         }}
@@ -54,7 +54,7 @@ export default function TabsLayout() {
             <Ionicons
               name={focused ? 'shield' : 'shield-outline'}
               size={22}
-              color={color}
+              color={String(color || NOVA_COLORS.textSecondary)}
             />
           ),
         }}
@@ -69,7 +69,7 @@ export default function TabsLayout() {
             <Ionicons
               name={focused ? 'cart' : 'cart-outline'}
               size={22}
-              color={color}
+              color={String(color || NOVA_COLORS.textSecondary)}
             />
           ),
         }}

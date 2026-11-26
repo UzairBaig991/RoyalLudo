@@ -178,6 +178,19 @@ export default function LiveGameScreen() {
   const dockPulseAnim = useRef(new Animated.Value(1)).current;
   const sixWaveAnim = useRef(new Animated.Value(0)).current;
   const boardShakeAnim = useRef(new Animated.Value(0)).current;
+  const rollPopAnim = useRef(new Animated.Value(0)).current;
+
+  // Trigger crisp floating roll number pop whenever a new roll lands
+  useEffect(() => {
+    if (lastDiceRoll && !isRolling) {
+      rollPopAnim.setValue(0);
+      Animated.timing(rollPopAnim, {
+        toValue: 1,
+        duration: 620,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [lastDiceRoll, isRolling, currentTurnSeat]);
 
   const triggerMobileBoardShake = () => {
     boardShakeAnim.setValue(0);
@@ -608,6 +621,9 @@ export default function LiveGameScreen() {
       .trim();
     const prettyColorName = colorName.charAt(0) + colorName.slice(1).toLowerCase();
     const displayName = `${rawName} (${prettyColorName})`;
+    const seatTokens = fullPlayer?.tokens || [];
+    const totalProgressSteps = seatTokens.reduce((sum, t) => sum + Math.max(0, t.position.step), 0);
+    const racePct = Math.min(100, Math.round((totalProgressSteps / (4 * 56)) * 100));
 
     return (
       <View style={[styles.playerCardContainer, { opacity: isThisTurn ? 1 : 0.42 }]}>
@@ -710,6 +726,50 @@ export default function LiveGameScreen() {
                     }}
                   />
 
+                  {/* FLOATING ROLL NUMBER POP (+1..+5 or ★ 6!) */}
+                  {lastDiceRoll !== null && !isRolling && (
+                    <Animated.View
+                      pointerEvents="none"
+                      style={{
+                        position: 'absolute',
+                        top: -14,
+                        alignSelf: 'center',
+                        zIndex: 55,
+                        opacity: rollPopAnim.interpolate({
+                          inputRange: [0, 0.2, 0.75, 1],
+                          outputRange: [0, 1, 1, 0],
+                        }),
+                        transform: [
+                          {
+                            translateY: rollPopAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [4, -26],
+                            }),
+                          },
+                          {
+                            scale: rollPopAnim.interpolate({
+                              inputRange: [0, 0.25, 1],
+                              outputRange: [0.6, 1.2, 0.9],
+                            }),
+                          },
+                        ],
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: lastDiceRoll === 6 ? '#FFDF00' : '#FFFFFF',
+                          fontSize: lastDiceRoll === 6 ? 16 : 13,
+                          fontWeight: '900',
+                          textShadowColor: 'rgba(0,0,0,0.9)',
+                          textShadowOffset: { width: 0, height: 1 },
+                          textShadowRadius: 4,
+                        }}
+                      >
+                        {lastDiceRoll === 6 ? '★ 6!' : `+${lastDiceRoll}`}
+                      </Text>
+                    </Animated.View>
+                  )}
+
                   {/* AUTHENTIC LUDO STAR BOUNCING ARROW: Directly on Upper Side of Dice, ONLY on Your Roll Turn */}
                   {isHumanSeat && canRollDice && !isRolling && (
                     <Animated.View
@@ -755,6 +815,29 @@ export default function LiveGameScreen() {
                 <Ionicons name="dice-outline" size={18} color="rgba(255,255,255,0.2)" />
               </View>
             )}
+          </View>
+          {/* LIVE RACE-TO-CROWN PROGRESS STRIP */}
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: 10,
+              right: 10,
+              bottom: 3,
+              height: 3,
+              borderRadius: 2,
+              backgroundColor: 'rgba(255,255,255,0.12)',
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                width: `${racePct}%`,
+                height: '100%',
+                backgroundColor: colorHex,
+                borderRadius: 2,
+              }}
+            />
           </View>
         </View>
       </View>
@@ -822,11 +905,21 @@ export default function LiveGameScreen() {
         )}
       </View>
 
-      {/* 3. CENTER LUDO BOARD (With Dynamic Rotated Home Colors, Capture Shake & Active Profile Badge) */}
+      {/* 3. CENTER LUDO BOARD (With Dynamic Turn-Colored Aura Glow, Capture Shake & Active Profile Badge) */}
       <Animated.View
         style={[
           styles.boardWrapper,
-          { transform: [{ translateX: boardShakeAnim }] },
+          {
+            borderWidth: 2.5,
+            borderColor: getSeatVisual(currentTurnSeat).hex,
+            borderRadius: 16,
+            shadowColor: getSeatVisual(currentTurnSeat).hex,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.65,
+            shadowRadius: 14,
+            elevation: 10,
+            transform: [{ translateX: boardShakeAnim }],
+          },
         ]}
       >
         <LudoBoardSvg
