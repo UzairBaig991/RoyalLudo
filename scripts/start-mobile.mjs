@@ -50,9 +50,25 @@ const filteredArgs = extraArgs.filter((a) => a !== '--online');
 const port = hasPortArg ? 8081 : await findFreePort(8081);
 const expoUrl = `exp://${physicalIp}:${port}`;
 
+// 2.5 Auto-start Royal Ludo Game Server on port 4000 if not already running,
+// so Expo Go renders the EXACT same live game as Desktop with ONE command!
+let serverChild = null;
+const serverPortFree = await isPortFree(4000);
+if (serverPortFree) {
+  console.log('🚀 Auto-starting Royal Ludo Game Server on port 4000...');
+  serverChild = spawn(
+    process.execPath,
+    ['--no-warnings', '--experimental-strip-types', '--loader', './scripts/ts-loader.mjs', 'server/src/server.ts'],
+    { cwd: path.resolve('.'), stdio: 'inherit' }
+  );
+} else {
+  console.log(`✅ Royal Ludo Game Server already active at http://${physicalIp}:4000/play`);
+}
+
 console.log('====================================================');
-console.log('👑 ROYAL LUDO - EXPO MOBILE CLIENT LAUNCHER');
+console.log('👑 ROYAL LUDO - UNIFIED MOBILE & DESKTOP LAUNCHER');
 console.log(`📱 Active Mobile Wi-Fi / Hotspot IP: ${physicalIp}`);
+console.log(`🎮 Live Game Server (Same on Desktop & Mobile): http://${physicalIp}:4000/play`);
 if (!isTunnel) {
   console.log(`🌐 Expo Go URL: ${expoUrl}`);
 } else {
@@ -118,5 +134,8 @@ if (!isTunnel) {
 }
 
 child.on('exit', (code) => {
+  if (serverChild && !serverChild.killed) {
+    try { serverChild.kill(); } catch {}
+  }
   process.exit(code || 0);
 });
